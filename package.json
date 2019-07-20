@@ -1,0 +1,57 @@
+{
+    "name": "rcsb-molstar",
+    "version": "0.0.0",
+    "description": "RCSB PDB apps and props based on Mol*.",
+    "homepage": "https://github.com/rcsb/rcsb-molstar#readme",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/rcsb/rcsb-molstar.git"
+    },
+    "bugs": {
+        "url": "https://github.com/rcsb/rcsb-molstar/issues"
+    },
+    "scripts": {
+        "test": "npm run lint",
+        "lint": "tslint src/**/*.ts",
+        "build": "npm run build-tsc && npm run build-extra && npm run build-webpack",
+        "build-tsc": "tsc",
+        "build-extra": "cpx \"src/**/*.{scss,woff,woff2,ttf,otf,eot,svg,html}\" build/src/",
+        "build-webpack": "webpack --mode production",
+        "watch": "concurrently --kill-others \"npm:watch-tsc\" \"npm:watch-extra\" \"npm:watch-webpack\"",
+        "watch-tsc": "tsc -watch",
+        "watch-extra": "cpx \"src/**/*.{scss,woff,woff2,ttf,otf,eot,svg,html}\" build/src/ --watch",
+        "watch-webpack": "webpack -w --mode development --display minimal",
+        "preversion": "npm run test",
+        "postversion": "git push && git push --tags",
+        "prepublishOnly": "npm run test && npm run build"
+    },
+    "author": "RCSB PDB and Mol* Contributors",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/argparse": "^1.0.36",
+        "@types/node": "^12.6.8",
+        "@types/node-fetch": "^2.3.7",
+        "@types/react": "^16.8.23",
+        "@types/react-dom": "^16.8.4",
+        "concurrently": "^4.1.1",
+        "cpx": "^1.5.0",
+        "css-loader": "^3.1.0",
+        "extra-watch-webpack-plugin": "^1.0.3",
+        "file-loader": "^4.1.0",
+        "molstar": "^0.2.5",
+        "mini-css-extract-plugin": "^0.8.0",
+        "node-fetch": "^2.6.0",
+        "node-sass": "^4.12.0",
+        "raw-loader": "^3.1.0",
+        "react": "^16.8.6",
+        "react-dom": "^16.8.6",
+        "resolve-url-loader": "^3.1.0",
+        "sass-loader": "^7.1.0",
+        "style-loader": "^0.23.1",
+        "tslint": "^5.18.0",
+        "typescript": "3.5.3",
+        "webpack": "^4.36.1",
+        "webpack-cli": "^3.3.6"
+    },
+    "dependencies": {}
+}

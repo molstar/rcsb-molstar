@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <title>RCSB Mol* Viewer</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            #app {
+                position: absolute;
+                left: 100px;
+                top: 100px;
+                width: 1024px;
+                height: 800px;
+            }
+        </style>
+        <link rel="stylesheet" type="text/css" href="app.css" />
+        <script type="text/javascript" src="./app.js"></script>
+    </head>
+    <body>
+        <div id="app"></div>
+        <script>
+            // create an instance of the plugin
+            var viewer = new app.StructureViewer();
+
+            function $(id) { return document.getElementById(id); }
+
+            var pdbId = '1cbs', assemblyId= 'deposited';
+            var url = 'https://files.rcsb.org/download/' + pdbId + '.cif';
+            var format = 'cif';
+
+            var representationStyle = {
+                sequence: { coloring: 'polymer-id' }, // or just { }
+                hetGroups: { kind: 'ball-and-stick' }, // or 'spacefill
+                water: { hide: true },
+                snfg3d: { hide: false }
+            };
+
+            viewer.init('app', { });
+            viewer.load({ url: url, format: format, assemblyId: assemblyId, representationStyle: representationStyle });
+        </script>
+    </body>
+</html>
