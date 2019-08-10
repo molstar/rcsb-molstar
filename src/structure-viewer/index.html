@@ -24,24 +24,24 @@
     <body>
         <div id="app"></div>
         <script>
+            function getQueryParam(id) {
+                const a = new RegExp(id + '=([^&#=]*)', 'i')
+                const m = a.exec(window.location.search)
+                return m ? decodeURIComponent(m[1]) : undefined
+            }
+
             // create an instance of the plugin
             var viewer = new app.StructureViewer();
 
             function $(id) { return document.getElementById(id); }
 
-            var pdbId = '1cbs', assemblyId= 'deposited';
+            var pdbId = getQueryParam('pdbId') || '3pqr'
+            var assemblyId = getQueryParam('assemblyId') || 'deposited';
             var url = 'https://files.rcsb.org/download/' + pdbId + '.cif';
             var format = 'cif';
 
-            var representationStyle = {
-                sequence: { coloring: 'polymer-id' }, // or just { }
-                hetGroups: { kind: 'ball-and-stick' }, // or 'spacefill
-                water: { hide: true },
-                snfg3d: { hide: false }
-            };
-
             viewer.init('app', { });
-            viewer.load({ url: url, format: format, assemblyId: assemblyId, representationStyle: representationStyle });
+            viewer.load({ url: url, format: format, assemblyId: assemblyId });
         </script>
     </body>
 </html>
