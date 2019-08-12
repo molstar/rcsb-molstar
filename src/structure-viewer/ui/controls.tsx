@@ -15,9 +15,8 @@ import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
 import { Canvas3DParams } from 'molstar/lib/mol-canvas3d/canvas3d';
 import { StateObject, StateBuilder } from 'molstar/lib/mol-state';
-import { PluginStateObject } from 'molstar/lib/mol-plugin/state/objects';
+import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
-import { Structure } from 'molstar/lib/mol-model/structure';
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin/util/structure-selection-helper';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 
@@ -61,7 +60,6 @@ class GeneralSettings<P, S extends GeneralSettingsState> extends PluginUICompone
             PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { trackball: { ...trackball, spin: p.value } } });
         } else if (p.name === 'backgroundColor') {
             const renderer = this.plugin.canvas3d.props.renderer;
-            console.log(p.value)
             PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: p.value } } });
         } else if (p.name === 'renderStyle') {
             const postprocessing = this.plugin.canvas3d.props.postprocessing;
@@ -153,7 +151,10 @@ class GeneralSettings<P, S extends GeneralSettingsState> extends PluginUICompone
 
 //
 
-type StructureControlsState = { isCollapsed?: boolean }
+type StructureControlsState = {
+    representation: string
+    isCollapsed?: boolean
+}
 type StructureControlsProps = {
     trajectoryRef: string
     modelRef: string
@@ -166,7 +167,8 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
     }
 
     onChange = async (p: { param: PD.Base<any>, name: string, value: any }) => {
-        console.log(p.name, p.value)
+        // console.log('onChange', p.name, p.value)
+        const { themeCtx } = this.plugin.structureRepresentation
         const state = this.plugin.state.dataState;
         const tree = state.build();
         if (p.name === 'assembly') {
@@ -188,17 +190,37 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
                 props => ({ ...props, modelIndex: p.value })
             );
             await this.applyState(tree);
+        } else if (p.name === 'colorThemes') {
+            const assembly = this.getAssembly()
+            const dataCtx = { structure: assembly && assembly.data }
+
+            Object.keys(p.value).forEach(k => {
+                const repr = this.getRepresentation(k)
+                if (repr && repr.params) {
+                    const values = PD.getDefaultValues(themeCtx.colorThemeRegistry.get(name).getParams(dataCtx))
+                    tree.to(repr.transform.ref).update(
+                        StateTransforms.Representation.StructureRepresentation3D,
+                        props => ({ ...props, colorTheme: { name: p.value[k], params: values }})
+                    )
+                }
+            })
+            await this.applyState(tree)
         }
     }
 
+    getRepresentation(type: string) {
+        return this.plugin.helpers.structureRepresentation.getRepresentation(StateElements.Assembly, type)
+    }
+
     getParams = () => {
+        const { themeCtx, registry } = this.plugin.structureRepresentation
         const trajectory = this.getTrajectory()
         const model = this.getModel()
         const assembly = this.getAssembly()
 
         const modelOptions: [number, string][] = []
         if (trajectory) {
-            for (let i = 0, il = trajectory.length; i < il; ++i) {
+            for (let i = 0, il = trajectory.data.length; i < il; ++i) {
                 modelOptions.push([i, `${i + 1}`])
             }
         }
@@ -206,8 +228,8 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
         const assemblyOptions: [string, string][] = [['deposited', 'deposited']]
         let modelValue = 0
         if (model) {
-            if (trajectory) modelValue = trajectory.indexOf(model)
-            const { assemblies } = model.symmetry
+            if (trajectory) modelValue = trajectory.data.indexOf(model.data)
+            const { assemblies } = model.data.symmetry
             for (let i = 0, il = assemblies.length; i < il; ++i) {
                 const a = assemblies[i]
                 assemblyOptions.push([a.id, `${a.id}: ${a.details}`])
@@ -215,27 +237,65 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
         }
 
         let assemblyValue = 'deposited'
+        let colorTypes = themeCtx.colorThemeRegistry.types
+        let types = registry.types
         if (assembly) {
-            assemblyValue = assembly.units[0].conformation.operator.assembly.id
+            assemblyValue = assembly.data.units[0].conformation.operator.assembly.id
+            colorTypes = themeCtx.colorThemeRegistry.getApplicableTypes({ structure: assembly.data })
+            types = registry.getApplicableTypes(assembly.data)
+        }
+
+        const colorThemes: { [k: string]: PD.Any } = {}
+        for (let i = 0, il = types.length; i < il; ++i) {
+            const name = types[i][0]
+            if (this.getRepresentation(name)) {
+                colorThemes[name] = PD.Select(registry.get(name).defaultColorTheme, colorTypes)
+            }
         }
 
         return {
             assembly: PD.Select(assemblyValue, assemblyOptions),
             model: PD.Select(modelValue, modelOptions),
             symmetry: PD.Select('todo', [['todo', 'todo']]),
+            colorThemes: PD.Group(colorThemes, { isExpanded: true })
         }
     }
 
     get values () {
-        return {
+        const trajectory = this.getTrajectory()
+        const model = this.getModel()
+        const assembly = this.getAssembly()
 
+        const { registry } = this.plugin.structureRepresentation
+        const types = assembly ? registry.getApplicableTypes(assembly.data) : registry.types
+
+        const colorThemes: { [k: string]: string } = {}
+        for (let i = 0, il = types.length; i < il; ++i) {
+            const type = types[i][0]
+            const r = this.getRepresentation(type)
+            colorThemes[type] = r && r.params ? r.params.values.colorTheme.name : registry.get(type).defaultColorTheme
+        }
+
+        return {
+            assembly: assembly ? (assembly.data.units[0].conformation.operator.assembly.id || 'deposited') : 'deposited',
+            model: (model && trajectory) ? trajectory.data.indexOf(model.data) : 0,
+            symmetry: 'todo',
+            colorThemes
         }
     }
 
     componentDidMount() {
-        const { trajectoryRef, modelRef, assemblyRef } = this.props
+        // const { dataState } = this.plugin.state
+        // const { trajectoryRef, modelRef, assemblyRef } = this.props
         this.subscribe(this.plugin.events.state.object.updated, ({ ref, state }) => {
-            if ((trajectoryRef !== ref && modelRef !== ref && assemblyRef !== ref) || this.plugin.state.dataState !== state) return;
+            // TODO check if in subtree of trajectoryRef
+            // if ((trajectoryRef !== ref && modelRef !== ref && assemblyRef !== ref) || dataState !== state) return;
+            this.forceUpdate();
+        });
+
+        this.subscribe(this.plugin.events.state.object.created, ({ ref, state }) => {
+            // TODO check if in subtree of trajectoryRef
+            // if ((trajectoryRef !== ref && modelRef !== ref && assemblyRef !== ref) || dataState !== state) return;
             this.forceUpdate();
         });
     }
@@ -245,25 +305,20 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
     }
 
     state = {
+        representation: this.plugin.structureRepresentation.registry.types[0][0],
         isCollapsed: false
     } as Readonly<S>
 
-    private getObj<T extends StateObject>(ref: string): T['data'] | undefined {
+    private getObj<T extends StateObject>(ref: string): T | undefined {
         const state = this.plugin.state.dataState;
         const cell = state.select(ref)[0];
         if (!cell || !cell.obj) return void 0;
-        return (cell.obj as T).data;
+        return (cell.obj as T);
     }
 
-    private getTrajectory() {
-        return this.getObj<PluginStateObject.Molecule.Trajectory>(this.props.trajectoryRef)
-    }
-    private getModel() {
-        return this.getObj<PluginStateObject.Molecule.Model>(this.props.modelRef)
-    }
-    private getAssembly() {
-        return this.getObj<PluginStateObject.Molecule.Structure>(this.props.assemblyRef)
-    }
+    private getTrajectory() { return this.getObj<PSO.Molecule.Trajectory>(this.props.trajectoryRef) }
+    private getModel() { return this.getObj<PSO.Molecule.Model>(this.props.modelRef) }
+    private getAssembly() { return this.getObj<PSO.Molecule.Structure>(this.props.assemblyRef) }
 
     render() {
         const trajectory = this.getTrajectory()
