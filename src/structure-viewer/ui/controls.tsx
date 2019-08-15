@@ -14,11 +14,14 @@ import { ParameterControls } from 'molstar/lib/mol-plugin/ui/controls/parameters
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
 import { Canvas3DParams } from 'molstar/lib/mol-canvas3d/canvas3d';
-import { StateObject, StateBuilder } from 'molstar/lib/mol-state';
+import { StateObject, StateBuilder, StateTree } from 'molstar/lib/mol-state';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin/util/structure-selection-helper';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
+import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin/ui/viewport';
+import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin/ui/task';
+import { LociLabelControl } from 'molstar/lib/mol-plugin/ui/controls';
 
 export class ControlsWrapper extends PluginUIComponent {
     componentDidMount() {
@@ -39,6 +42,19 @@ export class ControlsWrapper extends PluginUIComponent {
                 <StructureToolsWrapper />
             </PluginContextContainer>
         </div>;
+    }
+}
+
+export class ViewportWrapper extends PluginUIComponent {
+    render() {
+        return <>
+            <Viewport />
+            <ViewportControls hideSettingsIcon={true} />
+            <div style={{ position: 'absolute', left: '10px', bottom: '10px' }}>
+                <BackgroundTaskProgress />
+            </div>
+            <LociLabelControl />
+        </>;
     }
 }
 
@@ -152,8 +168,7 @@ class GeneralSettings<P, S extends GeneralSettingsState> extends PluginUICompone
 //
 
 type StructureControlsState = {
-    representation: string
-    isCollapsed?: boolean
+    isCollapsed: boolean
 }
 type StructureControlsProps = {
     trajectoryRef: string
@@ -166,8 +181,17 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
         return PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
     }
 
+    async preset() {
+        const { structureRepresentation: rep } = this.plugin.helpers
+        await rep.setFromExpression('add', 'cartoon', Q.all)
+        await rep.setFromExpression('add', 'carbohydrate', Q.all)
+        await rep.setFromExpression('add', 'ball-and-stick', MS.struct.modifier.union([
+            MS.struct.combinator.merge([ Q.ligandsPlusConnected, Q.branchedConnectedOnly, Q.water ])
+        ]))
+    }
+
     onChange = async (p: { param: PD.Base<any>, name: string, value: any }) => {
-        // console.log('onChange', p.name, p.value)
+        console.log('onChange', p.name, p.value)
         const { themeCtx } = this.plugin.structureRepresentation
         const state = this.plugin.state.dataState;
         const tree = state.build();
@@ -176,20 +200,38 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
                 StateTransforms.Model.StructureAssemblyFromModel,
                 props => ({ ...props, id: p.value })
             );
-            await this.applyState(tree);
-
-            const { structureRepresentation: rep } = this.plugin.helpers
-            await rep.setFromExpression('add', 'cartoon', Q.all)
-            await rep.setFromExpression('add', 'carbohydrate', Q.all)
-            await rep.setFromExpression('add', 'ball-and-stick', MS.struct.modifier.union([
-                MS.struct.combinator.merge([ Q.ligandsPlusConnected, Q.branchedConnectedOnly, Q.water ])
-            ]))
+            await this.applyState(tree)
+            await this.preset()
         } else if (p.name === 'model') {
-            tree.to(StateElements.Model).update(
-                StateTransforms.Model.ModelFromTrajectory,
-                props => ({ ...props, modelIndex: p.value })
-            );
-            await this.applyState(tree);
+            if (p.value === -1) {
+                tree.delete(StateElements.Model)
+                    .to(StateElements.Trajectory).apply(
+                        StateTransforms.Model.StructureFromTrajectory,
+                        {}, { ref: StateElements.Assembly }
+                    )
+                await this.applyState(tree);
+                await this.preset()
+            } else {
+                if (state.tree.transforms.has(StateElements.Model)) {
+                    tree.to(StateElements.Model).update(
+                        StateTransforms.Model.ModelFromTrajectory,
+                        props => ({ ...props, modelIndex: p.value })
+                    );
+                    await this.applyState(tree);
+                } else {
+                    tree.delete(StateElements.Assembly)
+                        .to(StateElements.Trajectory).apply(
+                            StateTransforms.Model.ModelFromTrajectory,
+                            { modelIndex: p.value }, { ref: StateElements.Model }
+                        )
+                        .apply(
+                            StateTransforms.Model.StructureAssemblyFromModel,
+                            { id: 'deposited' }, { ref: StateElements.Assembly }
+                        );
+                    await this.applyState(tree);
+                    await this.preset()
+                }
+            }
         } else if (p.name === 'colorThemes') {
             const assembly = this.getAssembly()
             const dataCtx = { structure: assembly && assembly.data }
@@ -220,6 +262,7 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
 
         const modelOptions: [number, string][] = []
         if (trajectory) {
+            if (trajectory.data.length > 1) modelOptions.push([-1, `All`])
             for (let i = 0, il = trajectory.data.length; i < il; ++i) {
                 modelOptions.push([i, `${i + 1}`])
             }
@@ -234,6 +277,8 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
                 const a = assemblies[i]
                 assemblyOptions.push([a.id, `${a.id}: ${a.details}`])
             }
+        } else if (assembly) {
+            modelValue = -1
         }
 
         let assemblyValue = 'deposited'
@@ -257,7 +302,7 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
             assembly: PD.Select(assemblyValue, assemblyOptions),
             model: PD.Select(modelValue, modelOptions),
             symmetry: PD.Select('todo', [['todo', 'todo']]),
-            colorThemes: PD.Group(colorThemes, { isExpanded: true })
+            colorThemes: PD.Group(colorThemes, { isExpanded: true }),
         }
     }
 
@@ -276,27 +321,26 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
             colorThemes[type] = r && r.params ? r.params.values.colorTheme.name : registry.get(type).defaultColorTheme
         }
 
+        let modelValue = 0
+        if (trajectory) {
+            modelValue = model ? trajectory.data.indexOf(model.data) : -1
+        }
+
         return {
             assembly: assembly ? (assembly.data.units[0].conformation.operator.assembly.id || 'deposited') : 'deposited',
-            model: (model && trajectory) ? trajectory.data.indexOf(model.data) : 0,
+            model: modelValue,
             symmetry: 'todo',
-            colorThemes
+            colorThemes,
         }
     }
 
     componentDidMount() {
-        // const { dataState } = this.plugin.state
-        // const { trajectoryRef, modelRef, assemblyRef } = this.props
         this.subscribe(this.plugin.events.state.object.updated, ({ ref, state }) => {
-            // TODO check if in subtree of trajectoryRef
-            // if ((trajectoryRef !== ref && modelRef !== ref && assemblyRef !== ref) || dataState !== state) return;
-            this.forceUpdate();
+            if (StateTree.subtreeHasRef(state.tree, this.props.trajectoryRef, ref)) this.forceUpdate();
         });
 
         this.subscribe(this.plugin.events.state.object.created, ({ ref, state }) => {
-            // TODO check if in subtree of trajectoryRef
-            // if ((trajectoryRef !== ref && modelRef !== ref && assemblyRef !== ref) || dataState !== state) return;
-            this.forceUpdate();
+            if (StateTree.subtreeHasRef(state.tree, this.props.trajectoryRef, ref)) this.forceUpdate();
         });
     }
 
@@ -305,8 +349,7 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
     }
 
     state = {
-        representation: this.plugin.structureRepresentation.registry.types[0][0],
-        isCollapsed: false
+        isCollapsed: false,
     } as Readonly<S>
 
     private getObj<T extends StateObject>(ref: string): T | undefined {
@@ -322,10 +365,10 @@ class StructureControls<P extends StructureControlsProps, S extends StructureCon
 
     render() {
         const trajectory = this.getTrajectory()
-        const model = this.getModel()
+        // const model = this.getModel()
         const assembly = this.getAssembly()
 
-        if (!trajectory || !model || !assembly) return null;
+        if (!trajectory || !assembly) return null;
 
         const wrapClass = this.state.isCollapsed
             ? 'msp-transform-wrapper msp-transform-wrapper-collapsed'

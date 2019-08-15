@@ -15,7 +15,7 @@ import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { AnimateModelIndex } from 'molstar/lib/mol-plugin/state/animation/built-in';
 import { StateBuilder, StateSelection } from 'molstar/lib/mol-state';
 import { LoadParams, SupportedFormats, StateElements } from './helpers';
-import { ControlsWrapper } from './ui/controls';
+import { ControlsWrapper, ViewportWrapper } from './ui/controls';
 import { Scheduler } from 'molstar/lib/mol-task';
 import { InitVolumeStreaming, CreateVolumeStreamingInfo } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 import { ParamDefinition } from 'molstar/lib/mol-util/param-definition';
@@ -47,14 +47,16 @@ export class StructureViewer {
             ],
             layout: {
                 initial: {
-                    isExpanded: true,
-                    showControls: true
+                    isExpanded: false,
+                    showControls: true,
+                    outsideControls: false
                 },
                 controls: {
                     left: 'none',
                     right: ControlsWrapper,
                     bottom: 'none'
-                }
+                },
+                viewport: ViewportWrapper
             }
         });
     }
