@@ -185,8 +185,12 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
         }
 
         return {
-            assembly: PD.Select(assemblyValue, assemblyOptions),
-            model: PD.Select(modelValue, modelOptions),
+            assembly: PD.Select(assemblyValue, assemblyOptions, {
+                isHidden: assemblyOptions.length === 1
+            }),
+            model: PD.Select(modelValue, modelOptions, {
+                isHidden: modelOptions.length === 1
+            }),
             symmetry: PD.Select('todo', [['todo', 'todo']]),
             colorThemes: PD.Group(colorThemes, { isExpanded: true }),
         }

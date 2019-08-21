@@ -55,7 +55,7 @@ export class GeneralSettings<P, S extends GeneralSettingsState> extends PluginUI
         } else if (p.name === 'occlusion') {
             const postprocessing = this.plugin.canvas3d.props.postprocessing;
             PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
-                postprocessing: { ...postprocessing, occlusionEnable: p.value, occlusionBias: 0.9 },
+                postprocessing: { ...postprocessing, occlusionEnable: p.value, occlusionBias: 0.7 },
             } });
         }
     }

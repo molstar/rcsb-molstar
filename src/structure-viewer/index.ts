@@ -21,10 +21,9 @@ import { InitVolumeStreaming, CreateVolumeStreamingInfo } from 'molstar/lib/mol-
 import { ParamDefinition } from 'molstar/lib/mol-util/param-definition';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 import { StructureRepresentationInteraction } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-representation-interaction';
-import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin/util/structure-selection-helper';
 import { Model } from 'molstar/lib/mol-model/structure';
-import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
-require('molstar/lib/mol-plugin/skin/light.scss')
+import { ColorNames } from 'molstar/lib/mol-util/color/names';
+require('./skin/rcsb.scss')
 
 export class StructureViewer {
     plugin: PluginContext;
@@ -32,7 +31,8 @@ export class StructureViewer {
     init(target: string | HTMLElement, options?: {
         // TODO
     }) {
-        this.plugin = createPlugin(typeof target === 'string' ? document.getElementById(target)! : target, {
+        target = typeof target === 'string' ? document.getElementById(target)! : target
+        this.plugin = createPlugin(target, {
             ...DefaultPluginSpec,
             behaviors: [
                 PluginSpec.Behavior(PluginBehaviors.Representation.HighlightLoci),
@@ -59,6 +59,9 @@ export class StructureViewer {
                 viewport: ViewportWrapper
             }
         });
+
+        const renderer = this.plugin.canvas3d.props.renderer;
+        PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
     }
 
     get state() {
@@ -69,7 +72,7 @@ export class StructureViewer {
         return b.apply(StateTransforms.Data.Download, { url, isBinary: false })
     }
 
-    private model(b: StateBuilder.To<PSO.Data.Binary | PSO.Data.String>, format: SupportedFormats, assemblyId: string) {
+    private model(b: StateBuilder.To<PSO.Data.Binary | PSO.Data.String>, format: SupportedFormats) {
         const parsed = format === 'cif'
             ? b.apply(StateTransforms.Data.ParseCif).apply(StateTransforms.Model.TrajectoryFromMmCif, {}, { ref: StateElements.Trajectory })
             : b.apply(StateTransforms.Model.TrajectoryFromPDB, {}, { ref: StateElements.Trajectory });
@@ -105,7 +108,7 @@ export class StructureViewer {
 
         if (loadType === 'full') {
             await PluginCommands.State.RemoveObject.dispatch(this.plugin, { state, ref: state.tree.root.ref });
-            const modelTree = this.model(this.download(state.build().toRoot(), url), format, assemblyId);
+            const modelTree = this.model(this.download(state.build().toRoot(), url), format);
             await this.applyState(modelTree);
             const structureTree = this.structure(assemblyId);
             await this.applyState(structureTree);
@@ -115,21 +118,12 @@ export class StructureViewer {
             await this.applyState(tree);
         }
 
-        await this.updateStyle();
+        await this.plugin.helpers.structureRepresentation.preset();
 
         this.loadedParams = { url, format, assemblyId };
         Scheduler.setImmediate(() => PluginCommands.Camera.Reset.dispatch(this.plugin, { }));
 
         this.experimentalData.init()
-    }
-
-    async updateStyle() {
-        const { structureRepresentation: rep } = this.plugin.helpers
-        await rep.setFromExpression('add', 'cartoon', Q.all)
-        await rep.setFromExpression('add', 'carbohydrate', Q.all)
-        await rep.setFromExpression('add', 'ball-and-stick', MS.struct.modifier.union([
-            MS.struct.combinator.merge([ Q.ligandsPlusConnected, Q.branchedConnectedOnly, Q.water ])
-        ]))
     }
 
     experimentalData = {
