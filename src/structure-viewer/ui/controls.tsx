@@ -8,7 +8,8 @@ import * as React from 'react';
 import { PluginUIComponent } from 'molstar/lib/mol-plugin/ui/base';
 import { PluginContextContainer } from 'molstar/lib/mol-plugin/ui/plugin';
 import { TransformUpdaterControl } from 'molstar/lib/mol-plugin/ui/state/update-transform';
-import { StructureToolsWrapper } from 'molstar/lib/mol-plugin/ui/controls';
+import { StructureSelectionControls } from 'molstar/lib/mol-plugin/ui/structure/selection';
+import { StructureRepresentationControls } from 'molstar/lib/mol-plugin/ui/structure/representation';
 import { StateElements } from '../helpers';
 import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin/ui/viewport';
 import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin/ui/task';
@@ -28,7 +29,8 @@ export class ControlsWrapper extends PluginUIComponent {
                 <GeneralSettings />
                 <StructureControls />
                 <TransformUpdaterControl nodeRef={StateElements.VolumeStreaming} header={{ name: 'Volume Controls', description: '' }} />
-                <StructureToolsWrapper />
+                <StructureSelectionControls />
+                <StructureRepresentationControls />
             </PluginContextContainer>
         </div>;
     }
