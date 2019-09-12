@@ -27,6 +27,7 @@ require('./skin/rcsb.scss')
 
 export class StructureViewer {
     plugin: PluginContext;
+    structureControlsHelper: StructureControlsHelper;
 
     init(target: string | HTMLElement) {
         target = typeof target === 'string' ? document.getElementById(target)! : target
@@ -65,6 +66,7 @@ export class StructureViewer {
 
         const renderer = this.plugin.canvas3d.props.renderer;
         PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
+        this.structureControlsHelper = new StructureControlsHelper(this.plugin)
     }
 
     get state() {
@@ -84,20 +86,11 @@ export class StructureViewer {
             .apply(StateTransforms.Model.ModelFromTrajectory, { modelIndex: 0 }, { ref: StateElements.Model });
     }
 
-    // private structure(assemblyId: string) {
-    //     const model = this.state.build().to(StateElements.Model);
-
-    //     const s = model
-    //         .apply(StateTransforms.Model.StructureAssemblyFromModel, { id: assemblyId || 'deposited' }, { ref: StateElements.Assembly });
-
-    //     return s;
-    // }
-
     private applyState(tree: StateBuilder) {
         return PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
     }
 
-    async load({ url, format = 'cif', assemblyId = '' }: LoadParams) {
+    async load({ url, format = 'cif', assemblyId = 'deposited' }: LoadParams) {
         if (!url) return
 
         const state = this.plugin.state.dataState;
@@ -112,8 +105,6 @@ export class StructureViewer {
 
         this.experimentalData.init()
     }
-
-    structureControlsHelper = new StructureControlsHelper(this.plugin)
 
     experimentalData = {
         init: async () => {
