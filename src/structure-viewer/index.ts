@@ -2,7 +2,6 @@
  * Copyright (c) 2019 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @author David Sehnal <david.sehnal@gmail.com>
  */
 
 import { createPlugin, DefaultPluginSpec } from 'molstar/lib/mol-plugin';
@@ -23,14 +22,13 @@ import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 import { StructureRepresentationInteraction } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-representation-interaction';
 import { Model } from 'molstar/lib/mol-model/structure';
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
+import { StructureControlsHelper } from './ui/structure';
 require('./skin/rcsb.scss')
 
 export class StructureViewer {
     plugin: PluginContext;
 
-    init(target: string | HTMLElement, options?: {
-        // TODO
-    }) {
+    init(target: string | HTMLElement) {
         target = typeof target === 'string' ? document.getElementById(target)! : target
         this.plugin = createPlugin(target, {
             ...DefaultPluginSpec,
@@ -38,8 +36,13 @@ export class StructureViewer {
                 PluginSpec.Behavior(PluginBehaviors.Representation.HighlightLoci),
                 PluginSpec.Behavior(PluginBehaviors.Representation.SelectLoci),
                 PluginSpec.Behavior(PluginBehaviors.Representation.DefaultLociLabelProvider),
-                PluginSpec.Behavior(PluginBehaviors.Camera.FocusLociOnSelect, { minRadius: 8, extraRadius: 4 }),
-                PluginSpec.Behavior(PluginBehaviors.CustomProps.RCSBAssemblySymmetry, { autoAttach: true }),
+                PluginSpec.Behavior(PluginBehaviors.Camera.FocusLociOnSelect, {
+                    minRadius: 8,
+                    extraRadius: 4
+                }),
+                PluginSpec.Behavior(PluginBehaviors.CustomProps.RCSBAssemblySymmetry, {
+                    autoAttach: true
+                }),
                 PluginSpec.Behavior(StructureRepresentationInteraction)
             ],
             animations: [
@@ -81,50 +84,36 @@ export class StructureViewer {
             .apply(StateTransforms.Model.ModelFromTrajectory, { modelIndex: 0 }, { ref: StateElements.Model });
     }
 
-    private structure(assemblyId: string) {
-        const model = this.state.build().to(StateElements.Model);
+    // private structure(assemblyId: string) {
+    //     const model = this.state.build().to(StateElements.Model);
 
-        const s = model
-            .apply(StateTransforms.Model.StructureAssemblyFromModel, { id: assemblyId || 'deposited' }, { ref: StateElements.Assembly });
+    //     const s = model
+    //         .apply(StateTransforms.Model.StructureAssemblyFromModel, { id: assemblyId || 'deposited' }, { ref: StateElements.Assembly });
 
-        return s;
-    }
+    //     return s;
+    // }
 
     private applyState(tree: StateBuilder) {
         return PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
     }
 
-    private loadedParams: LoadParams = { url: '', format: 'cif', assemblyId: '' };
     async load({ url, format = 'cif', assemblyId = '' }: LoadParams) {
-        let loadType: 'full' | 'update' = 'full';
+        if (!url) return
 
         const state = this.plugin.state.dataState;
+        await PluginCommands.State.RemoveObject.dispatch(this.plugin, { state, ref: state.tree.root.ref });
 
-        if (this.loadedParams.url !== url || this.loadedParams.format !== format) {
-            loadType = 'full';
-        } else if (this.loadedParams.url === url) {
-            if (state.select(StateElements.Assembly).length > 0) loadType = 'update';
-        }
+        const modelTree = this.model(this.download(state.build().toRoot(), url), format);
+        await this.applyState(modelTree);
 
-        if (loadType === 'full') {
-            await PluginCommands.State.RemoveObject.dispatch(this.plugin, { state, ref: state.tree.root.ref });
-            const modelTree = this.model(this.download(state.build().toRoot(), url), format);
-            await this.applyState(modelTree);
-            const structureTree = this.structure(assemblyId);
-            await this.applyState(structureTree);
-        } else {
-            const tree = state.build();
-            tree.to(StateElements.Assembly).update(StateTransforms.Model.StructureAssemblyFromModel, p => ({ ...p, id: assemblyId || 'deposited' }));
-            await this.applyState(tree);
-        }
+        await this.structureControlsHelper.setAssembly(assemblyId)
 
-        await this.plugin.helpers.structureRepresentation.preset();
-
-        this.loadedParams = { url, format, assemblyId };
         Scheduler.setImmediate(() => PluginCommands.Camera.Reset.dispatch(this.plugin, { }));
 
         this.experimentalData.init()
     }
+
+    structureControlsHelper = new StructureControlsHelper(this.plugin)
 
     experimentalData = {
         init: async () => {
@@ -133,10 +122,11 @@ export class StructureViewer {
             if (!model || !asm) return
 
             const m = model.data as Model
-            const hasXrayMap = m.sourceData.data.pdbx_database_status.status_code_sf.value(0) === 'REL'
+            const d = m.sourceData.data
+            const hasXrayMap = d.pdbx_database_status.status_code_sf.value(0) === 'REL'
             let hasEmMap = false
-            for (let i = 0, il = m.sourceData.data.pdbx_database_related._rowCount; i < il; ++i) {
-                if (m.sourceData.data.pdbx_database_related.db_name.value(i).toUpperCase() === 'EMDB') {
+            for (let i = 0, il = d.pdbx_database_related._rowCount; i < il; ++i) {
+                if (d.pdbx_database_related.db_name.value(i).toUpperCase() === 'EMDB') {
                     hasEmMap = true
                     break
                 }
@@ -149,10 +139,10 @@ export class StructureViewer {
                 await this.plugin.runTask(this.state.applyAction(InitVolumeStreaming, params, StateElements.Assembly));
             }
         },
-        remove: () => {
+        remove: async () => {
             const r = this.state.select(StateSelection.Generators.ofTransformer(CreateVolumeStreamingInfo))[0];
             if (!r) return;
-            PluginCommands.State.RemoveObject.dispatch(this.plugin, { state: this.state, ref: r.transform.ref });
+            await PluginCommands.State.RemoveObject.dispatch(this.plugin, { state: this.state, ref: r.transform.ref });
         }
     }
 }

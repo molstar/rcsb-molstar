@@ -15,6 +15,7 @@ import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
 import { Model } from 'molstar/lib/mol-model/structure';
+import { PluginContext } from 'molstar/lib/mol-plugin/context';
 
 type StructureControlsState = {
     isCollapsed: boolean
@@ -24,8 +25,8 @@ type StructureControlsProps = {
 
 }
 
-export class StructureControls<P extends StructureControlsProps, S extends StructureControlsState> extends PluginUIComponent<P, S> {
-    private applyState(tree: StateBuilder) {
+export class StructureControlsHelper {
+    applyState(tree: StateBuilder) {
         return PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
     }
 
@@ -36,14 +37,14 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
     async setAssembly(id: string) {
         const state = this.plugin.state.dataState;
         const tree = state.build();
-        if (id === '__unitcell__') {
+        if (id === 'unitcell') {
             const props = { ijkMin: Vec3.create(0, 0, 0), ijkMax: Vec3.create(0, 0, 0) }
             tree.delete(StateElements.Assembly)
                 .to(StateElements.Model).apply(
                     StateTransforms.Model.StructureSymmetryFromModel,
                     props, { ref: StateElements.Assembly, tags: [ 'unitcell' ] }
                 )
-        } else if (id === '__supercell__') {
+        } else if (id === 'supercell') {
             const props = { ijkMin: Vec3.create(-1, -1, -1), ijkMax: Vec3.create(1, 1, 1) }
             tree.delete(StateElements.Assembly)
                 .to(StateElements.Model).apply(
@@ -56,10 +57,6 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
                     StateTransforms.Model.StructureAssemblyFromModel,
                     { id }, { ref: StateElements.Assembly }
                 )
-            // tree.to(StateElements.Assembly).update(
-            //     StateTransforms.Model.StructureAssemblyFromModel,
-            //     props => ({ ...props, id: p.value })
-            // );
         }
         await this.applyState(tree)
         await this.preset()
@@ -99,6 +96,19 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
         }
     }
 
+    constructor(private plugin: PluginContext) {
+
+    }
+}
+
+export class StructureControls<P extends StructureControlsProps, S extends StructureControlsState> extends PluginUIComponent<P, S> {
+    structureControlsHelper: StructureControlsHelper
+
+    constructor(props: P, context?: any) {
+        super(props, context);
+        this.structureControlsHelper = new StructureControlsHelper(this.plugin)
+    }
+
     async setColorTheme(theme: { [k: string]: string }) {
         const { themeCtx } = this.plugin.structureRepresentation
         const state = this.plugin.state.dataState;
@@ -117,15 +127,15 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
                 )
             }
         })
-        await this.applyState(tree)
+        await this.structureControlsHelper.applyState(tree)
     }
 
     onChange = async (p: { param: PD.Base<any>, name: string, value: any }) => {
         console.log('onChange', p.name, p.value)
         if (p.name === 'assembly') {
-            this.setAssembly(p.value)
+            this.structureControlsHelper.setAssembly(p.value)
         } else if (p.name === 'model') {
-            this.setModel(p.value)
+            this.structureControlsHelper.setModel(p.value)
         } else if (p.name === 'colorThemes') {
             this.setColorTheme(p.value)
         }
@@ -150,7 +160,7 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
                 modelOptions.push([i, `${i + 1}`])
             }
             if (trajectory.data.length === 1 && modelHasSymmetry(trajectory.data[0])) {
-                assemblyOptions.push(['__unitcell__', 'unitcell'], ['__supercell__', 'supercell'])
+                assemblyOptions.push(['unitcell', 'unitcell'], ['supercell', 'supercell'])
             }
         }
 
@@ -220,9 +230,9 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
         if (assembly) {
             const tags = (assembly as StateObject).tags
             if (tags && tags.includes('unitcell')) {
-                assemblyValue = '__unitcell__'
+                assemblyValue = 'unitcell'
             } else if (tags && tags.includes('supercell')) {
-                assemblyValue = '__supercell__'
+                assemblyValue = 'supercell'
             } else {
                 assemblyValue = assembly.data.units[0].conformation.operator.assembly.id || 'deposited'
             }
@@ -297,7 +307,7 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
     }
 
     private getAssembly() {
-        if (!this.state.trajectoryRef) return
+        if (!this.state.trajectoryRef || !this.plugin.state.dataState.transforms.has(this.state.trajectoryRef)) return
         const assemblies = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Structure, this.state.trajectoryRef))
         return assemblies.length > 0 ? assemblies[0].obj : undefined
     }

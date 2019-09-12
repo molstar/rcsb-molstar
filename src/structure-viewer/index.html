@@ -17,6 +17,16 @@
                 width: 1024px;
                 height: 800px;
             }
+
+            #menu {
+                position: absolute;
+                right: 100px;
+                top: 100px;
+            }
+
+            #menu > select {
+                width: 200px;
+            }
         </style>
         <link rel="stylesheet" type="text/css" href="app.css" />
         <script type="text/javascript" src="./app.js"></script>
@@ -30,18 +40,128 @@
                 return m ? decodeURIComponent(m[1]) : undefined
             }
 
+            function getLoadParams(pdbId) {
+                return {
+                    assemblyId: getQueryParam('assemblyId') || 'deposited',
+                    url: 'https://files.rcsb.org/download/' + pdbId + '.cif',
+                    format: 'cif'
+                }
+            }
+
             // create an instance of the plugin
             var viewer = new app.StructureViewer();
-
-            function $(id) { return document.getElementById(id); }
-
-            var pdbId = getQueryParam('pdbId') || '3pqr'
-            var assemblyId = getQueryParam('assemblyId') || 'deposited';
-            var url = 'https://files.rcsb.org/download/' + pdbId + '.cif';
-            var format = 'cif';
-
             viewer.init('app', { });
-            viewer.load({ url: url, format: format, assemblyId: assemblyId });
+            const pdbId = getQueryParam('pdbId');
+            if (pdbId) viewer.load(getLoadParams(pdbId));
+        </script>
+        <div id="menu">
+            Examples
+            <select id="examples" onchange="viewer.load(getLoadParams(this.value))">
+                <option value=''></option>
+            </select>
+        </div>
+        <script>
+            var examples = [
+                {
+                    id: '1CRN',
+                    info: 'small: only polymer'
+                },
+                {
+                    id: '3PQR',
+                    info: 'medium: polymer, carbs, ligands'
+                },
+                {
+                    id: '6QVK',
+                    info: 'large: The cryo-EM structure of bacteriophage phi29 prohead'
+                },
+                {
+                    id: '5Y6P',
+                    info: 'large: Structure of the phycobilisome from the red alga Griffithsia pacifica'
+                },
+                {
+                    id: '6O2S',
+                    info: 'large: Deacetylated Microtubules'
+                },
+                {
+                    id: '5MQ7',
+                    info: 'large: Structure of AaLS-13'
+                },
+                {
+                    id: '5IV5',
+                    info: 'large: Cryo-electron microscopy structure of the hexagonal pre-attachment T4 baseplate-tail tube complex'
+                },
+                {
+                    id: '3JC8',
+                    info: 'large: Architectural model of the type IVa pilus machine in a piliated state'
+                },
+                {
+                    id: '4V99',
+                    info: 'large: The Crystallographic Structure of Panicum Mosaic Virus'
+                },
+                {
+                    id: '3J3Q',
+                    info: 'large: Atomic-level structure of the entire HIV-1 capsid'
+                },
+                {
+                    id: '6NCL',
+                    info: 'large: Near-atomic structure of icosahedrally averaged PBCV-1 capsid'
+                },
+                {
+                    id: '6EKC',
+                    info: 'large: Crystal structure of the BSD2 homolog of Arabidopsis thaliana bound to the octameric assembly of RbcL from Thermosynechococcus elongatus'
+                },
+                {
+                    id: '1M4X',
+                    info: 'large: PBCV-1 virus capsid, quasi-atomic model'
+                },
+                {
+                    id: '4V5A',
+                    info: 'large: Structure of the Ribosome Recycling Factor bound to the Thermus thermophilus 70S ribosome with mRNA, ASL-Phe and tRNA-fMet'
+                },
+                {
+                    id: '4UDF',
+                    info: 'large: STRUCTURAL BASIS OF HUMAN PARECHOVIRUS NEUTRALIZATION BY HUMAN MONOCLONAL ANTIBODIES'
+                },
+                {
+                    id: '6J5K',
+                    info: 'Cryo-EM structure of the mammalian ATP synthase tetramer bound with inhibitory protein IF1'
+                },
+                {
+                    id: '6RVV',
+                    info: 'Structure of left-handed protein cage consisting of 24 eleven-membered ring proteins held together by gold (I) bridges.'
+                },
+                {
+                    id: '6EK5',
+                    info: 'Near-atomic resolution structure of a plant geminivirus determined by electron cryo-microscopy'
+                },
+                {
+                    id: '4V93',
+                    info: 'Fitted coordinates for Lumbricus terrestris hemoglobin cryo-EM complex'
+                },
+                {
+                    id: '5VLZ',
+                    info: 'Backbone model for phage Qbeta capsid'
+                },
+                {
+                    id: '5XTI',
+                    info: 'Cryo-EM architecture of human respiratory chain megacomplex-I2III2IV2'
+                },
+                {
+                    id: '6BY7',
+                    info: 'Folding DNA into a lipid-conjugated nano-barrel for controlled reconstitution of membrane proteins'
+                },
+                {
+                    id: '6C50',
+                    info: 'Cross-alpha Amyloid-like Structure alphaAmS'
+                }
+            ];
+
+            var examplesSelect = document.getElementById('examples');
+            examples.forEach(function(e) {
+                var option = document.createElement('option')
+                Object.assign(option, { text: '[' + e.id + '] ' + e.info, value: e.id })
+                examplesSelect.appendChild(option)
+            })
         </script>
     </body>
 </html>
