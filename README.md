@@ -13,7 +13,7 @@
     DEBUG=molstar npm run watch
 
 ### Build for production:
-    NODE_ENV=production npm run build
+    npm run build
 
 **Run**
 
