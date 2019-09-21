@@ -17,7 +17,7 @@ import { LoadParams, SupportedFormats, StateElements } from './helpers';
 import { ControlsWrapper, ViewportWrapper } from './ui/controls';
 import { Scheduler } from 'molstar/lib/mol-task';
 import { InitVolumeStreaming, CreateVolumeStreamingInfo } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
-import { ParamDefinition } from 'molstar/lib/mol-util/param-definition';
+import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 import { StructureRepresentationInteraction } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-representation-interaction';
 import { Model } from 'molstar/lib/mol-model/structure';
@@ -25,11 +25,28 @@ import { ColorNames } from 'molstar/lib/mol-util/color/names';
 import { StructureControlsHelper } from './ui/structure';
 require('./skin/rcsb.scss')
 
-export class StructureViewer {
-    plugin: PluginContext;
-    structureControlsHelper: StructureControlsHelper;
+export const DefaultStructureViewerProps = {
+    // volumeServerUrl: '//128.6.244.39/',
+    volumeServerUrl: 'https://ds.litemol.org/',
+    modelUrlProvider: (pdbId: string) => {
+        const id = pdbId.toLowerCase()
+        return {
+            // url: `https://files.rcsb.org/download/${id}.cif`,
+            // format: 'cif' as SupportedFormats
+            url: `https://alpha-models.rcsb.org/${id}.bcif`,
+            // url: `https://alpha-models.rcsb.org/models/${id.substr(1, 2)}/${id}.bcif`,
+            format: 'bcif' as SupportedFormats
+        }
+    },
+}
+export type StructureViewerProps = typeof DefaultStructureViewerProps
 
-    init(target: string | HTMLElement) {
+export class StructureViewer {
+    private readonly plugin: PluginContext;
+    private readonly structureControlsHelper: StructureControlsHelper;
+    private readonly props: Readonly<StructureViewerProps>
+
+    constructor(target: string | HTMLElement, props: Partial<StructureViewerProps> = {}) {
         target = typeof target === 'string' ? document.getElementById(target)! : target
         this.plugin = createPlugin(target, {
             ...DefaultPluginSpec,
@@ -37,7 +54,7 @@ export class StructureViewer {
                 PluginSpec.Behavior(PluginBehaviors.Representation.HighlightLoci),
                 PluginSpec.Behavior(PluginBehaviors.Representation.SelectLoci),
                 PluginSpec.Behavior(PluginBehaviors.Representation.DefaultLociLabelProvider),
-                PluginSpec.Behavior(PluginBehaviors.Camera.FocusLociOnSelect, {
+                PluginSpec.Behavior(PluginBehaviors.Camera.FocusLoci, {
                     minRadius: 8,
                     extraRadius: 4
                 }),
@@ -64,6 +81,8 @@ export class StructureViewer {
             }
         });
 
+        this.props = { ...DefaultStructureViewerProps, ...props }
+
         const renderer = this.plugin.canvas3d.props.renderer;
         PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
         this.structureControlsHelper = new StructureControlsHelper(this.plugin)
@@ -73,12 +92,13 @@ export class StructureViewer {
         return this.plugin.state.dataState;
     }
 
-    private download(b: StateBuilder.To<PSO.Root>, url: string) {
-        return b.apply(StateTransforms.Data.Download, { url, isBinary: false })
+    private download(b: StateBuilder.To<PSO.Root>, url: string, isBinary: boolean) {
+        return b.apply(StateTransforms.Data.Download, { url, isBinary })
     }
 
     private model(b: StateBuilder.To<PSO.Data.Binary | PSO.Data.String>, format: SupportedFormats) {
-        const parsed = format === 'cif'
+        const isMmcif = format === 'cif' || format === 'bcif'
+        const parsed = isMmcif
             ? b.apply(StateTransforms.Data.ParseCif).apply(StateTransforms.Model.TrajectoryFromMmCif, {}, { ref: StateElements.Trajectory })
             : b.apply(StateTransforms.Model.TrajectoryFromPDB, {}, { ref: StateElements.Trajectory });
 
@@ -96,7 +116,8 @@ export class StructureViewer {
         const state = this.plugin.state.dataState;
         await PluginCommands.State.RemoveObject.dispatch(this.plugin, { state, ref: state.tree.root.ref });
 
-        const modelTree = this.model(this.download(state.build().toRoot(), url), format);
+        const isBinary = format === 'bcif'
+        const modelTree = this.model(this.download(state.build().toRoot(), url, isBinary), format);
         await this.applyState(modelTree);
 
         await this.structureControlsHelper.setAssembly(assemblyId)
@@ -104,6 +125,13 @@ export class StructureViewer {
         Scheduler.setImmediate(() => PluginCommands.Camera.Reset.dispatch(this.plugin, { }));
 
         this.experimentalData.init()
+    }
+
+    async loadPdbId(pdbId: string, assemblyId = 'deposited') {
+        return this.load({
+            assemblyId,
+            ...this.props.modelUrlProvider(pdbId),
+        })
     }
 
     experimentalData = {
@@ -124,9 +152,10 @@ export class StructureViewer {
             }
 
             if (hasXrayMap || hasEmMap) {
-                const params = ParamDefinition.getDefaultValues(InitVolumeStreaming.definition.params!(asm, this.plugin));
+                const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(asm, this.plugin));
                 params.behaviorRef = StateElements.VolumeStreaming;
                 params.defaultView = 'selection-box';
+                params.serverUrl = this.props.volumeServerUrl
                 await this.plugin.runTask(this.state.applyAction(InitVolumeStreaming, params, StateElements.Assembly));
             }
         },

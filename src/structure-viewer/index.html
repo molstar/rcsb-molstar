@@ -44,23 +44,17 @@
                 return m ? decodeURIComponent(m[1]) : undefined
             }
 
-            function getLoadParams(pdbId) {
-                return {
-                    assemblyId: getQueryParam('assemblyId') || 'deposited',
-                    url: 'https://files.rcsb.org/download/' + pdbId + '.cif',
-                    format: 'cif'
-                }
-            }
-
             // create an instance of the plugin
-            var viewer = new app.StructureViewer();
-            viewer.init('app', { });
+            var viewer = new app.StructureViewer('app');
+
+            // load pdbId
             const pdbId = getQueryParam('pdbId');
-            if (pdbId) viewer.load(getLoadParams(pdbId));
+            const assemblyId = getQueryParam('assemblyId') || 'deposited';
+            if (pdbId) viewer.loadPdbId(pdbId, assemblyId);
         </script>
         <div id="menu">
             Examples
-            <select id="examples" onchange="viewer.load(getLoadParams(this.value))">
+            <select id="examples" onchange="viewer.loadPdbId(this.value)">
                 <option value=''></option>
             </select>
         </div>
