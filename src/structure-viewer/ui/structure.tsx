@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react';
-import { PluginUIComponent } from 'molstar/lib/mol-plugin/ui/base';
+import { CollapsableControls, CollapsableState } from 'molstar/lib/mol-plugin/ui/base';
 import { StateElements } from '../helpers';
 import { ParameterControls } from 'molstar/lib/mol-plugin/ui/controls/parameters';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
@@ -17,12 +17,8 @@ import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
 import { Model } from 'molstar/lib/mol-model/structure';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 
-type StructureControlsState = {
-    isCollapsed: boolean
+interface StructureControlsState extends CollapsableState {
     trajectoryRef: string
-}
-type StructureControlsProps = {
-
 }
 
 export class StructureControlsHelper {
@@ -101,7 +97,7 @@ export class StructureControlsHelper {
     }
 }
 
-export class StructureControls<P extends StructureControlsProps, S extends StructureControlsState> extends PluginUIComponent<P, S> {
+export class StructureControls<P, S extends StructureControlsState> extends CollapsableControls<P, S> {
     structureControlsHelper: StructureControlsHelper
 
     constructor(props: P, context?: any) {
@@ -131,7 +127,7 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
     }
 
     onChange = async (p: { param: PD.Base<any>, name: string, value: any }) => {
-        console.log('onChange', p.name, p.value)
+        // console.log('onChange', p.name, p.value)
         if (p.name === 'assembly') {
             this.structureControlsHelper.setAssembly(p.value)
         } else if (p.name === 'model') {
@@ -188,9 +184,14 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
 
         const colorThemes: { [k: string]: PD.Any } = {}
         for (let i = 0, il = types.length; i < il; ++i) {
-            const name = types[i][0]
-            if (this.getRepresentation(name)) {
-                colorThemes[name] = PD.Select(registry.get(name).defaultColorTheme, colorTypes)
+            const type = types[i][0]
+            const r = this.getRepresentation(type)
+            if (r) {
+                const n = r.params ? r.params.values.colorTheme.name : registry.get(type).defaultColorTheme
+                const p = themeCtx.colorThemeRegistry.get(n)
+                const d = { structure: assembly && assembly.data }
+                const ct = p.factory(d, PD.getDefaultValues(p.getParams(d)))
+                colorThemes[type] = PD.Select(n, colorTypes, { description: ct.description, legend: ct.legend })
             }
         }
 
@@ -201,7 +202,7 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
             model: PD.Select(modelValue, modelOptions, {
                 isHidden: modelOptions.length === 1
             }),
-            symmetry: PD.Select('todo', [['todo', 'todo']]),
+            // symmetry: PD.Select('todo', [['todo', 'todo']]), // TODO
             colorThemes: PD.Group(colorThemes, { isExpanded: true }),
         }
     }
@@ -279,15 +280,6 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
         })
     }
 
-    toggleExpanded = () => {
-        this.setState({ isCollapsed: !this.state.isCollapsed })
-    }
-
-    state = {
-        isCollapsed: false,
-        trajectoryRef: ''
-    } as S
-
     private getObj<T extends StateObject>(ref: string): T | undefined {
         if (!ref) return undefined
         const state = this.plugin.state.dataState
@@ -312,27 +304,22 @@ export class StructureControls<P extends StructureControlsProps, S extends Struc
         return assemblies.length > 0 ? assemblies[0].obj : undefined
     }
 
-    render() {
-        const trajectory = this.getTrajectory()
-        // const model = this.getModel()
-        const assembly = this.getAssembly()
+    defaultState() {
+        return {
+            isCollapsed: false,
+            header: 'Structure Settings',
 
-        if (!trajectory || !assembly) return null;
+            trajectoryRef: '',
+        } as S
+    }
 
-        const wrapClass = this.state.isCollapsed
-            ? 'msp-transform-wrapper msp-transform-wrapper-collapsed'
-            : 'msp-transform-wrapper';
+    renderControls() {
+        if (!this.plugin.canvas3d) return null
+        if (!this.getTrajectory() || !this.getAssembly()) return null
 
-        return this.plugin.canvas3d ? <div className={wrapClass}>
-            <div className='msp-transform-header'>
-                <button className='msp-btn msp-btn-block' onClick={this.toggleExpanded}>
-                    Structure Settings
-                </button>
-            </div>
-            {!this.state.isCollapsed &&
-                <ParameterControls params={this.getParams()} values={this.values} onChange={this.onChange} />
-            }
-        </div> : null;
+        return <div>
+            <ParameterControls params={this.getParams()} values={this.values} onChange={this.onChange} />
+        </div>
     }
 }
 

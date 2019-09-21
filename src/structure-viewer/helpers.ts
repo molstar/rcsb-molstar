@@ -4,7 +4,7 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-export type SupportedFormats = 'cif' | 'pdb'
+export type SupportedFormats = 'cif' | 'bcif' | 'pdb'
 export interface LoadParams {
     /** URL pointing to a structure file  */
     url: string,

@@ -16,6 +16,7 @@ import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin/ui/task';
 import { LociLabelControl } from 'molstar/lib/mol-plugin/ui/controls';
 import { GeneralSettings } from './general';
 import { StructureControls } from './structure';
+import { Help } from './help';
 
 export class ControlsWrapper extends PluginUIComponent {
     componentDidMount() {
@@ -26,6 +27,7 @@ export class ControlsWrapper extends PluginUIComponent {
     render() {
         return <div className='msp-scrollable-container msp-right-controls'>
             <PluginContextContainer plugin={this.plugin}>
+                <Help />
                 <GeneralSettings />
                 <StructureControls />
                 <TransformUpdaterControl nodeRef={StateElements.VolumeStreaming} header={{ name: 'Volume Controls', description: '' }} />
