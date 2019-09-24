@@ -31,11 +31,11 @@ export const DefaultStructureViewerProps = {
     modelUrlProvider: (pdbId: string) => {
         const id = pdbId.toLowerCase()
         return {
-            // url: `https://files.rcsb.org/download/${id}.cif`,
-            // format: 'cif' as SupportedFormats
-            url: `https://alpha-models.rcsb.org/${id}.bcif`,
+            url: `https://files.rcsb.org/download/${id}.cif`,
+            format: 'cif' as SupportedFormats
+            // url: `https://alpha-models.rcsb.org/${id}.bcif`,
             // url: `https://alpha-models.rcsb.org/models/${id.substr(1, 2)}/${id}.bcif`,
-            format: 'bcif' as SupportedFormats
+            // format: 'bcif' as SupportedFormats
         }
     },
 }
