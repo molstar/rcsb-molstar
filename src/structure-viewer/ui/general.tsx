@@ -17,9 +17,6 @@ const GeneralSettingsParams = {
     renderStyle: PD.Select('glossy', [['toon', 'Toon'], ['matte', 'Matte'], ['glossy', 'Glossy'], ['metallic', 'Metallic']], { description: 'Style in which the 3D scene is rendered' }),
     occlusion: PD.Boolean(false, { description: 'Darken occluded crevices with the ambient occlusion effect' }),
 }
-// TODO remove when updating molstar
-GeneralSettingsParams.spin.description = 'Spin the 3D scene around the x-axis in view space'
-GeneralSettingsParams.background.description = 'Background color of the 3D canvas'
 
 export class GeneralSettings<P> extends CollapsableControls<P> {
     setSettings = (p: { param: PD.Base<any>, name: string, value: any }) => {

@@ -26,16 +26,16 @@ import { StructureControlsHelper } from './ui/structure';
 require('./skin/rcsb.scss')
 
 export const DefaultStructureViewerProps = {
-    // volumeServerUrl: '//128.6.244.39/',
-    volumeServerUrl: 'https://ds.litemol.org/',
+    // volumeServerUrl: 'https://ds.litemol.org/',
+    volumeServerUrl: '//alpha-maps.rcsb.org/',
     modelUrlProvider: (pdbId: string) => {
         const id = pdbId.toLowerCase()
         return {
-            url: `https://files.rcsb.org/download/${id}.cif`,
-            format: 'cif' as SupportedFormats
-            // url: `https://alpha-models.rcsb.org/${id}.bcif`,
+            // url: `https://files.rcsb.org/download/${id}.cif`,
+            // format: 'cif' as SupportedFormats
+            url: `//alpha-models.rcsb.org/${id}.bcif`,
             // url: `https://alpha-models.rcsb.org/models/${id.substr(1, 2)}/${id}.bcif`,
-            // format: 'bcif' as SupportedFormats
+            format: 'bcif' as SupportedFormats
         }
     },
 }
