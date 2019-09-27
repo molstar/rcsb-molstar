@@ -13,7 +13,7 @@ import { StructureRepresentationControls } from 'molstar/lib/mol-plugin/ui/struc
 import { StateElements } from '../helpers';
 import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin/ui/viewport';
 import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin/ui/task';
-import { LociLabelControl } from 'molstar/lib/mol-plugin/ui/controls';
+import { LociLabels } from 'molstar/lib/mol-plugin/ui/controls';
 import { GeneralSettings } from './general';
 import { StructureControls } from './structure';
 import { Help } from './help';
@@ -46,7 +46,7 @@ export class ViewportWrapper extends PluginUIComponent {
             <div style={{ position: 'absolute', left: '10px', bottom: '10px' }}>
                 <BackgroundTaskProgress />
             </div>
-            <LociLabelControl />
+            <LociLabels />
         </>;
     }
 }
