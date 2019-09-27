@@ -6,7 +6,6 @@
 
 import * as React from 'react';
 import { PluginUIComponent } from 'molstar/lib/mol-plugin/ui/base';
-import { PluginContextContainer } from 'molstar/lib/mol-plugin/ui/plugin';
 import { TransformUpdaterControl } from 'molstar/lib/mol-plugin/ui/state/update-transform';
 import { StructureSelectionControls } from 'molstar/lib/mol-plugin/ui/structure/selection';
 import { StructureRepresentationControls } from 'molstar/lib/mol-plugin/ui/structure/representation';
@@ -25,15 +24,13 @@ export class ControlsWrapper extends PluginUIComponent {
     }
 
     render() {
-        return <div className='msp-scrollable-container msp-right-controls'>
-            <PluginContextContainer plugin={this.plugin}>
-                <Help />
-                <GeneralSettings />
-                <StructureControls />
-                <TransformUpdaterControl nodeRef={StateElements.VolumeStreaming} header={{ name: 'Volume Controls', description: '' }} />
-                <StructureSelectionControls />
-                <StructureRepresentationControls />
-            </PluginContextContainer>
+        return <div className='msp-scrollable-container msp-right-controls' style={{ paddingTop: '0px' }}>
+            <Help />
+            <GeneralSettings />
+            <StructureControls />
+            <TransformUpdaterControl nodeRef={StateElements.VolumeStreaming} header={{ name: 'Volume Controls', description: '' }} />
+            <StructureSelectionControls />
+            <StructureRepresentationControls />
         </div>;
     }
 }
