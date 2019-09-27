@@ -6,6 +6,7 @@
 
 import { createPlugin, DefaultPluginSpec } from 'molstar/lib/mol-plugin';
 import './index.html'
+import './favicon.ico'
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
 import { PluginBehaviors } from 'molstar/lib/mol-plugin/behavior';
@@ -34,7 +35,6 @@ export const DefaultStructureViewerProps = {
             // url: `https://files.rcsb.org/download/${id}.cif`,
             // format: 'cif' as SupportedFormats
             url: `//alpha-models.rcsb.org/${id}.bcif`,
-            // url: `https://alpha-models.rcsb.org/models/${id.substr(1, 2)}/${id}.bcif`,
             format: 'bcif' as SupportedFormats
         }
     },
