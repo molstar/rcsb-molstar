@@ -13,6 +13,7 @@ import { StateElements } from '../helpers';
 import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin/ui/viewport';
 import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin/ui/task';
 import { LociLabels } from 'molstar/lib/mol-plugin/ui/controls';
+import { Toasts } from 'molstar/lib/mol-plugin/ui/toast';
 import { GeneralSettings } from './general';
 import { StructureControls } from './structure';
 import { Help } from './help';
@@ -43,7 +44,10 @@ export class ViewportWrapper extends PluginUIComponent {
             <div style={{ position: 'absolute', left: '10px', bottom: '10px' }}>
                 <BackgroundTaskProgress />
             </div>
-            <LociLabels />
+            <div className='msp-highlight-toast-wrapper'>
+                <LociLabels />
+                <Toasts />
+            </div>
         </>;
     }
 }
