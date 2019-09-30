@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 import { CollapsableControls, CollapsableState } from 'molstar/lib/mol-plugin/ui/base';
-import { StateElements } from '../helpers';
+import { StateElements, StructureViewerState } from '../helpers';
 import { ParameterControls } from 'molstar/lib/mol-plugin/ui/controls/parameters';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
@@ -24,6 +24,10 @@ interface StructureControlsState extends CollapsableState {
 export class StructureControlsHelper {
     applyState(tree: StateBuilder) {
         return PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
+    }
+
+    get experimentalData () {
+        return (this.plugin.customState as StructureViewerState).experimentalData
     }
 
     async preset() {
@@ -56,6 +60,7 @@ export class StructureControlsHelper {
         }
         await this.applyState(tree)
         await this.preset()
+        await this.experimentalData.init()
     }
 
     async setModel(modelIndex: number) {
@@ -98,11 +103,12 @@ export class StructureControlsHelper {
 }
 
 export class StructureControls<P, S extends StructureControlsState> extends CollapsableControls<P, S> {
-    structureControlsHelper: StructureControlsHelper
-
     constructor(props: P, context?: any) {
         super(props, context);
-        this.structureControlsHelper = new StructureControlsHelper(this.plugin)
+    }
+
+    get structureControlsHelper () {
+        return (this.plugin.customState as StructureViewerState).structureControlsHelper
     }
 
     async setColorTheme(theme: { [k: string]: string }) {

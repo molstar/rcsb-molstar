@@ -14,7 +14,7 @@ import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { AnimateModelIndex } from 'molstar/lib/mol-plugin/state/animation/built-in';
 import { StateBuilder, StateSelection } from 'molstar/lib/mol-state';
-import { LoadParams, SupportedFormats, StateElements } from './helpers';
+import { LoadParams, SupportedFormats, StateElements, StructureViewerState } from './helpers';
 import { ControlsWrapper, ViewportWrapper } from './ui/controls';
 import { Scheduler } from 'molstar/lib/mol-task';
 import { InitVolumeStreaming, CreateVolumeStreamingInfo } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
@@ -43,7 +43,6 @@ export type StructureViewerProps = typeof DefaultStructureViewerProps
 
 export class StructureViewer {
     private readonly plugin: PluginContext;
-    private readonly structureControlsHelper: StructureControlsHelper;
     private readonly props: Readonly<StructureViewerProps>
 
     constructor(target: string | HTMLElement, props: Partial<StructureViewerProps> = {}) {
@@ -81,11 +80,15 @@ export class StructureViewer {
             }
         });
 
+        (this.plugin.customState as StructureViewerState) = {
+            structureControlsHelper: new StructureControlsHelper(this.plugin),
+            experimentalData: this.experimentalData
+        };
+
         this.props = { ...DefaultStructureViewerProps, ...props }
 
         const renderer = this.plugin.canvas3d.props.renderer;
         PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
-        this.structureControlsHelper = new StructureControlsHelper(this.plugin)
     }
 
     get state() {
@@ -120,11 +123,9 @@ export class StructureViewer {
         const modelTree = this.model(this.download(state.build().toRoot(), url, isBinary), format);
         await this.applyState(modelTree);
 
-        await this.structureControlsHelper.setAssembly(assemblyId)
+        await (this.plugin.customState as StructureViewerState).structureControlsHelper.setAssembly(assemblyId)
 
         Scheduler.setImmediate(() => PluginCommands.Camera.Reset.dispatch(this.plugin, { }));
-
-        this.experimentalData.init()
     }
 
     async loadPdbId(pdbId: string, assemblyId = 'deposited') {

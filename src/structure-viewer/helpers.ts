@@ -4,6 +4,9 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
+import { StructureControlsHelper } from './ui/structure';
+import { StructureViewer } from '.';
+
 export type SupportedFormats = 'cif' | 'bcif' | 'pdb'
 export interface LoadParams {
     /** URL pointing to a structure file  */
@@ -27,4 +30,9 @@ export enum StateElements {
     Assembly = 'assembly',
 
     VolumeStreaming = 'volume-streaming',
+}
+
+export interface StructureViewerState {
+    structureControlsHelper: StructureControlsHelper
+    experimentalData: StructureViewer['experimentalData']
 }
