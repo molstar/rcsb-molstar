@@ -4,7 +4,8 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import { createPlugin, DefaultPluginSpec } from 'molstar/lib/mol-plugin';
+import { DefaultPluginSpec } from 'molstar/lib/mol-plugin';
+import { Plugin } from 'molstar/lib/mol-plugin/ui/plugin'
 import './index.html'
 import './favicon.ico'
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
@@ -24,6 +25,8 @@ import { StructureRepresentationInteraction } from 'molstar/lib/mol-plugin/behav
 import { Model } from 'molstar/lib/mol-model/structure';
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
 import { StructureControlsHelper } from './ui/structure';
+import ReactDOM = require('react-dom');
+import React = require('react');
 require('./skin/rcsb.scss')
 
 export const DefaultStructureViewerProps = {
@@ -47,7 +50,8 @@ export class StructureViewer {
 
     constructor(target: string | HTMLElement, props: Partial<StructureViewerProps> = {}) {
         target = typeof target === 'string' ? document.getElementById(target)! : target
-        this.plugin = createPlugin(target, {
+
+        this.plugin = new PluginContext({
             ...DefaultPluginSpec,
             behaviors: [
                 PluginSpec.Behavior(PluginBehaviors.Representation.HighlightLoci),
@@ -86,6 +90,8 @@ export class StructureViewer {
         };
 
         this.props = { ...DefaultStructureViewerProps, ...props }
+
+        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
 
         const renderer = this.plugin.canvas3d.props.renderer;
         PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
