@@ -16,6 +16,7 @@ import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
 import { Model } from 'molstar/lib/mol-model/structure';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
+import { Scheduler } from 'molstar/lib/mol-task';
 
 interface StructureControlsState extends CollapsableState {
     trajectoryRef: string
@@ -32,6 +33,7 @@ export class StructureControlsHelper {
 
     async preset() {
         await this.plugin.helpers.structureRepresentation.preset()
+        Scheduler.setImmediate(() => PluginCommands.Camera.Reset.dispatch(this.plugin, { }))
     }
 
     async setAssembly(id: string) {
