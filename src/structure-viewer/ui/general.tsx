@@ -13,6 +13,7 @@ import { Canvas3DParams } from 'molstar/lib/mol-canvas3d/canvas3d';
 
 const GeneralSettingsParams = {
     spin: Canvas3DParams.trackball.params.spin,
+    camera: Canvas3DParams.cameraMode,
     background: Canvas3DParams.renderer.params.backgroundColor,
     renderStyle: PD.Select('glossy', [['toon', 'Toon'], ['matte', 'Matte'], ['glossy', 'Glossy'], ['metallic', 'Metallic']], { description: 'Style in which the 3D scene is rendered' }),
     occlusion: PD.Boolean(false, { description: 'Darken occluded crevices with the ambient occlusion effect' }),
@@ -23,6 +24,8 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
         if (p.name === 'spin') {
             const trackball = this.plugin.canvas3d.props.trackball;
             PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { trackball: { ...trackball, spin: p.value } } });
+        } else if (p.name === 'camera') {
+            PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { cameraMode: p.value }});
         } else if (p.name === 'background') {
             const renderer = this.plugin.canvas3d.props.renderer;
             PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: p.value } } });
@@ -78,6 +81,7 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
 
         return {
             spin: this.plugin.canvas3d.props.trackball.spin,
+            camera: this.plugin.canvas3d.props.cameraMode,
             background: this.plugin.canvas3d.props.renderer.backgroundColor,
             renderStyle,
             occlusion: this.plugin.canvas3d.props.postprocessing.occlusionEnable
