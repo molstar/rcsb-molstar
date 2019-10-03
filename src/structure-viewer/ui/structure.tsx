@@ -10,7 +10,7 @@ import { StateElements, StructureViewerState } from '../helpers';
 import { ParameterControls } from 'molstar/lib/mol-plugin/ui/controls/parameters';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
-import { StateObject, StateBuilder, StateTree, StateSelection } from 'molstar/lib/mol-state';
+import { StateObject, StateBuilder, StateTree, StateSelection, State } from 'molstar/lib/mol-state';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
@@ -36,6 +36,15 @@ export class StructureControlsHelper {
         Scheduler.setImmediate(() => PluginCommands.Camera.Reset.dispatch(this.plugin, { }))
     }
 
+    private ensureModelUnitcell(tree: StateBuilder.Root, state: State) {
+        if (!state.tree.transforms.has(StateElements.ModelUnitcell)) {
+            tree.to(StateElements.Model).apply(
+                StateTransforms.Representation.ModelUnitcell3D,
+                undefined, { ref: StateElements.ModelUnitcell }
+            )
+        }
+    }
+
     async setAssembly(id: string) {
         const state = this.plugin.state.dataState;
         const tree = state.build();
@@ -46,6 +55,7 @@ export class StructureControlsHelper {
                     StateTransforms.Model.StructureSymmetryFromModel,
                     props, { ref: StateElements.Assembly, tags: [ 'unitcell' ] }
                 )
+            this.ensureModelUnitcell(tree, state)
         } else if (id === 'supercell') {
             const props = { ijkMin: Vec3.create(-1, -1, -1), ijkMax: Vec3.create(1, 1, 1) }
             tree.delete(StateElements.Assembly)
@@ -53,7 +63,9 @@ export class StructureControlsHelper {
                     StateTransforms.Model.StructureSymmetryFromModel,
                     props, { ref: StateElements.Assembly, tags: [ 'supercell' ] }
                 )
+            this.ensureModelUnitcell(tree, state)
         } else {
+            tree.delete(StateElements.ModelUnitcell)
             tree.delete(StateElements.Assembly)
                 .to(StateElements.Model).apply(
                     StateTransforms.Model.StructureAssemblyFromModel,

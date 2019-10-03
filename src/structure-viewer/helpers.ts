@@ -27,6 +27,7 @@ export enum StateElements {
     Trajectory = 'trajectory',
     Model = 'model',
     ModelProps = 'model-props',
+    ModelUnitcell = 'model-unitcell',
     Assembly = 'assembly',
 
     VolumeStreaming = 'volume-streaming',
