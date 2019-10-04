@@ -23,4 +23,8 @@ $logo-background: lighten(#325880, 60%);
     @return darken($color, $amount);
 }
 
+.msp-semi-transparent-background {
+    opacity: 0.8 !important;
+}
+
 @import 'molstar/lib/mol-plugin/skin/base/base';
