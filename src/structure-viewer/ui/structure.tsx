@@ -86,15 +86,12 @@ export class StructureControlsHelper {
                     StateTransforms.Model.StructureFromTrajectory,
                     {}, { ref: StateElements.Assembly }
                 )
-            await this.applyState(tree);
-            await this.preset()
         } else {
             if (state.tree.transforms.has(StateElements.Model)) {
                 tree.to(StateElements.Model).update(
                     StateTransforms.Model.ModelFromTrajectory,
                     props => ({ ...props, modelIndex })
-                );
-                await this.applyState(tree);
+                )
             } else {
                 tree.delete(StateElements.Assembly)
                     .to(StateElements.Trajectory).apply(
@@ -104,11 +101,11 @@ export class StructureControlsHelper {
                     .apply(
                         StateTransforms.Model.StructureAssemblyFromModel,
                         { id: 'deposited' }, { ref: StateElements.Assembly }
-                    );
-                await this.applyState(tree);
-                await this.preset()
+                    )
             }
         }
+        await this.applyState(tree)
+        await this.preset()
     }
 
     constructor(private plugin: PluginContext) {
