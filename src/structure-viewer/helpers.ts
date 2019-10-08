@@ -19,6 +19,7 @@ export interface LoadParams {
      * - a number as string, e.g. '1', '2', ... must be defined in the file
      * - 'unitcell' for the unitcell of an X-ray structure
      * - 'supercell' for the supercell of an X-ray structure
+     * - 'crystal-contacts' for the symmetry mates of an X-ray structure
      */
     assemblyId?: string,
 }
@@ -31,6 +32,13 @@ export enum StateElements {
     Assembly = 'assembly',
 
     VolumeStreaming = 'volume-streaming',
+}
+
+export enum AssemblyNames {
+    Deposited = 'deposited',
+    Unitcell = 'unitcell',
+    Supercell = 'supercell',
+    CrystalContacts = 'crystal-contacts',
 }
 
 export interface StructureViewerState {

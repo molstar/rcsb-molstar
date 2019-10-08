@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 import { CollapsableControls, CollapsableState } from 'molstar/lib/mol-plugin/ui/base';
-import { StateElements, StructureViewerState } from '../helpers';
+import { StateElements, AssemblyNames, StructureViewerState } from '../helpers';
 import { ParameterControls } from 'molstar/lib/mol-plugin/ui/controls/parameters';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
@@ -48,22 +48,30 @@ export class StructureControlsHelper {
     async setAssembly(id: string) {
         const state = this.plugin.state.dataState;
         const tree = state.build();
-        if (id === 'unitcell') {
+        if (id === AssemblyNames.Unitcell) {
             const props = { ijkMin: Vec3.create(0, 0, 0), ijkMax: Vec3.create(0, 0, 0) }
             tree.delete(StateElements.Assembly)
                 .to(StateElements.Model).apply(
                     StateTransforms.Model.StructureSymmetryFromModel,
-                    props, { ref: StateElements.Assembly, tags: [ 'unitcell' ] }
+                    props, { ref: StateElements.Assembly, tags: [ AssemblyNames.Unitcell ] }
                 )
             this.ensureModelUnitcell(tree, state)
-        } else if (id === 'supercell') {
+        } else if (id === AssemblyNames.Supercell) {
             const props = { ijkMin: Vec3.create(-1, -1, -1), ijkMax: Vec3.create(1, 1, 1) }
             tree.delete(StateElements.Assembly)
                 .to(StateElements.Model).apply(
                     StateTransforms.Model.StructureSymmetryFromModel,
-                    props, { ref: StateElements.Assembly, tags: [ 'supercell' ] }
+                    props, { ref: StateElements.Assembly, tags: [ AssemblyNames.Supercell ] }
                 )
             this.ensureModelUnitcell(tree, state)
+        } else if (id === AssemblyNames.CrystalContacts) {
+            const props = { radius: 5 }
+            tree.delete(StateElements.ModelUnitcell)
+            tree.delete(StateElements.Assembly)
+                .to(StateElements.Model).apply(
+                    StateTransforms.Model.StructureSymmetryMatesFromModel,
+                    props, { ref: StateElements.Assembly, tags: [ AssemblyNames.CrystalContacts ] }
+                )
         } else {
             tree.delete(StateElements.ModelUnitcell)
             tree.delete(StateElements.Assembly)
@@ -100,7 +108,7 @@ export class StructureControlsHelper {
                     )
                     .apply(
                         StateTransforms.Model.StructureAssemblyFromModel,
-                        { id: 'deposited' }, { ref: StateElements.Assembly }
+                        { id: AssemblyNames.Deposited }, { ref: StateElements.Assembly }
                     )
             }
         }
@@ -165,7 +173,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         const assembly = this.getAssembly()
 
         const modelOptions: [number, string][] = []
-        const assemblyOptions: [string, string][] = [['deposited', 'deposited']]
+        const assemblyOptions: [string, string][] = [[AssemblyNames.Deposited, 'deposited']]
 
         if (trajectory) {
             if (trajectory.data.length > 1) modelOptions.push([-1, `All`])
@@ -173,7 +181,11 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 modelOptions.push([i, `${i + 1}`])
             }
             if (trajectory.data.length === 1 && modelHasSymmetry(trajectory.data[0])) {
-                assemblyOptions.push(['unitcell', 'unitcell'], ['supercell', 'supercell'])
+                assemblyOptions.push(
+                    [AssemblyNames.Unitcell, 'unitcell'],
+                    [AssemblyNames.Supercell, 'supercell'],
+                    [AssemblyNames.CrystalContacts, 'crystal contacts']
+                )
             }
         }
 
@@ -190,7 +202,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
             modelValue = -1
         }
 
-        let assemblyValue = 'deposited'
+        let assemblyValue: string = AssemblyNames.Deposited
         let colorTypes = themeCtx.colorThemeRegistry.types
         let types = registry.types
         if (assembly) {
@@ -246,22 +258,24 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
             modelValue = model ? trajectory.data.indexOf(model.data) : -1
         }
 
-        let assemblyValue = 'deposited'
+        let assemblyValue: string = AssemblyNames.Deposited
         if (assembly) {
             const tags = (assembly as StateObject).tags
             if (tags && tags.includes('unitcell')) {
-                assemblyValue = 'unitcell'
+                assemblyValue = AssemblyNames.Unitcell
             } else if (tags && tags.includes('supercell')) {
-                assemblyValue = 'supercell'
+                assemblyValue = AssemblyNames.Supercell
+            } else if (tags && tags.includes('crystal-contacts')) {
+                assemblyValue = AssemblyNames.CrystalContacts
             } else {
-                assemblyValue = assembly.data.units[0].conformation.operator.assembly.id || 'deposited'
+                assemblyValue = assembly.data.units[0].conformation.operator.assembly.id || AssemblyNames.Deposited
             }
         }
 
         return {
             assembly: assemblyValue,
             model: modelValue,
-            symmetry: 'todo',
+            // symmetry: 'todo', // TODO
             colorThemes,
         }
     }
