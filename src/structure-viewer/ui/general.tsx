@@ -10,11 +10,12 @@ import { ParameterControls } from 'molstar/lib/mol-plugin/ui/controls/parameters
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
 import { Canvas3DParams } from 'molstar/lib/mol-canvas3d/canvas3d';
+import { ColorNames } from 'molstar/lib/mol-util/color/names';
 
 const GeneralSettingsParams = {
     spin: Canvas3DParams.trackball.params.spin,
     camera: Canvas3DParams.cameraMode,
-    background: Canvas3DParams.renderer.params.backgroundColor,
+    background: PD.Select('white', [['white', 'White'], ['black', 'Black'], ['transparent', 'Transparent']], { description: 'Background of the 3D canvas' }),
     renderStyle: PD.Select('glossy', [['toon', 'Toon'], ['matte', 'Matte'], ['glossy', 'Glossy'], ['metallic', 'Metallic']], { description: 'Style in which the 3D scene is rendered' }),
     occlusion: PD.Boolean(false, { description: 'Darken occluded crevices with the ambient occlusion effect' }),
 }
@@ -28,7 +29,13 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
             PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { cameraMode: p.value }});
         } else if (p.name === 'background') {
             const renderer = this.plugin.canvas3d.props.renderer;
-            PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: p.value } } });
+            if (p.value === 'white') {
+                PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white, transparentBackground: false } } });
+            } else if (p.value === 'black') {
+                PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.black, transparentBackground: false } } });
+            } else if (p.value === 'transparent') {
+                PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white, transparentBackground: true } } });
+            }
         } else if (p.name === 'renderStyle') {
             const postprocessing = this.plugin.canvas3d.props.postprocessing;
             const renderer = this.plugin.canvas3d.props.renderer;
@@ -62,9 +69,10 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
     }
 
     get values () {
-        let renderStyle = 'custom'
-        const postprocessing = this.plugin.canvas3d.props.postprocessing;
         const renderer = this.plugin.canvas3d.props.renderer;
+        const postprocessing = this.plugin.canvas3d.props.postprocessing;
+
+        let renderStyle = 'custom'
         if (postprocessing.outlineEnable) {
             if (renderer.lightIntensity === 0 && renderer.ambientIntensity === 1 && renderer.roughness === 0.4 && renderer.metalness === 0) {
                 renderStyle = 'toon'
@@ -79,10 +87,19 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
             }
         }
 
+        let background = 'custom'
+        if (renderer.backgroundColor === ColorNames.white && !renderer.transparentBackground) {
+            background = 'white'
+        } else if (renderer.backgroundColor === ColorNames.black && !renderer.transparentBackground) {
+            background = 'black'
+        } else if (renderer.backgroundColor === ColorNames.white && renderer.transparentBackground) {
+            background = 'transparent'
+        }
+
         return {
             spin: this.plugin.canvas3d.props.trackball.spin,
             camera: this.plugin.canvas3d.props.cameraMode,
-            background: this.plugin.canvas3d.props.renderer.backgroundColor,
+            background,
             renderStyle,
             occlusion: this.plugin.canvas3d.props.postprocessing.occlusionEnable
         }
