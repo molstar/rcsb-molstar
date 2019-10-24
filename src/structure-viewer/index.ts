@@ -160,9 +160,9 @@ export class StructureViewer {
 
             if (hasXrayMap || hasEmMap) {
                 const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(asm, this.plugin));
-                params.behaviorRef = StateElements.VolumeStreaming;
                 params.defaultView = 'selection-box';
-                params.serverUrl = this.props.volumeServerUrl
+                params.options.behaviorRef = StateElements.VolumeStreaming;
+                params.options.serverUrl = this.props.volumeServerUrl
                 await this.plugin.runTask(this.state.applyAction(InitVolumeStreaming, params, StateElements.Assembly));
             }
         },
