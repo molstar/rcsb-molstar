@@ -4,13 +4,23 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import { StructureControlsHelper } from './ui/structure';
-import { StructureViewer } from '.';
+import { StructureView } from './helpers/structure';
+import { ModelLoader } from './helpers/model';
+import { VolumeData } from './helpers/volume';
 
-export type SupportedFormats = 'cif' | 'bcif' | 'pdb'
+export interface StructureViewerProps {
+    volumeServerUrl: string,
+    modelUrlProvider: (pdbId: string) => {
+        url: string,
+        format: SupportedFormats
+    },
+    showOpenFileControls: boolean,
+}
+
+export type SupportedFormats = 'cif' | 'bcif'
 export interface LoadParams {
-    /** URL pointing to a structure file  */
-    url: string,
+    /** A File object or URL representing a structure file  */
+    fileOrUrl: File | string,
     /** A supported file format extension string */
     format?: SupportedFormats,
     /**
@@ -22,6 +32,8 @@ export interface LoadParams {
      * - 'crystal-contacts' for the symmetry mates of an X-ray structure
      */
     assemblyId?: string,
+    // TODO The modelId to show initially
+    // modelId?: string
 }
 
 export enum StateElements {
@@ -42,6 +54,8 @@ export enum AssemblyNames {
 }
 
 export interface StructureViewerState {
-    structureControlsHelper: StructureControlsHelper
-    experimentalData: StructureViewer['experimentalData']
+    props: StructureViewerProps
+    modelLoader: ModelLoader
+    structureView: StructureView
+    volumeData: VolumeData
 }

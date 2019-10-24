@@ -13,10 +13,10 @@
             }
             #app {
                 position: absolute;
-                left: 100px;
+                left: 5%;
                 top: 100px;
-                width: 1024px;
-                height: 800px;
+                min-width: 90%;
+                height: 85%;
             }
 
             .msp-layout-expanded {
@@ -25,8 +25,8 @@
 
             #menu {
                 position: absolute;
-                right: 100px;
-                top: 100px;
+                left: 100px;
+                top: 50px;
             }
 
             #menu > select {
@@ -45,12 +45,13 @@
                 return m ? decodeURIComponent(m[1]) : undefined
             }
 
-            // create an instance of the plugin
-            var viewer = new app.StructureViewer('app');
-
-            // load pdbId
             const pdbId = getQueryParam('pdbId');
             const assemblyId = getQueryParam('assemblyId') || 'deposited';
+
+            // create an instance of the plugin
+            var viewer = new app.StructureViewer('app', { showOpenFileControls: !pdbId });
+
+            // load pdbId
             if (pdbId) viewer.loadPdbId(pdbId, assemblyId);
         </script>
         <div id="menu">

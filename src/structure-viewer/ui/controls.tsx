@@ -9,7 +9,7 @@ import { PluginUIComponent } from 'molstar/lib/mol-plugin/ui/base';
 import { TransformUpdaterControl } from 'molstar/lib/mol-plugin/ui/state/update-transform';
 import { StructureSelectionControls } from 'molstar/lib/mol-plugin/ui/structure/selection';
 import { StructureRepresentationControls } from 'molstar/lib/mol-plugin/ui/structure/representation';
-import { StateElements } from '../helpers';
+import { StateElements, StructureViewerState } from '../types';
 import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin/ui/viewport';
 import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin/ui/task';
 import { ImageControls } from 'molstar/lib/mol-plugin/ui/image';
@@ -19,6 +19,7 @@ import { Toasts } from 'molstar/lib/mol-plugin/ui/toast';
 import { GeneralSettings } from './general';
 import { StructureControls } from './structure';
 import { HelpContent } from './help';
+import { OpenFile } from './open';
 
 export class ControlsWrapper extends PluginUIComponent {
     componentDidMount() {
@@ -27,7 +28,9 @@ export class ControlsWrapper extends PluginUIComponent {
     }
 
     render() {
+        const { showOpenFileControls } = (this.plugin.customState as StructureViewerState).props
         return <div className='msp-scrollable-container msp-right-controls' style={{ paddingTop: '0px' }}>
+            {showOpenFileControls && <OpenFile initiallyCollapsed={false} />}
             <GeneralSettings initiallyCollapsed={true} />
             <StructureControls  />
             <StructureSelectionControls header='Manage Selection' initiallyCollapsed={true} />

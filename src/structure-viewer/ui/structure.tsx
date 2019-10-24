@@ -6,119 +6,16 @@
 
 import * as React from 'react';
 import { CollapsableControls, CollapsableState } from 'molstar/lib/mol-plugin/ui/base';
-import { StateElements, AssemblyNames, StructureViewerState } from '../helpers';
+import { StateElements, AssemblyNames, StructureViewerState } from '../types';
 import { ParameterControls } from 'molstar/lib/mol-plugin/ui/controls/parameters';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
-import { PluginCommands } from 'molstar/lib/mol-plugin/command';
-import { StateObject, StateBuilder, StateTree, StateSelection, State } from 'molstar/lib/mol-state';
+import { StateObject, StateTree, StateSelection } from 'molstar/lib/mol-state';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
-import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
 import { Model } from 'molstar/lib/mol-model/structure';
-import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { Scheduler } from 'molstar/lib/mol-task';
 
 interface StructureControlsState extends CollapsableState {
     trajectoryRef: string
-}
-
-export class StructureControlsHelper {
-    applyState(tree: StateBuilder) {
-        return PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
-    }
-
-    get experimentalData () {
-        return (this.plugin.customState as StructureViewerState).experimentalData
-    }
-
-    async preset() {
-        await this.plugin.helpers.structureRepresentation.preset()
-        Scheduler.setImmediate(() => PluginCommands.Camera.Reset.dispatch(this.plugin, { }))
-    }
-
-    private ensureModelUnitcell(tree: StateBuilder.Root, state: State) {
-        if (!state.tree.transforms.has(StateElements.ModelUnitcell)) {
-            tree.to(StateElements.Model).apply(
-                StateTransforms.Representation.ModelUnitcell3D,
-                undefined, { ref: StateElements.ModelUnitcell }
-            )
-        }
-    }
-
-    async setAssembly(id: string) {
-        const state = this.plugin.state.dataState;
-        const tree = state.build();
-        if (id === AssemblyNames.Unitcell) {
-            const props = { ijkMin: Vec3.create(0, 0, 0), ijkMax: Vec3.create(0, 0, 0) }
-            tree.delete(StateElements.Assembly)
-                .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureSymmetryFromModel,
-                    props, { ref: StateElements.Assembly, tags: [ AssemblyNames.Unitcell ] }
-                )
-            this.ensureModelUnitcell(tree, state)
-        } else if (id === AssemblyNames.Supercell) {
-            const props = { ijkMin: Vec3.create(-1, -1, -1), ijkMax: Vec3.create(1, 1, 1) }
-            tree.delete(StateElements.Assembly)
-                .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureSymmetryFromModel,
-                    props, { ref: StateElements.Assembly, tags: [ AssemblyNames.Supercell ] }
-                )
-            this.ensureModelUnitcell(tree, state)
-        } else if (id === AssemblyNames.CrystalContacts) {
-            const props = { radius: 5 }
-            tree.delete(StateElements.ModelUnitcell)
-            tree.delete(StateElements.Assembly)
-                .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureSymmetryMatesFromModel,
-                    props, { ref: StateElements.Assembly, tags: [ AssemblyNames.CrystalContacts ] }
-                )
-        } else {
-            tree.delete(StateElements.ModelUnitcell)
-            tree.delete(StateElements.Assembly)
-                .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureAssemblyFromModel,
-                    { id }, { ref: StateElements.Assembly }
-                )
-        }
-        await this.applyState(tree)
-        await this.preset()
-        await this.experimentalData.init()
-    }
-
-    async setModel(modelIndex: number) {
-        const state = this.plugin.state.dataState;
-        const tree = state.build();
-        if (modelIndex === -1) {
-            tree.delete(StateElements.Model)
-                .to(StateElements.Trajectory).apply(
-                    StateTransforms.Model.StructureFromTrajectory,
-                    {}, { ref: StateElements.Assembly }
-                )
-        } else {
-            if (state.tree.transforms.has(StateElements.Model)) {
-                tree.to(StateElements.Model).update(
-                    StateTransforms.Model.ModelFromTrajectory,
-                    props => ({ ...props, modelIndex })
-                )
-            } else {
-                tree.delete(StateElements.Assembly)
-                    .to(StateElements.Trajectory).apply(
-                        StateTransforms.Model.ModelFromTrajectory,
-                        { modelIndex }, { ref: StateElements.Model }
-                    )
-                    .apply(
-                        StateTransforms.Model.StructureAssemblyFromModel,
-                        { id: AssemblyNames.Deposited }, { ref: StateElements.Assembly }
-                    )
-            }
-        }
-        await this.applyState(tree)
-        await this.preset()
-    }
-
-    constructor(private plugin: PluginContext) {
-
-    }
 }
 
 export class StructureControls<P, S extends StructureControlsState> extends CollapsableControls<P, S> {
@@ -126,8 +23,8 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         super(props, context);
     }
 
-    get structureControlsHelper () {
-        return (this.plugin.customState as StructureViewerState).structureControlsHelper
+    get structureView () {
+        return (this.plugin.customState as StructureViewerState).structureView
     }
 
     async setColorTheme(theme: { [k: string]: string }) {
@@ -148,15 +45,15 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 )
             }
         })
-        await this.structureControlsHelper.applyState(tree)
+        await this.structureView.applyState(tree)
     }
 
     onChange = async (p: { param: PD.Base<any>, name: string, value: any }) => {
         // console.log('onChange', p.name, p.value)
         if (p.name === 'assembly') {
-            this.structureControlsHelper.setAssembly(p.value)
+            this.structureView.setAssembly(p.value)
         } else if (p.name === 'model') {
-            this.structureControlsHelper.setModel(p.value)
+            this.structureView.setModel(p.value)
         } else if (p.name === 'colorThemes') {
             this.setColorTheme(p.value)
         }
