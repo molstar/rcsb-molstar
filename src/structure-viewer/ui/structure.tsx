@@ -227,7 +227,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         return {
             assembly: PD.Select(assemblyValue, assemblyOptions, {
                 isHidden: assemblyOptions.length === 1,
-                description: 'Show a specific biological or crystallographic assembly'
+                description: 'Show a specific biological, crystallographic or artificial assembly'
             }),
             model: PD.Select(modelValue, modelOptions, {
                 isHidden: modelOptions.length === 1,

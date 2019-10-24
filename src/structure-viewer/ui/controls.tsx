@@ -14,10 +14,11 @@ import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin/ui/viewport';
 import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin/ui/task';
 import { ImageControls } from 'molstar/lib/mol-plugin/ui/image';
 import { LociLabels } from 'molstar/lib/mol-plugin/ui/controls';
+import { IconButton } from 'molstar/lib/mol-plugin/ui/controls/common';
 import { Toasts } from 'molstar/lib/mol-plugin/ui/toast';
 import { GeneralSettings } from './general';
 import { StructureControls } from './structure';
-import { Help } from './help';
+import { HelpContent } from './help';
 
 export class ControlsWrapper extends PluginUIComponent {
     componentDidMount() {
@@ -27,13 +28,30 @@ export class ControlsWrapper extends PluginUIComponent {
 
     render() {
         return <div className='msp-scrollable-container msp-right-controls' style={{ paddingTop: '0px' }}>
-            <Help />
             <GeneralSettings initiallyCollapsed={true} />
             <StructureControls  />
             <StructureSelectionControls header='Manage Selection' initiallyCollapsed={true} />
             <StructureRepresentationControls header='Change Representation' initiallyCollapsed={true} />
             <ImageControls initiallyCollapsed={true} />
-            <TransformUpdaterControl nodeRef={StateElements.VolumeStreaming} header={{ name: 'Volume Controls', description: '' }} initiallyCollapsed={true} />
+            <TransformUpdaterControl nodeRef={StateElements.VolumeStreaming} header={{ name: 'Density Controls', description: '' }} initiallyCollapsed={true} />
+        </div>;
+    }
+}
+
+class HelpViewportControls extends PluginUIComponent<{}, { isExpanded: boolean }> {
+    state = { isExpanded: false }
+
+    toggleExpanded = () => this.setState({ isExpanded: !this.state.isExpanded });
+
+    render() {
+        return <div className='msp-help-viewport-controls'>
+            <div>
+                <div className='msp-semi-transparent-background' />
+                <IconButton icon='help-circle' title='Help' onClick={this.toggleExpanded} />
+            </div>
+            {this.state.isExpanded && <div className='msp-help-viewport-controls-content'>
+                <HelpContent />
+            </div>}
         </div>;
     }
 }
@@ -42,6 +60,9 @@ export class ViewportWrapper extends PluginUIComponent {
     render() {
         return <>
             <Viewport />
+            <div className='msp-viewport-top-left-controls'>
+                <HelpViewportControls />
+            </div>
             <ViewportControls hideSettingsIcon={true} />
             <div style={{ position: 'absolute', left: '10px', bottom: '10px' }}>
                 <BackgroundTaskProgress />
