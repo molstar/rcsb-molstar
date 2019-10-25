@@ -24,8 +24,7 @@
         "serve": "http-server -p 1335",
         "preversion": "npm run test",
         "postversion": "git push && git push --tags",
-        "prepublishOnly": "npm run test && npm run build",
-        "prepack": "npm run build"
+        "prepublishOnly": "npm run test && npm run build"
     },
     "main": "build/src/index.js",
     "files": [
