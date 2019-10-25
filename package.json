@@ -26,6 +26,9 @@
         "postversion": "git push && git push --tags",
         "prepublishOnly": "npm run test && npm run build"
     },
+    "publishConfig":{
+        "registry": "http://nexus3.rcsb.org/repository/npm-rcsb/"
+    },
     "main": "build/src/index.js",
     "files": [
         "build/dist/"
