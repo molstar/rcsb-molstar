@@ -16,6 +16,7 @@ import { Model } from 'molstar/lib/mol-model/structure';
 
 interface StructureControlsState extends CollapsableState {
     trajectoryRef: string
+    isDisabled: boolean
 }
 
 export class StructureControls<P, S extends StructureControlsState> extends CollapsableControls<P, S> {
@@ -208,6 +209,8 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 this.forceUpdate()
             }
         })
+
+        this.subscribe(this.plugin.state.dataState.events.isUpdating, v => this.setState({ isDisabled: v }))
     }
 
     private getObj<T extends StateObject>(ref: string): T | undefined {
@@ -240,6 +243,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
             header: 'Structure Settings',
 
             trajectoryRef: '',
+            isDisabled: false
         } as S
     }
 
@@ -248,7 +252,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         if (!this.getTrajectory() || !this.getAssembly()) return null
 
         return <div>
-            <ParameterControls params={this.getParams()} values={this.values} onChange={this.onChange} />
+            <ParameterControls params={this.getParams()} values={this.values} onChange={this.onChange} isDisabled={this.state.isDisabled} />
         </div>
     }
 }
