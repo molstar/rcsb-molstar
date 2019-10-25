@@ -25,8 +25,8 @@
 
             #menu {
                 position: absolute;
-                left: 100px;
-                top: 50px;
+                left: 5%;
+                top: 20px;
             }
 
             #menu > select {
@@ -57,6 +57,7 @@
             else if (url) viewer.loadUrl(url, assemblyId);
         </script>
         <div id="menu">
+            <h2> RCSB PDB Mol* Viewer - Test Page</h2>
             Examples
             <select id="examples" onchange="viewer.loadPdbId(this.value)">
                 <option value=''></option>
