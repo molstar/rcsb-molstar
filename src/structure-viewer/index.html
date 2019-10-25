@@ -46,13 +46,15 @@
             }
 
             const pdbId = getQueryParam('pdbId');
+            const url = getQueryParam('url');
             const assemblyId = getQueryParam('assemblyId') || 'deposited';
 
             // create an instance of the plugin
             var viewer = new app.StructureViewer('app', { showOpenFileControls: !pdbId });
 
-            // load pdbId
+            // load pdbId or url
             if (pdbId) viewer.loadPdbId(pdbId, assemblyId);
+            else if (url) viewer.loadUrl(url, assemblyId);
         </script>
         <div id="menu">
             Examples

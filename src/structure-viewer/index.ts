@@ -103,4 +103,12 @@ export class StructureViewer {
             assemblyId,
         })
     }
+
+    async loadUrl(url: string, assemblyId = 'deposited') {
+        return (this.plugin.customState as StructureViewerState).modelLoader.load({
+            fileOrUrl: url,
+            format: 'cif',
+            assemblyId,
+        })
+    }
 }
