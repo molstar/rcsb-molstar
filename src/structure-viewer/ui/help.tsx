@@ -9,6 +9,7 @@ import { CollapsableControls, PluginUIComponent } from 'molstar/lib/mol-plugin/u
 import { Binding } from 'molstar/lib/mol-util/binding';
 import { StateSelection, StateTransformer } from 'molstar/lib/mol-state';
 import { StructureRepresentationInteraction } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-representation-interaction';
+import { SelectLoci } from 'molstar/lib/mol-plugin/behavior/dynamic/representation';
 
 function getBindingsList(bindings: { [k: string]: Binding }) {
     return Object.keys(bindings).map(k => [k, bindings[k]] as [string, Binding])
@@ -17,12 +18,12 @@ function getBindingsList(bindings: { [k: string]: Binding }) {
 class BindingsHelp extends React.Component<{ bindings: { [k: string]: Binding } }, { isExpanded: boolean }> {
     getBindingComponents() {
         const bindingsList = getBindingsList(this.props.bindings)
-        return bindingsList.map(value => {
-            const [name, binding] = value
-            return !Binding.isEmpty(binding) ? <div key={name} style={{ padding: '4px 0px' }}>
-                {Binding.format(binding, name)}
-            </div> : null
-        })
+        return <ul style={{ paddingLeft: '20px' }}>
+            {bindingsList.map(value => {
+                const [name, binding] = value
+                return !Binding.isEmpty(binding) ? <li>{Binding.format(binding, name)}</li> : null
+            })}
+        </ul>
     }
 
     render() {
@@ -84,22 +85,23 @@ export class HelpContent extends PluginUIComponent {
     }
 
     private getMouseBindingComponents() {
-        const components = [
-            <HelpGroup key='trackball' header='Trackball'>
-                <BindingsHelp bindings={this.plugin.canvas3d.props.trackball.bindings} />
-            </HelpGroup>
-        ]
+        const interactionBindings: { [k: string]: Binding } = {}
         this.plugin.spec.behaviors.forEach(b => {
             const { bindings } = b.defaultParams
-            if (bindings) {
-                components.push(
-                    <HelpGroup key={b.transformer.id} header={b.transformer.definition.display.name}>
-                        <BindingsHelp bindings={bindings} />
-                    </HelpGroup>
-                )
-            }
+            if (bindings) Object.assign(interactionBindings, bindings)
         })
-        return components
+        return [
+            <HelpGroup key='trackball' header='Moving in 3D'>
+                <BindingsHelp bindings={this.plugin.canvas3d.props.trackball.bindings} />
+            </HelpGroup>,
+            <HelpGroup key='interactions' header='Select, Highlight, Focus'>
+                <BindingsHelp bindings={interactionBindings} />
+            </HelpGroup>
+        ]
+    }
+
+    private formatTriggers(binding: Binding) {
+        return binding.triggers.map(t => Binding.Trigger.format(t)).join(' or ')
     }
 
     private getTriggerFor(transformer: StateTransformer, name: string) {
@@ -108,13 +110,14 @@ export class HelpContent extends PluginUIComponent {
         const params = selections.length === 1 ? selections[0].params : undefined
         const bindings = params ? params.values.bindings : {}
         const binding: Binding = name in bindings ? bindings[name] : Binding.Empty
-        return binding.triggers.map(t => Binding.Trigger.format(t)).join(' or ')
+        return this.formatTriggers(binding)
     }
 
     render() {
         if (!this.plugin.canvas3d) return null
 
-        // const structureInteractionTriggers = this.getTriggerFor(StructureRepresentationInteraction, 'clickInteractionAroundOnly')
+        const selectToggleTriggers = this.getTriggerFor(SelectLoci, 'clickSelectToggle')
+        const structureInteractionTriggers = this.getTriggerFor(StructureRepresentationInteraction, 'clickInteractionAroundOnly')
         const volumeAroundTriggers = this.getTriggerFor(StructureRepresentationInteraction, 'clickInteractionAroundOnly') // TODO get from correct behavior transform
 
         return <div>
@@ -127,24 +130,29 @@ export class HelpContent extends PluginUIComponent {
                 <HelpText>
                     The viewer allows changing colors and representations for selections of atoms, residues or chains. Selections can be created by
                     <ul style={{ paddingLeft: '20px' }}>
-                        <li>picking elements on the 3D canvas or the sequence view using the mouse (see help section on 'Mouse Bindings')</li>
-                        <li>using the 'Add', 'Remove' and 'Only' dropdown buttons in the 'Manage Selection' panel which allow modifing the current selection by predefined sets</li>
+                        <li>picking elements on the 3D canvas or the sequence view using the mouse, e.g. toggle selection using {selectToggleTriggers} (for more see help section on <i>Mouse Controls</i>)</li>
+                        <li>using the <i>Add</i>, <i>Remove</i> and <i>Only</i> dropdown buttons in the <i>Manage Selection</i> panel which allow modifing the current selection by predefined sets</li>
                     </ul>
                 </HelpText>
             </HelpGroup>
             <HelpGroup header='Coloring'>
                 <HelpText>
-                    There are two ways to color structures. Every representation (e.g. cartoon or spacefill) has a color theme which can be changed using the dropdown for each representation in the 'Structure Settings' panel. Additionally any selection atoms, residues or chains can by given a custom color. For that, first select the parts of the structure to be colored (see help section on 'Selections') and, second, choose a color from the color dropdown botton in the 'Selection' row of the 'Change Representation' panel. The theme color can be seen as a base color that is overpainted by the custom color. Custom colors can be removed for a selection with the 'Clear' option in the color dropdown.
+                    There are two ways to color structures. Every representation (e.g. cartoon or spacefill) has a color theme which can be changed using the dropdown for each representation in the <i>Structure Settings</i> panel. Additionally any selection atoms, residues or chains can by given a custom color. For that, first select the parts of the structure to be colored (see help section on <i>Selections</i>) and, second, choose a color from the color dropdown botton in the <i>Selection</i> row of the <i>Change Representation</i> panel. The theme color can be seen as a base color that is overpainted by the custom color. Custom colors can be removed for a selection with the 'Clear' option in the color dropdown.
                 </HelpText>
             </HelpGroup>
             <HelpGroup header='Representations'>
                 <HelpText>
-                    Structures can be shown with many different representations (e.g. cartoon or spacefill). The 'Change Representation' panel offers a collection of predefined styles which can be applied using the 'Preset' dropdown button. Additionally any selection atoms, residues or chains can by shown with a custom representation. For that, first select the parts of the structure to be mofified (see help section on 'Selections') and, second, choose a representation to hide or show from the 'Show' and 'Hide' dropdown bottons in the 'Selection' row of the 'Change Representation' panel. The 'Everything' row applies the action to the whole structure instead of the current selection.
+                    Structures can be shown with many different representations (e.g. cartoon or spacefill). The <i>Change Representation</i> panel offers a collection of predefined styles which can be applied using the <i>Preset</i> dropdown button. Additionally any selection atoms, residues or chains can by shown with a custom representation. For that, first select the parts of the structure to be mofified (see help section on <i>Selections</i>) and, second, choose a representation to hide or show from the <i>Show</i> and <i>Hide</i> dropdown bottons in the <i>Selection</i> row of the <i>Change Representation</i> panel. The <i>Everything</i> row applies the action to the whole structure instead of the current selection.
+                </HelpText>
+            </HelpGroup>
+            <HelpGroup header='Surroundings'>
+                <HelpText>
+                    To show the surroundings of a residue or ligand, click it in the 3D scene or in the sequence widget using {structureInteractionTriggers}.
                 </HelpText>
             </HelpGroup>
             <HelpGroup header='Densities'>
                 <HelpText>
-                    Densities can be shown for both X-ray and cryo-EM structures. By default the density around an element/atom can be shown by clicking using {volumeAroundTriggers}. The 'Density Controls' panel offers a variety of options to adjust the display of density maps. The absence of the 'Density Controls' panel indicates that no density is available for the loaded entry which is the case for e.g. NMR structures or very old X-ray structures.
+                    Densities can be shown for both X-ray and cryo-EM structures. By default the density around an element/atom can be shown by clicking using {volumeAroundTriggers}. The <i>Density Controls</i> panel offers a variety of options to adjust the display of density maps. The absence of the <i>Density Controls</i> panel indicates that no density is available for the loaded entry which is the case for e.g. NMR structures or very old X-ray structures.
                 </HelpText>
             </HelpGroup>
 
@@ -152,23 +160,23 @@ export class HelpContent extends PluginUIComponent {
             <HelpGroup header='Molecule of the Month Style'>
                 <HelpText>
                     <ol style={{ paddingLeft: '20px' }}>
-                        <li>First, hide everything, then show everything with the spacefill representation using the 'Representation' panel.</li>
-                        <li>Change color theme of the spacefill representation to 'illustrative' using the 'Structure Settings' panel.</li>
-                        <li>Set render style to 'toon' and activate 'occlusion' in the 'General Settings' panel.</li>
+                        <li>First, hide everything, then show everything with the spacefill representation using the <i>Representation</i> panel.</li>
+                        <li>Change color theme of the spacefill representation to <i>illustrative</i> using the <i>Structure Settings</i> panel.</li>
+                        <li>Set render style to <i>toon</i> and activate <i>occlusion</i> in the <i>General Settings</i> panel.</li>
                     </ol>
                 </HelpText>
             </HelpGroup>
             <HelpGroup header='Create an Image'>
                 <HelpText>
                     <ol style={{ paddingLeft: '20px' }}>
-                        <li>First, hide everything, then show everything with the spacefill representation using the 'Representation' panel.</li>
-                        <li>Change color theme of the spacefill representation to 'illustrative' using the 'Structure Settings' panel.</li>
-                        <li>Set render style to 'toon' and activate 'occlusion' in the 'General Settings' panel.</li>
+                        <li>Create the 3D scene you want an image of.</li>
+                        <li>Go to the <i>Create Image</i> panel and click <i>download</i> to get the same image you see on the 3D canvas.</li>
+                        <li>To adjust the size of the image, select <i>Custom</i> from the <i>Size</i> dropdown. Adjust the <i>Width</i> and <i>Height</i> using the sliders. To see an image preview with the correct aspect ratio, activate the preview by expanding the <i>Preview</i> panel.</li>
                     </ol>
                 </HelpText>
             </HelpGroup>
 
-            <HelpSection header='Mouse Bindings' />
+            <HelpSection header='Mouse Controls' />
             {this.getMouseBindingComponents()}
         </div>
     }
