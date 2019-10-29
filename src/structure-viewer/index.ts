@@ -26,14 +26,11 @@ import { VolumeData } from './helpers/volume';
 require('./skin/rcsb.scss')
 
 export const DefaultStructureViewerProps: StructureViewerProps = {
-    // volumeServerUrl: 'https://ds.litemol.org/',
-    volumeServerUrl: '//alpha-maps.rcsb.org/',
+    volumeServerUrl: '//maps.rcsb.org/',
     modelUrlProvider: (pdbId: string) => {
         const id = pdbId.toLowerCase()
         return {
-            // url: `https://files.rcsb.org/download/${id}.cif`,
-            // format: 'cif' as SupportedFormats
-            url: `//alpha-models.rcsb.org/${id}.bcif`,
+            url: `//models.rcsb.org/${id}.bcif`,
             format: 'bcif' as SupportedFormats
         }
     },
