@@ -71,7 +71,13 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         const assembly = this.getAssembly()
 
         const modelOptions: [number, string][] = []
-        const assemblyOptions: [string, string][] = [[AssemblyNames.Deposited, 'deposited']]
+        const assemblyOptions: [string, string][] = []
+
+        if (model && modelFromCrystallography(model.data)) {
+            assemblyOptions.push([AssemblyNames.Deposited, 'asymmetric unit'])
+        } else {
+            assemblyOptions.push([AssemblyNames.Deposited, 'deposited'])
+        }
 
         if (trajectory) {
             if (trajectory.data.length > 1) modelOptions.push([-1, `All`])
@@ -270,4 +276,13 @@ function modelHasSymmetry(model: Model) {
             mmcif.cell.length_c.value(0) === 1
         )
     )
+}
+
+function modelFromCrystallography(model: Model) {
+    const mmcif = model.sourceData.data
+    for (let i = 0; i < mmcif.exptl.method.rowCount; i++) {
+        const v = mmcif.exptl.method.value(i).toUpperCase()
+        if (v.indexOf('DIFFRACTION') >= 0) return true
+    }
+    return false
 }
