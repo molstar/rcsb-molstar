@@ -13,6 +13,7 @@ import { StateObject, StateTree, StateSelection } from 'molstar/lib/mol-state';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { Model } from 'molstar/lib/mol-model/structure';
+import { stringToWords } from 'molstar/lib/mol-util/string';
 
 interface StructureControlsState extends CollapsableState {
     trajectoryRef: string
@@ -74,9 +75,9 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         const assemblyOptions: [string, string][] = []
 
         if (model && modelFromCrystallography(model.data)) {
-            assemblyOptions.push([AssemblyNames.Deposited, 'asymmetric unit'])
+            assemblyOptions.push([AssemblyNames.Deposited, 'Asymmetric Unit'])
         } else {
-            assemblyOptions.push([AssemblyNames.Deposited, 'deposited'])
+            assemblyOptions.push([AssemblyNames.Deposited, 'Deposited'])
         }
 
         if (trajectory) {
@@ -86,9 +87,9 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
             }
             if (trajectory.data.length === 1 && modelHasSymmetry(trajectory.data[0])) {
                 assemblyOptions.push(
-                    [AssemblyNames.Unitcell, 'unitcell'],
-                    [AssemblyNames.Supercell, 'supercell'],
-                    [AssemblyNames.CrystalContacts, 'crystal contacts']
+                    [AssemblyNames.Unitcell, 'Unitcell'],
+                    [AssemblyNames.Supercell, 'Supercell'],
+                    [AssemblyNames.CrystalContacts, 'Crystal Contacts']
                 )
             }
         }
@@ -99,7 +100,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
             const { assemblies } = model.data.symmetry
             for (let i = 0, il = assemblies.length; i < il; ++i) {
                 const a = assemblies[i]
-                assemblyOptions.push([a.id, `${a.id}: ${a.details}`])
+                assemblyOptions.push([a.id, `${a.id}: ${stringToWords(a.details)}`])
             }
         } else if (assembly) {
             // assembly from trajectory, no model
