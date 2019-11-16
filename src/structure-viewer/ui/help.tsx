@@ -21,7 +21,9 @@ class BindingsHelp extends React.Component<{ bindings: { [k: string]: Binding } 
         return <ul style={{ paddingLeft: '20px' }}>
             {bindingsList.map(value => {
                 const [name, binding] = value
-                return !Binding.isEmpty(binding) ? <li>{Binding.format(binding, name)}</li> : null
+                return !Binding.isEmpty(binding)
+                    ? <li key={name}>{Binding.format(binding, name)}</li>
+                    : null
             })}
         </ul>
     }
