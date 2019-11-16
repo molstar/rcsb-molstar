@@ -25,6 +25,10 @@ import { ModelLoader } from './helpers/model';
 import { VolumeData } from './helpers/volume';
 require('./skin/rcsb.scss')
 
+/** package version, filled in at bundle build time */
+declare const __RCSB_MOLSTAR_VERSION__: string
+export const RCSB_MOLSTAR_VERSION = __RCSB_MOLSTAR_VERSION__;
+
 export const DefaultStructureViewerProps: StructureViewerProps = {
     volumeServerUrl: '//maps.rcsb.org/',
     modelUrlProvider: (pdbId: string) => {
@@ -84,12 +88,19 @@ export class StructureViewer {
             modelLoader: new ModelLoader(this.plugin),
             structureView: new StructureView(this.plugin),
             volumeData: new VolumeData(this.plugin)
-        };
+        }
 
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
 
         const renderer = this.plugin.canvas3d.props.renderer;
-        PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
+        PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } })
+
+        PluginCommands.Toast.Show.dispatch(this.plugin, {
+            title: 'Welcome',
+            message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION}`,
+            key: 'toast-welcome',
+            timeoutMs: 10000
+        })
     }
 
     async loadPdbId(pdbId: string, assemblyId = 'deposited') {

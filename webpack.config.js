@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const webpack = require('webpack');
 const ExtraWatchWebpackPlugin = require('extra-watch-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -31,6 +32,10 @@ const sharedConfig = {
         }),
         new webpack.DefinePlugin({
             __PLUGIN_VERSION_TIMESTAMP__: webpack.DefinePlugin.runtimeValue(() => `${new Date().valueOf()}`, true),
+            __RCSB_MOLSTAR_VERSION__: webpack.DefinePlugin.runtimeValue(() => {
+                const version = JSON.parse(fs.readFileSync('./package.json')).version;
+                return `'${version}'`;
+            }, true),
             'process.env.DEBUG': JSON.stringify(process.env.DEBUG)
         }),
         new MiniCssExtractPlugin({ filename: 'app.css' })
