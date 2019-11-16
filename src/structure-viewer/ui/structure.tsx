@@ -125,7 +125,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 const p = themeCtx.colorThemeRegistry.get(n)
                 const d = { structure: assembly && assembly.data }
                 const ct = p.factory(d, PD.getDefaultValues(p.getParams(d)))
-                colorThemes[type] = PD.Select(n, colorTypes, { description: ct.description, legend: ct.legend })
+                colorThemes[type] = PD.Select(n, colorTypes, { description: ct.description, legend: ct.legend, label: r.obj ? r.obj.label : type })
             }
         }
 
