@@ -99,7 +99,7 @@ export class StructureViewer {
             title: 'Welcome',
             message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION}`,
             key: 'toast-welcome',
-            timeoutMs: 10000
+            timeoutMs: 5000
         })
     }
 
