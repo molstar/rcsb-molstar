@@ -18,6 +18,7 @@ const GeneralSettingsParams = {
     background: PD.Select('white', [['white', 'White'], ['black', 'Black'], ['transparent', 'Transparent']], { description: 'Background of the 3D canvas' }),
     renderStyle: PD.Select('glossy', [['toon', 'Toon'], ['matte', 'Matte'], ['glossy', 'Glossy'], ['metallic', 'Metallic']], { description: 'Style in which the 3D scene is rendered' }),
     occlusion: PD.Boolean(false, { description: 'Darken occluded crevices with the ambient occlusion effect' }),
+    fog: PD.Boolean(false, { description: 'Show fog in the distance' }),
 }
 
 export class GeneralSettings<P> extends CollapsableControls<P> {
@@ -65,6 +66,10 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
             PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
                 postprocessing: { ...postprocessing, occlusionEnable: p.value, occlusionBias: 0.5, occlusionRadius: 64 },
             } });
+        } else if (p.name === 'fog') {;
+            PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
+                cameraFog: p.value ? 50 : 1,
+            } });
         }
     }
 
@@ -101,7 +106,8 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
             camera: this.plugin.canvas3d.props.cameraMode,
             background,
             renderStyle,
-            occlusion: this.plugin.canvas3d.props.postprocessing.occlusionEnable
+            occlusion: this.plugin.canvas3d.props.postprocessing.occlusionEnable,
+            fog: this.plugin.canvas3d.props.cameraFog > 1
         }
     }
 
