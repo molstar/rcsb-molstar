@@ -9,7 +9,6 @@ import { PluginCommands } from 'molstar/lib/mol-plugin/command';
 import { StateBuilder } from 'molstar/lib/mol-state';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { Scheduler } from 'molstar/lib/mol-task';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 
 export class ModelLoader {
@@ -45,8 +44,6 @@ export class ModelLoader {
 
     async init(assemblyId = 'deposited') {
         await (this.plugin.customState as StructureViewerState).structureView.setAssembly(assemblyId)
-
-        Scheduler.setImmediate(() => PluginCommands.Camera.Reset.dispatch(this.plugin, { }))
     }
 
     applyState(tree: StateBuilder) {

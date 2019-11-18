@@ -6,11 +6,12 @@
 
 import { StateElements, AssemblyNames, StructureViewerState } from '../types';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
-import { StateBuilder, State } from 'molstar/lib/mol-state';
+import { StateBuilder, State, StateSelection } from 'molstar/lib/mol-state';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { Scheduler } from 'molstar/lib/mol-task';
+import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
+import { Structure, StructureElement } from 'molstar/lib/mol-model/structure';
 
 export class StructureView {
     applyState(tree: StateBuilder) {
@@ -21,9 +22,32 @@ export class StructureView {
         return (this.plugin.customState as StructureViewerState).volumeData
     }
 
+    private findTrajectoryRef() {
+        const trajectories = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Trajectory))
+        return trajectories.length > 0 ? trajectories[0].transform.ref : ''
+    }
+
+    private getAssembly() {
+        const trajectoryRef = this.findTrajectoryRef()
+        if (!trajectoryRef || !this.plugin.state.dataState.transforms.has(trajectoryRef)) return
+        const assemblies = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Structure, trajectoryRef))
+        return assemblies.length > 0 ? assemblies[0].obj : undefined
+    }
+
     async preset() {
         await this.plugin.helpers.structureRepresentation.preset()
-        Scheduler.setImmediate(() => PluginCommands.Camera.Reset.dispatch(this.plugin, { }))
+
+        const assembly = this.getAssembly()
+        if (!assembly || assembly.data.isEmpty) return
+
+        const extraRadius = 4, minRadius = 8, durationMs = 250
+
+        const radius = Math.max(assembly.data.lookup3d.boundary.sphere.radius + extraRadius, minRadius);
+        const loci = Structure.toStructureElementLoci(assembly.data)
+        const principalAxes = StructureElement.Loci.getPrincipalAxes(loci)
+        const { center, normVecA, normVecC } = principalAxes
+
+        this.plugin.canvas3d.camera.focus(center, radius, durationMs, normVecA, normVecC);
     }
 
     private ensureModelUnitcell(tree: StateBuilder.Root, state: State) {
