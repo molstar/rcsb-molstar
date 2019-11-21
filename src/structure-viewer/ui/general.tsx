@@ -18,6 +18,7 @@ const GeneralSettingsParams = {
     background: PD.Select('white', [['white', 'White'], ['black', 'Black'], ['transparent', 'Transparent']], { description: 'Background of the 3D canvas' }),
     renderStyle: PD.Select('glossy', [['toon', 'Toon'], ['matte', 'Matte'], ['glossy', 'Glossy'], ['metallic', 'Metallic']], { description: 'Style in which the 3D scene is rendered' }),
     occlusion: PD.Boolean(false, { description: 'Darken occluded crevices with the ambient occlusion effect' }),
+    outline: PD.Boolean(false, { description: 'Draw outline around 3D objects' }),
     fog: PD.Boolean(false, { description: 'Show fog in the distance' }),
 }
 
@@ -38,26 +39,21 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
                 PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white, transparentBackground: true } } });
             }
         } else if (p.name === 'renderStyle') {
-            const postprocessing = this.plugin.canvas3d.props.postprocessing;
             const renderer = this.plugin.canvas3d.props.renderer;
             if (p.value === 'toon') {
                 PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
-                    postprocessing: { ...postprocessing, outlineEnable: true, },
                     renderer: { ...renderer, lightIntensity: 0, ambientIntensity: 1, roughness: 0.4, metalness: 0 }
                 } });
             } else if (p.value === 'matte') {
                 PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
-                    postprocessing: { ...postprocessing, outlineEnable: false, },
                     renderer: { ...renderer, lightIntensity: 0.6, ambientIntensity: 0.4, roughness: 1, metalness: 0 }
                 } });
             } else if (p.value === 'glossy') {
                 PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
-                    postprocessing: { ...postprocessing, outlineEnable: false, },
                     renderer: { ...renderer, lightIntensity: 0.6, ambientIntensity: 0.4, roughness: 0.4, metalness: 0 }
                 } });
             } else if (p.value === 'metallic') {
                 PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
-                    postprocessing: { ...postprocessing, outlineEnable: false, },
                     renderer: { ...renderer, lightIntensity: 0.6, ambientIntensity: 0.4, roughness: 0.6, metalness: 0.4 }
                 } });
             }
@@ -65,6 +61,11 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
             const postprocessing = this.plugin.canvas3d.props.postprocessing;
             PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
                 postprocessing: { ...postprocessing, occlusionEnable: p.value, occlusionBias: 0.5, occlusionRadius: 64 },
+            } });
+        } else if (p.name === 'outline') {
+            const postprocessing = this.plugin.canvas3d.props.postprocessing;
+            PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
+                postprocessing: { ...postprocessing, outlineEnable: p.value },
             } });
         } else if (p.name === 'fog') {;
             PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: {
@@ -75,13 +76,10 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
 
     get values () {
         const renderer = this.plugin.canvas3d.props.renderer;
-        const postprocessing = this.plugin.canvas3d.props.postprocessing;
 
         let renderStyle = 'custom'
-        if (postprocessing.outlineEnable) {
-            if (renderer.lightIntensity === 0 && renderer.ambientIntensity === 1 && renderer.roughness === 0.4 && renderer.metalness === 0) {
-                renderStyle = 'toon'
-            }
+        if (renderer.lightIntensity === 0 && renderer.ambientIntensity === 1 && renderer.roughness === 0.4 && renderer.metalness === 0) {
+            renderStyle = 'toon'
         } else if (renderer.lightIntensity === 0.6 && renderer.ambientIntensity === 0.4) {
             if (renderer.roughness === 1 && renderer.metalness === 0) {
                 renderStyle = 'matte'
@@ -107,6 +105,7 @@ export class GeneralSettings<P> extends CollapsableControls<P> {
             background,
             renderStyle,
             occlusion: this.plugin.canvas3d.props.postprocessing.occlusionEnable,
+            outline: this.plugin.canvas3d.props.postprocessing.outlineEnable,
             fog: this.plugin.canvas3d.props.cameraFog > 1
         }
     }
