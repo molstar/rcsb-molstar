@@ -46,8 +46,8 @@ export class ModelLoader {
         await (this.plugin.customState as StructureViewerState).structureView.setAssembly(assemblyId)
     }
 
-    applyState(tree: StateBuilder) {
-        return PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree })
+    async applyState(tree: StateBuilder) {
+        await PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree })
     }
 
     constructor(private plugin: PluginContext) {

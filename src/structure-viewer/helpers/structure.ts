@@ -14,8 +14,8 @@ import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { Structure, StructureElement } from 'molstar/lib/mol-model/structure';
 
 export class StructureView {
-    applyState(tree: StateBuilder) {
-        return PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
+    async applyState(tree: StateBuilder) {
+        await PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
     }
 
     get experimentalData () {
