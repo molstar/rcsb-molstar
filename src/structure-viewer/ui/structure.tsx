@@ -1,19 +1,21 @@
 /**
- * Copyright (c) 2019 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
 import * as React from 'react';
-import { CollapsableControls, CollapsableState } from 'molstar/lib/mol-plugin/ui/base';
+import { CollapsableControls, CollapsableState } from 'molstar/lib/mol-plugin-ui/base';
 import { StateElements, AssemblyNames, StructureViewerState } from '../types';
-import { ParameterControls } from 'molstar/lib/mol-plugin/ui/controls/parameters';
+import { ParameterControls } from 'molstar/lib/mol-plugin-ui/controls/parameters';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { StateObject, StateTree, StateSelection } from 'molstar/lib/mol-state';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { Model } from 'molstar/lib/mol-model/structure';
+import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
 import { stringToWords } from 'molstar/lib/mol-util/string';
+import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
 
 interface StructureControlsState extends CollapsableState {
     trajectoryRef: string
@@ -96,11 +98,16 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
 
         let modelValue = 0
         if (model) {
-            if (trajectory) modelValue = trajectory.data.indexOf(model.data)
-            const { assemblies } = model.data.symmetry
-            for (let i = 0, il = assemblies.length; i < il; ++i) {
-                const a = assemblies[i]
-                assemblyOptions.push([a.id, `${a.id}: ${stringToWords(a.details)}`])
+            const symmetry = ModelSymmetry.Provider.get(model.data)
+            if (symmetry) {
+                if (trajectory) modelValue = trajectory.data.indexOf(model.data)
+                const { assemblies } = symmetry
+                for (let i = 0, il = assemblies.length; i < il; ++i) {
+                    const a = assemblies[i]
+                    assemblyOptions.push([a.id, `${a.id}: ${stringToWords(a.details)}`])
+                }
+            } else {
+                modelValue = -1
             }
         } else if (assembly) {
             // assembly from trajectory, no model
@@ -265,24 +272,26 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
 }
 
 function modelHasSymmetry(model: Model) {
-    const mmcif = model.sourceData.data
+    if (!MmcifFormat.is(model.sourceData)) return false
+    const { db } = model.sourceData.data
     return (
-        mmcif.symmetry._rowCount === 1 && mmcif.cell._rowCount === 1 && !(
-            mmcif.symmetry.Int_Tables_number.value(0) === 1 &&
-            mmcif.cell.angle_alpha.value(0) === 90 &&
-            mmcif.cell.angle_beta.value(0) === 90 &&
-            mmcif.cell.angle_gamma.value(0) === 90 &&
-            mmcif.cell.length_a.value(0) === 1 &&
-            mmcif.cell.length_b.value(0) === 1 &&
-            mmcif.cell.length_c.value(0) === 1
+        db.symmetry._rowCount === 1 && db.cell._rowCount === 1 && !(
+            db.symmetry.Int_Tables_number.value(0) === 1 &&
+            db.cell.angle_alpha.value(0) === 90 &&
+            db.cell.angle_beta.value(0) === 90 &&
+            db.cell.angle_gamma.value(0) === 90 &&
+            db.cell.length_a.value(0) === 1 &&
+            db.cell.length_b.value(0) === 1 &&
+            db.cell.length_c.value(0) === 1
         )
     )
 }
 
 function modelFromCrystallography(model: Model) {
-    const mmcif = model.sourceData.data
-    for (let i = 0; i < mmcif.exptl.method.rowCount; i++) {
-        const v = mmcif.exptl.method.value(i).toUpperCase()
+    if (!MmcifFormat.is(model.sourceData)) return false
+    const { db } = model.sourceData.data
+    for (let i = 0; i < db.exptl.method.rowCount; i++) {
+        const v = db.exptl.method.value(i).toUpperCase()
         if (v.indexOf('DIFFRACTION') >= 0) return true
     }
     return false

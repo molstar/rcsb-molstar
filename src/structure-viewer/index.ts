@@ -1,11 +1,11 @@
 /**
- * Copyright (c) 2019 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
 import { DefaultPluginSpec } from 'molstar/lib/mol-plugin';
-import { Plugin } from 'molstar/lib/mol-plugin/ui/plugin'
+import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin'
 import './index.html'
 import './favicon.ico'
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
@@ -60,10 +60,13 @@ export class StructureViewer {
                     minRadius: 8,
                     extraRadius: 4
                 }),
-                PluginSpec.Behavior(PluginBehaviors.CustomProps.RCSBAssemblySymmetry, {
-                    autoAttach: true
-                }),
-                PluginSpec.Behavior(StructureRepresentationInteraction)
+                PluginSpec.Behavior(StructureRepresentationInteraction),
+
+                PluginSpec.Behavior(PluginBehaviors.CustomProps.AccessibleSurfaceArea),
+                PluginSpec.Behavior(PluginBehaviors.CustomProps.Interactions),
+                PluginSpec.Behavior(PluginBehaviors.CustomProps.RCSBAssemblySymmetry),
+                PluginSpec.Behavior(PluginBehaviors.CustomProps.RCSBValidationReport),
+
             ],
             animations: [
                 AnimateModelIndex
@@ -92,7 +95,7 @@ export class StructureViewer {
 
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
 
-        const renderer = this.plugin.canvas3d.props.renderer;
+        const renderer = this.plugin.canvas3d!.props.renderer;
         PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } })
 
         PluginCommands.Toast.Show.dispatch(this.plugin, {

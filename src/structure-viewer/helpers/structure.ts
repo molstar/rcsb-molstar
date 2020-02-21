@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
@@ -45,9 +45,9 @@ export class StructureView {
         const radius = Math.max(assembly.data.lookup3d.boundary.sphere.radius + extraRadius, minRadius);
         const loci = Structure.toStructureElementLoci(assembly.data)
         const principalAxes = StructureElement.Loci.getPrincipalAxes(loci)
-        const { center, normVecA, normVecC } = principalAxes
+        const { origin, dirA, dirC } = principalAxes.boxAxes
 
-        this.plugin.canvas3d.camera.focus(center, radius, durationMs, normVecA, normVecC);
+        this.plugin.canvas3d!.camera.focus(origin, radius, radius, durationMs, dirA, dirC);
     }
 
     private ensureModelUnitcell(tree: StateBuilder.Root, state: State) {
@@ -63,27 +63,42 @@ export class StructureView {
         const state = this.plugin.state.dataState;
         const tree = state.build();
         if (id === AssemblyNames.Unitcell) {
-            const props = { ijkMin: Vec3.create(0, 0, 0), ijkMax: Vec3.create(0, 0, 0) }
+            const props = {
+                type: {
+                    name: 'symmetry' as const,
+                    params: { ijkMin: Vec3.create(0, 0, 0), ijkMax: Vec3.create(0, 0, 0) }
+                }
+            }
             tree.delete(StateElements.Assembly)
                 .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureSymmetryFromModel,
+                    StateTransforms.Model.StructureFromModel,
                     props, { ref: StateElements.Assembly, tags: [ AssemblyNames.Unitcell ] }
                 )
             this.ensureModelUnitcell(tree, state)
         } else if (id === AssemblyNames.Supercell) {
-            const props = { ijkMin: Vec3.create(-1, -1, -1), ijkMax: Vec3.create(1, 1, 1) }
+            const props = {
+                type: {
+                    name: 'symmetry' as const,
+                    params: { ijkMin: Vec3.create(-1, -1, -1), ijkMax: Vec3.create(1, 1, 1) }
+                }
+            }
             tree.delete(StateElements.Assembly)
                 .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureSymmetryFromModel,
+                    StateTransforms.Model.StructureFromModel,
                     props, { ref: StateElements.Assembly, tags: [ AssemblyNames.Supercell ] }
                 )
             this.ensureModelUnitcell(tree, state)
         } else if (id === AssemblyNames.CrystalContacts) {
-            const props = { radius: 5 }
+            const props = {
+                type: {
+                    name: 'symmetry-mates' as const,
+                    params: { radius: 5 }
+                }
+            }
             tree.delete(StateElements.ModelUnitcell)
             tree.delete(StateElements.Assembly)
                 .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureSymmetryMatesFromModel,
+                    StateTransforms.Model.StructureFromModel,
                     props, { ref: StateElements.Assembly, tags: [ AssemblyNames.CrystalContacts ] }
                 )
         } else {

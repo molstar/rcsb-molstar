@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react';
-import { CollapsableControls, PluginUIComponent } from 'molstar/lib/mol-plugin/ui/base';
+import { CollapsableControls, PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { Binding } from 'molstar/lib/mol-util/binding';
 import { StateSelection, StateTransformer } from 'molstar/lib/mol-state';
 import { StructureRepresentationInteraction } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-representation-interaction';
@@ -94,7 +94,7 @@ export class HelpContent extends PluginUIComponent {
         })
         return [
             <HelpGroup key='trackball' header='Moving in 3D'>
-                <BindingsHelp bindings={this.plugin.canvas3d.props.trackball.bindings} />
+                <BindingsHelp bindings={this.plugin.canvas3d?.props.trackball.bindings ?? {}} />
             </HelpGroup>,
             <HelpGroup key='interactions' header='Select, Highlight, Focus'>
                 <BindingsHelp bindings={interactionBindings} />

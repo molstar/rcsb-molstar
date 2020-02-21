@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
@@ -11,6 +11,7 @@ import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { InitVolumeStreaming, CreateVolumeStreamingInfo } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { Model } from 'molstar/lib/mol-model/structure';
+import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
 
 export class VolumeData {
     get state() {
@@ -24,11 +25,12 @@ export class VolumeData {
         if (!model || !asm) return
 
         const m = model.data as Model
-        const d = m.sourceData.data
-        const hasXrayMap = d.pdbx_database_status.status_code_sf.value(0) === 'REL'
+        if (!MmcifFormat.is(m.sourceData)) return
+        const { db } = m.sourceData.data
+        const hasXrayMap = db.pdbx_database_status.status_code_sf.value(0) === 'REL'
         let hasEmMap = false
-        for (let i = 0, il = d.pdbx_database_related._rowCount; i < il; ++i) {
-            if (d.pdbx_database_related.db_name.value(i).toUpperCase() === 'EMDB') {
+        for (let i = 0, il = db.pdbx_database_related._rowCount; i < il; ++i) {
+            if (db.pdbx_database_related.db_name.value(i).toUpperCase() === 'EMDB') {
                 hasEmMap = true
                 break
             }

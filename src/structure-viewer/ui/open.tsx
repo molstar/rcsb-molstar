@@ -10,8 +10,8 @@ import { StateAction, StateTransform } from 'molstar/lib/mol-state';
 import { PluginStateObject } from 'molstar/lib/mol-plugin/state/objects';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { Task } from 'molstar/lib/mol-task';
-import { ApplyActionControl } from 'molstar/lib/mol-plugin/ui/state/apply-action';
-import { PluginUIComponent } from 'molstar/lib/mol-plugin/ui/base';
+import { ApplyActionControl } from 'molstar/lib/mol-plugin-ui/state/apply-action';
+import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { StructureViewerState } from '../types';
 
 const OpenFileAction = StateAction.build({
@@ -19,7 +19,7 @@ const OpenFileAction = StateAction.build({
     from: PluginStateObject.Root,
     params: (a, ctx: PluginContext) => {
         return {
-            file: PD.File({ accept: '.cif, .mcif, .mmcif, .bcif' })
+            file: PD.File({ accept: '.cif, .mcif, .mmcif, .bcif, .gz, .zip' })
         }
     }
 })(({ params, state }, ctx: PluginContext) => Task.create('Open File', async taskCtx => {
