@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
@@ -42,6 +42,7 @@ export enum StateElements {
     ModelProps = 'model-props',
     ModelUnitcell = 'model-unitcell',
     Assembly = 'assembly',
+    AssemblySymmetry = 'assembly-symmetry',
 
     VolumeStreaming = 'volume-streaming',
 }

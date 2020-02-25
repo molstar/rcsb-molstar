@@ -12,6 +12,9 @@ import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { Structure, StructureElement } from 'molstar/lib/mol-model/structure';
+import { AssemblySymmetryProvider } from 'molstar/lib/mol-model-props/rcsb/assembly-symmetry';
+import { Task } from 'molstar/lib/mol-task';
+import { AssemblySymmetry3D } from 'molstar/lib/mol-plugin/behavior/dynamic/custom-props/rcsb/assembly-symmetry';
 
 export class StructureView {
     async applyState(tree: StateBuilder) {
@@ -57,6 +60,15 @@ export class StructureView {
                 undefined, { ref: StateElements.ModelUnitcell }
             )
         }
+    }
+
+    private async attachSymmetry() {
+        const assembly = this.getAssembly()
+        if (!assembly || assembly.data.isEmpty) return
+
+        await this.plugin.runTask(Task.create('Assembly symmetry', async runtime => {
+            await AssemblySymmetryProvider.attach({ fetch: this.plugin.fetch, runtime }, assembly.data)
+        }))
     }
 
     async setAssembly(id: string) {
@@ -110,6 +122,7 @@ export class StructureView {
                 )
         }
         await this.applyState(tree)
+        await this.attachSymmetry()
         await this.preset()
         await this.experimentalData.init()
     }
@@ -142,7 +155,33 @@ export class StructureView {
             }
         }
         await this.applyState(tree)
+        await this.attachSymmetry()
         await this.preset()
+    }
+
+    async setSymmetry(symmetryIndex: number) {
+        const state = this.plugin.state.dataState;
+        const tree = state.build();
+        if (symmetryIndex === -1) {
+            tree.delete(StateElements.AssemblySymmetry)
+        } else {
+            if (state.tree.transforms.has(StateElements.AssemblySymmetry)) {
+                tree.to(StateElements.AssemblySymmetry).update(
+                    AssemblySymmetry3D,
+                    props => ({ ...props, symmetryIndex })
+                )
+            } else {
+                const assembly = this.getAssembly()
+                if (!assembly || assembly.data.isEmpty) return
+
+                const props = AssemblySymmetry3D.createDefaultParams(assembly, this.plugin)
+                tree.to(StateElements.Assembly).apply(
+                    AssemblySymmetry3D,
+                    { ...props, symmetryIndex }, { ref: StateElements.AssemblySymmetry }
+                )
+            }
+        }
+        await this.applyState(tree)
     }
 
     constructor(private plugin: PluginContext) {

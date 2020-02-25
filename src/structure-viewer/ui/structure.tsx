@@ -16,6 +16,7 @@ import { Model } from 'molstar/lib/mol-model/structure';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
 import { stringToWords } from 'molstar/lib/mol-util/string';
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
+import { AssemblySymmetryProvider } from 'molstar/lib/mol-model-props/rcsb/assembly-symmetry'
 
 interface StructureControlsState extends CollapsableState {
     trajectoryRef: string
@@ -37,15 +38,40 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         const tree = state.build();
 
         const assembly = this.getAssembly()
+        const symmetry = this.getSymmetry()
         const dataCtx = { structure: assembly && assembly.data }
 
         Object.keys(theme).forEach(k => {
             const repr = this.getRepresentation(k)
             if (repr && repr.params) {
-                const values = PD.getDefaultValues(themeCtx.colorThemeRegistry.get(name).getParams(dataCtx))
+                const name = theme[k]
+                const params = PD.getDefaultValues(themeCtx.colorThemeRegistry.get(name).getParams(dataCtx))
+                if (symmetry && name === 'rcsb-assembly-symmetry-cluster') {
+                    Object.assign(params, { symmetryIndex: symmetry.params.symmetryIndex })
+                }
                 tree.to(repr.transform.ref).update(
                     StateTransforms.Representation.StructureRepresentation3D,
-                    props => ({ ...props, colorTheme: { name: theme[k], params: values }})
+                    props => ({ ...props, colorTheme: { name, params }})
+                )
+            }
+        })
+        await this.structureView.applyState(tree)
+    }
+
+    async syncSymmetryIndex() {
+        const symmetry = this.getSymmetry()
+        if (!symmetry) return
+
+        const state = this.plugin.state.dataState;
+        const tree = state.build();
+
+        this.plugin.helpers.structureRepresentation.eachRepresentation(repr => {
+            if (repr.params?.values.colorTheme.name === 'rcsb-assembly-symmetry-cluster') {
+                const { name, params } = repr.params.values.colorTheme
+                Object.assign(params, { symmetryIndex: symmetry.params.symmetryIndex })
+                tree.to(repr.transform.ref).update(
+                    StateTransforms.Representation.StructureRepresentation3D,
+                    props => ({ ...props, colorTheme: { name, params }})
                 )
             }
         })
@@ -55,11 +81,14 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
     onChange = async (p: { param: PD.Base<any>, name: string, value: any }) => {
         // console.log('onChange', p.name, p.value)
         if (p.name === 'assembly') {
-            this.structureView.setAssembly(p.value)
+            await this.structureView.setAssembly(p.value)
         } else if (p.name === 'model') {
-            this.structureView.setModel(p.value)
+            await this.structureView.setModel(p.value)
+        } else if (p.name === 'symmetry') {
+            await this.structureView.setSymmetry(p.value)
+            await this.syncSymmetryIndex()
         } else if (p.name === 'colorThemes') {
-            this.setColorTheme(p.value)
+            await this.setColorTheme(p.value)
         }
     }
 
@@ -75,6 +104,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
 
         const modelOptions: [number, string][] = []
         const assemblyOptions: [string, string][] = []
+        const symmetryOptions: [number, string][] = [[-1, 'Off']]
 
         if (model && modelFromCrystallography(model.data)) {
             assemblyOptions.push([AssemblyNames.Deposited, 'Asymmetric Unit'])
@@ -123,6 +153,18 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
             types = registry.getApplicableTypes(assembly.data)
         }
 
+        let symmetryValue = -1
+        if (assembly) {
+            const assemblySymmetry = AssemblySymmetryProvider.get(assembly.data).value
+            if (assemblySymmetry) {
+                symmetryValue = 0
+                for (let i = 0, il = assemblySymmetry.length; i < il; ++i) {
+                    const { symbol, kind } = assemblySymmetry[i]
+                    symmetryOptions.push([i, `${i + 1}: ${symbol} ${kind}`])
+                }
+            }
+        }
+
         const colorThemes: { [k: string]: PD.Any } = {}
         for (let i = 0, il = types.length; i < il; ++i) {
             const type = types[i][0]
@@ -145,7 +187,10 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 isHidden: modelOptions.length === 1,
                 description: 'Show a specific model or the full ensamble of models'
             }),
-            // symmetry: PD.Select('todo', [['todo', 'todo']]), // TODO
+            symmetry: PD.Select(symmetryValue, symmetryOptions, {
+                isHidden: symmetryOptions.length === 1,
+                description: 'Show a specific assembly symmetry'
+            }),
             colorThemes: PD.Group(colorThemes, { isExpanded: true }),
         }
     }
@@ -154,6 +199,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         const trajectory = this.getTrajectory()
         const model = this.getModel()
         const assembly = this.getAssembly()
+        const symmetry = this.getSymmetry()
 
         const { registry } = this.plugin.structureRepresentation
         const types = assembly ? registry.getApplicableTypes(assembly.data) : registry.types
@@ -184,10 +230,15 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
             }
         }
 
+        let symmetryValue = -1
+        if (symmetry) {
+            symmetryValue = symmetry.params.symmetryIndex
+        }
+
         return {
             assembly: assemblyValue,
             model: modelValue,
-            // symmetry: 'todo', // TODO
+            symmetry: symmetryValue,
             colorThemes,
         }
     }
@@ -249,6 +300,10 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         if (!this.state.trajectoryRef || !this.plugin.state.dataState.transforms.has(this.state.trajectoryRef)) return
         const assemblies = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Structure, this.state.trajectoryRef))
         return assemblies.length > 0 ? assemblies[0].obj : undefined
+    }
+
+    private getSymmetry() {
+        return this.plugin.state.dataState.transforms.get(StateElements.AssemblySymmetry)
     }
 
     defaultState() {
