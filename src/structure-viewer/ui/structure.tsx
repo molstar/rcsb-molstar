@@ -12,8 +12,6 @@ import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { StateObject, StateTree, StateSelection } from 'molstar/lib/mol-state';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
-import { Model } from 'molstar/lib/mol-model/structure';
-import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
 import { stringToWords } from 'molstar/lib/mol-util/string';
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
 import { AssemblySymmetryProvider } from 'molstar/lib/mol-model-props/rcsb/assembly-symmetry'
@@ -324,30 +322,4 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
             <ParameterControls params={this.getParams()} values={this.values} onChange={this.onChange} isDisabled={this.state.isDisabled} />
         </div>
     }
-}
-
-function modelHasSymmetry(model: Model) {
-    if (!MmcifFormat.is(model.sourceData)) return false
-    const { db } = model.sourceData.data
-    return (
-        db.symmetry._rowCount === 1 && db.cell._rowCount === 1 && !(
-            db.symmetry.Int_Tables_number.value(0) === 1 &&
-            db.cell.angle_alpha.value(0) === 90 &&
-            db.cell.angle_beta.value(0) === 90 &&
-            db.cell.angle_gamma.value(0) === 90 &&
-            db.cell.length_a.value(0) === 1 &&
-            db.cell.length_b.value(0) === 1 &&
-            db.cell.length_c.value(0) === 1
-        )
-    )
-}
-
-function modelFromCrystallography(model: Model) {
-    if (!MmcifFormat.is(model.sourceData)) return false
-    const { db } = model.sourceData.data
-    for (let i = 0; i < db.exptl.method.rowCount; i++) {
-        const v = db.exptl.method.value(i).toUpperCase()
-        if (v.indexOf('DIFFRACTION') >= 0) return true
-    }
-    return false
 }
