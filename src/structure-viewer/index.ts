@@ -23,6 +23,7 @@ import ReactDOM = require('react-dom');
 import React = require('react');
 import { ModelLoader } from './helpers/model';
 import { VolumeData } from './helpers/volume';
+import { PresetManager, PresetProps } from './helpers/preset';
 require('./skin/rcsb.scss')
 
 /** package version, filled in at bundle build time */
@@ -44,6 +45,10 @@ export const DefaultStructureViewerProps: StructureViewerProps = {
 export class StructureViewer {
     private readonly plugin: PluginContext;
     private readonly props: Readonly<StructureViewerProps>
+
+    private get customState() {
+        return this.plugin.customState as StructureViewerState
+    }
 
     constructor(target: string | HTMLElement, props: Partial<StructureViewerProps> = {}) {
         target = typeof target === 'string' ? document.getElementById(target)! : target
@@ -88,9 +93,11 @@ export class StructureViewer {
 
         (this.plugin.customState as StructureViewerState) = {
             props: this.props,
+
             modelLoader: new ModelLoader(this.plugin),
+            presetManager: new PresetManager(this.plugin),
             structureView: new StructureView(this.plugin),
-            volumeData: new VolumeData(this.plugin)
+            volumeData: new VolumeData(this.plugin),
         }
 
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
@@ -106,20 +113,13 @@ export class StructureViewer {
         })
     }
 
-    async loadPdbId(pdbId: string, assemblyId = 'deposited') {
+    async loadPdbId(pdbId: string, props?: PresetProps) {
         const p = this.props.modelUrlProvider(pdbId)
-        return (this.plugin.customState as StructureViewerState).modelLoader.load({
-            fileOrUrl: p.url,
-            format: p.format,
-            assemblyId,
-        })
+        await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format })
+        await this.customState.presetManager.apply(props)
     }
 
-    async loadUrl(url: string, assemblyId = 'deposited') {
-        return (this.plugin.customState as StructureViewerState).modelLoader.load({
-            fileOrUrl: url,
-            format: 'cif',
-            assemblyId,
-        })
+    async loadUrl(url: string, props?: PresetProps) {
+        await this.customState.modelLoader.load({ fileOrUrl: url, format: 'cif', })
     }
 }

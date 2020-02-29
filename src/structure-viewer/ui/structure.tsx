@@ -15,6 +15,10 @@ import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { stringToWords } from 'molstar/lib/mol-util/string';
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
 import { AssemblySymmetryProvider } from 'molstar/lib/mol-model-props/rcsb/assembly-symmetry'
+import { ActionMenu } from 'molstar/lib/mol-plugin-ui/controls/action-menu';
+import { PresetProps } from '../helpers/preset';
+import { ValidationReport } from 'molstar/lib/mol-model-props/rcsb/validation-report';
+import { modelFromCrystallography, modelHasMap, modelHasSymmetry, modelFromNmr, getStructureSize, StructureSize } from '../helpers/util';
 
 interface StructureControlsState extends CollapsableState {
     trajectoryRef: string
@@ -22,12 +26,12 @@ interface StructureControlsState extends CollapsableState {
 }
 
 export class StructureControls<P, S extends StructureControlsState> extends CollapsableControls<P, S> {
-    constructor(props: P, context?: any) {
-        super(props, context);
+    get customState() {
+        return this.plugin.customState as StructureViewerState
     }
 
-    get structureView () {
-        return (this.plugin.customState as StructureViewerState).structureView
+    constructor(props: P, context?: any) {
+        super(props, context);
     }
 
     async setColorTheme(theme: { [k: string]: string }) {
@@ -53,7 +57,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 )
             }
         })
-        await this.structureView.applyState(tree)
+        await this.customState.structureView.applyState(tree)
     }
 
     async syncSymmetryIndex() {
@@ -73,17 +77,17 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 )
             }
         })
-        await this.structureView.applyState(tree)
+        await this.customState.structureView.applyState(tree)
     }
 
     onChange = async (p: { param: PD.Base<any>, name: string, value: any }) => {
         // console.log('onChange', p.name, p.value)
         if (p.name === 'assembly') {
-            await this.structureView.setAssembly(p.value)
+            await this.customState.presetManager.assembly(p.value)
         } else if (p.name === 'model') {
-            await this.structureView.setModel(p.value)
+            await this.customState.presetManager.model(p.value)
         } else if (p.name === 'symmetry') {
-            await this.structureView.setSymmetry(p.value)
+            await this.customState.structureView.setSymmetry(p.value)
             await this.syncSymmetryIndex()
         } else if (p.name === 'colorThemes') {
             await this.setColorTheme(p.value)
@@ -304,6 +308,54 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         return this.plugin.state.dataState.transforms.get(StateElements.AssemblySymmetry)
     }
 
+    private actionMenu = new ActionMenu();
+
+    private applyPreset = (props: PresetProps) => {
+        this.customState.presetManager.apply(props)
+    }
+
+    private getPresets = () => {
+        const model = this.getModel()
+        const assembly = this.getAssembly()
+
+        const showClashes = assembly && getStructureSize(assembly.data) <= StructureSize.Medium
+
+        const validationItems = [
+            'Validation Report',
+            ActionMenu.Item(`Geometry Quality Coloring${showClashes ? ' & Clashes' : ''}`, {
+                kind: 'validation',
+                colorTheme: ValidationReport.Tag.GeometryQuality,
+                showClashes
+            }),
+        ]
+
+        if (model && modelHasMap(model.data)) {
+            validationItems.push(ActionMenu.Item('Density Fit Coloring', {
+                kind: 'validation',
+                colorTheme: ValidationReport.Tag.DensityFit,
+                showClashes: false
+            }))
+        }
+
+        if (model && modelFromNmr(model.data)) {
+            validationItems.push(ActionMenu.Item('Random Coil Index Coloring', {
+                kind: 'validation',
+                colorTheme: ValidationReport.Tag.RandomCoilIndex,
+                showClashes: false
+            }))
+        }
+
+        return [
+            ActionMenu.Item('Standard', {
+                kind: 'standard'
+            }),
+            ActionMenu.Item('Assembly Symmetry', {
+                kind: 'symmetry'
+            }),
+            validationItems
+        ] as unknown as ActionMenu.Spec
+    }
+
     defaultState() {
         return {
             isCollapsed: false,
@@ -319,6 +371,13 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         if (!this.getTrajectory() || !this.getAssembly()) return null
 
         return <div>
+            <div>
+                <div className='msp-control-row'>
+                    <ActionMenu.Toggle menu={this.actionMenu} items={this.getPresets()} label='Apply Preset' onSelect={this.applyPreset} disabled={this.state.isDisabled} />
+                </div>
+                <ActionMenu.Options menu={this.actionMenu} />
+            </div>
+
             <ParameterControls params={this.getParams()} values={this.values} onChange={this.onChange} isDisabled={this.state.isDisabled} />
         </div>
     }

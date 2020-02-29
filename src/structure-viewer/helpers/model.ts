@@ -12,6 +12,10 @@ import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
 
 export class ModelLoader {
+    get customState() {
+        return this.plugin.customState as StructureViewerState
+    }
+
     download(b: StateBuilder.To<PSO.Root>, url: string, isBinary: boolean) {
         return b.apply(StateTransforms.Data.Download, { url, isBinary })
     }
@@ -43,7 +47,7 @@ export class ModelLoader {
     }
 
     async init(assemblyId = 'deposited') {
-        await (this.plugin.customState as StructureViewerState).structureView.setAssembly(assemblyId)
+        await this.customState.structureView.setAssembly(assemblyId)
     }
 
     async applyState(tree: StateBuilder) {

@@ -7,6 +7,7 @@
 import { StructureView } from './helpers/structure';
 import { ModelLoader } from './helpers/model';
 import { VolumeData } from './helpers/volume';
+import { PresetManager } from './helpers/preset';
 
 export interface StructureViewerProps {
     volumeServerUrl: string,
@@ -54,9 +55,15 @@ export enum AssemblyNames {
     CrystalContacts = 'crystal-contacts',
 }
 
+export enum ModelNames {
+    All = -1,
+}
+
 export interface StructureViewerState {
     props: StructureViewerProps
+
     modelLoader: ModelLoader
+    presetManager: PresetManager
     structureView: StructureView
     volumeData: VolumeData
 }

@@ -4,53 +4,47 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import { StateElements, AssemblyNames, StructureViewerState } from '../types';
+import { StateElements, AssemblyNames, StructureViewerState, ModelNames } from '../types';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
 import { StateBuilder, State, StateSelection } from 'molstar/lib/mol-state';
 import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
-import { Structure, StructureElement } from 'molstar/lib/mol-model/structure';
 import { AssemblySymmetryProvider } from 'molstar/lib/mol-model-props/rcsb/assembly-symmetry';
 import { Task } from 'molstar/lib/mol-task';
 import { AssemblySymmetry3D } from 'molstar/lib/mol-plugin/behavior/dynamic/custom-props/rcsb/assembly-symmetry';
+import { ValidationReportProvider } from 'molstar/lib/mol-model-props/rcsb/validation-report';
 
 export class StructureView {
+    get customState() {
+        return this.plugin.customState as StructureViewerState
+    }
+
     async applyState(tree: StateBuilder) {
         await PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
     }
 
     get experimentalData () {
-        return (this.plugin.customState as StructureViewerState).volumeData
+        return this.customState.volumeData
     }
 
-    private findTrajectoryRef() {
+    findTrajectoryRef() {
         const trajectories = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Trajectory))
         return trajectories.length > 0 ? trajectories[0].transform.ref : ''
     }
 
-    private getAssembly() {
+    getAssembly() {
         const trajectoryRef = this.findTrajectoryRef()
         if (!trajectoryRef || !this.plugin.state.dataState.transforms.has(trajectoryRef)) return
         const assemblies = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Structure, trajectoryRef))
         return assemblies.length > 0 ? assemblies[0].obj : undefined
     }
 
-    async preset() {
-        await this.plugin.helpers.structureRepresentation.preset()
-
-        const assembly = this.getAssembly()
-        if (!assembly || assembly.data.isEmpty) return
-
-        const extraRadius = 4, minRadius = 8, durationMs = 250
-
-        const radius = Math.max(assembly.data.lookup3d.boundary.sphere.radius + extraRadius, minRadius);
-        const loci = Structure.toStructureElementLoci(assembly.data)
-        const principalAxes = StructureElement.Loci.getPrincipalAxes(loci)
-        const { origin, dirA, dirC } = principalAxes.boxAxes
-
-        this.plugin.canvas3d!.camera.focus(origin, radius, radius, durationMs, dirA, dirC);
+    getModel() {
+        const trajectoryRef = this.findTrajectoryRef()
+        const models = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Model, trajectoryRef))
+        return models.length > 0 ? models[0].obj : undefined
     }
 
     private ensureModelUnitcell(tree: StateBuilder.Root, state: State) {
@@ -62,12 +56,21 @@ export class StructureView {
         }
     }
 
-    private async attachSymmetry() {
+    async attachAssemblySymmetry() {
         const assembly = this.getAssembly()
         if (!assembly || assembly.data.isEmpty) return
 
         await this.plugin.runTask(Task.create('Assembly symmetry', async runtime => {
             await AssemblySymmetryProvider.attach({ fetch: this.plugin.fetch, runtime }, assembly.data)
+        }))
+    }
+
+    async attachValidationReport() {
+        const model = this.getModel()
+        if (!model) return
+
+        await this.plugin.runTask(Task.create('Validation Report', async runtime => {
+            await ValidationReportProvider.attach({ fetch: this.plugin.fetch, runtime }, model.data)
         }))
     }
 
@@ -114,23 +117,28 @@ export class StructureView {
                     props, { ref: StateElements.Assembly, tags: [ AssemblyNames.CrystalContacts ] }
                 )
         } else {
+            const props = {
+                type: {
+                    name: 'assembly' as const,
+                    params: { id }
+                }
+            }
             tree.delete(StateElements.ModelUnitcell)
             tree.delete(StateElements.Assembly)
                 .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureAssemblyFromModel,
-                    { id }, { ref: StateElements.Assembly }
+                    StateTransforms.Model.StructureFromModel,
+                    props, { ref: StateElements.Assembly }
                 )
         }
         await this.applyState(tree)
-        await this.attachSymmetry()
-        await this.preset()
+        await this.attachAssemblySymmetry()
         await this.experimentalData.init()
     }
 
     async setModel(modelIndex: number) {
         const state = this.plugin.state.dataState;
         const tree = state.build();
-        if (modelIndex === -1) {
+        if (modelIndex === ModelNames.All) {
             tree.delete(StateElements.Model)
                 .to(StateElements.Trajectory).apply(
                     StateTransforms.Model.StructureFromTrajectory,
@@ -143,20 +151,25 @@ export class StructureView {
                     props => ({ ...props, modelIndex })
                 )
             } else {
+                const props = {
+                    type: {
+                        name: 'assembly' as const,
+                        params: { id: AssemblyNames.Deposited }
+                    }
+                }
                 tree.delete(StateElements.Assembly)
                     .to(StateElements.Trajectory).apply(
                         StateTransforms.Model.ModelFromTrajectory,
                         { modelIndex }, { ref: StateElements.Model }
                     )
                     .apply(
-                        StateTransforms.Model.StructureAssemblyFromModel,
-                        { id: AssemblyNames.Deposited }, { ref: StateElements.Assembly }
+                        StateTransforms.Model.StructureFromModel,
+                        props, { ref: StateElements.Assembly }
                     )
             }
         }
         await this.applyState(tree)
-        await this.attachSymmetry()
-        await this.preset()
+        await this.attachAssemblySymmetry()
     }
 
     async setSymmetry(symmetryIndex: number) {

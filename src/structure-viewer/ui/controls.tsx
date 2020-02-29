@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
@@ -20,16 +20,20 @@ import { HelpContent } from './help';
 import { OpenFile } from './open';
 
 export class ControlsWrapper extends PluginUIComponent {
+    get customState() {
+        return this.plugin.customState as StructureViewerState
+    }
+
     componentDidMount() {
         this.subscribe(this.plugin.state.behavior.currentObject, () => this.forceUpdate());
         this.subscribe(this.plugin.events.state.object.updated, () => this.forceUpdate());
     }
 
     render() {
-        const { showOpenFileControls } = (this.plugin.customState as StructureViewerState).props
+        const { showOpenFileControls } = this.customState.props
         return <div className='msp-scrollable-container msp-right-controls' style={{ paddingTop: '0px' }}>
             {showOpenFileControls && <OpenFile initiallyCollapsed={false} />}
-            <StructureControls  />
+            <StructureControls />
             <StructureSelectionControls header='Manage Selection' initiallyCollapsed={true} />
             <StructureRepresentationControls header='Change Representation' initiallyCollapsed={true} />
             <TransformUpdaterControl nodeRef={StateElements.VolumeStreaming} header={{ name: 'Density Controls', description: '' }} initiallyCollapsed={true} />
