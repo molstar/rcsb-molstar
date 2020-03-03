@@ -5,11 +5,11 @@
  */
 
 import { StateElements, StructureViewerState, LoadParams } from '../types';
-import { PluginCommands } from 'molstar/lib/mol-plugin/command';
+import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { StateBuilder } from 'molstar/lib/mol-state';
-import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
+import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
+import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin-state/objects';
 
 export class ModelLoader {
     get customState() {
@@ -35,7 +35,7 @@ export class ModelLoader {
         if (!fileOrUrl) return
 
         const state = this.plugin.state.dataState;
-        await PluginCommands.State.RemoveObject.dispatch(this.plugin, { state, ref: state.tree.root.ref })
+        await PluginCommands.State.RemoveObject(this.plugin, { state, ref: state.tree.root.ref })
 
         const isBinary = format === 'bcif'
         const data = fileOrUrl instanceof File
@@ -46,7 +46,7 @@ export class ModelLoader {
     }
 
     async applyState(tree: StateBuilder) {
-        await PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree })
+        await PluginCommands.State.Update(this.plugin, { state: this.plugin.state.dataState, tree }).catch(e => console.log(e))
     }
 
     constructor(private plugin: PluginContext) {

@@ -5,7 +5,7 @@
  */
 
 import { StateElements, StructureViewerState } from '../types';
-import { PluginCommands } from 'molstar/lib/mol-plugin/command';
+import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { StateSelection, StateBuilder } from 'molstar/lib/mol-state';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { InitVolumeStreaming, CreateVolumeStreamingInfo, CreateVolumeStreamingBehavior } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
@@ -24,7 +24,7 @@ export class VolumeData {
     }
 
     async applyState(tree: StateBuilder) {
-        await PluginCommands.State.Update.dispatch(this.plugin, { state: this.state, tree });
+        await PluginCommands.State.Update(this.plugin, { state: this.state, tree });
     }
 
     async init() {
@@ -80,7 +80,7 @@ export class VolumeData {
     async remove() {
         const r = this.state.select(StateSelection.Generators.ofTransformer(CreateVolumeStreamingInfo))[0]
         if (!r) return
-        await PluginCommands.State.RemoveObject.dispatch(this.plugin, { state: this.state, ref: r.transform.ref })
+        await PluginCommands.State.RemoveObject(this.plugin, { state: this.state, ref: r.transform.ref })
     }
 
     constructor(private plugin: PluginContext) {

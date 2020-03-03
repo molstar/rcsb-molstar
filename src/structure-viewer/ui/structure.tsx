@@ -10,8 +10,8 @@ import { StateElements, AssemblyNames, StructureViewerState } from '../types';
 import { ParameterControls } from 'molstar/lib/mol-plugin-ui/controls/parameters';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { StateObject, StateTree, StateSelection } from 'molstar/lib/mol-state';
-import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
-import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
+import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin-state/objects';
+import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 import { stringToWords } from 'molstar/lib/mol-util/string';
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
 import { AssemblySymmetryProvider } from 'molstar/lib/mol-model-props/rcsb/assembly-symmetry'

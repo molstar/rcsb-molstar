@@ -5,12 +5,12 @@
  */
 
 import { StateElements, AssemblyNames, StructureViewerState, ModelNames } from '../types';
-import { PluginCommands } from 'molstar/lib/mol-plugin/command';
+import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { StateBuilder, State, StateSelection } from 'molstar/lib/mol-state';
-import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
+import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 import { Vec3 } from 'molstar/lib/mol-math/linear-algebra';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin/state/objects';
+import { PluginStateObject as PSO } from 'molstar/lib/mol-plugin-state/objects';
 import { AssemblySymmetryProvider } from 'molstar/lib/mol-model-props/rcsb/assembly-symmetry';
 import { Task } from 'molstar/lib/mol-task';
 import { AssemblySymmetry3D } from 'molstar/lib/mol-plugin/behavior/dynamic/custom-props/rcsb/assembly-symmetry';
@@ -23,7 +23,7 @@ export class StructureView {
     }
 
     async applyState(tree: StateBuilder) {
-        await PluginCommands.State.Update.dispatch(this.plugin, { state: this.plugin.state.dataState, tree });
+        await PluginCommands.State.Update(this.plugin, { state: this.plugin.state.dataState, tree });
     }
 
     get experimentalData () {

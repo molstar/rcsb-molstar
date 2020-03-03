@@ -7,7 +7,7 @@
 import * as React from 'react';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { StateAction, StateTransform } from 'molstar/lib/mol-state';
-import { PluginStateObject } from 'molstar/lib/mol-plugin/state/objects';
+import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { Task } from 'molstar/lib/mol-task';
 import { ApplyActionControl } from 'molstar/lib/mol-plugin-ui/state/apply-action';

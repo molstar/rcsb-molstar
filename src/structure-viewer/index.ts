@@ -9,9 +9,9 @@ import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin'
 import './index.html'
 import './favicon.ico'
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { PluginCommands } from 'molstar/lib/mol-plugin/command';
+import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { PluginBehaviors } from 'molstar/lib/mol-plugin/behavior';
-import { AnimateModelIndex } from 'molstar/lib/mol-plugin/state/animation/built-in';
+import { AnimateModelIndex } from 'molstar/lib/mol-plugin-state/animation/built-in';
 import { SupportedFormats, StructureViewerState, StructureViewerProps, LoadParams } from './types';
 import { ControlsWrapper, ViewportWrapper } from './ui/controls';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
@@ -103,9 +103,9 @@ export class StructureViewer {
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
 
         const renderer = this.plugin.canvas3d!.props.renderer;
-        PluginCommands.Canvas3D.SetSettings.dispatch(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } })
+        PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } })
 
-        PluginCommands.Toast.Show.dispatch(this.plugin, {
+        PluginCommands.Toast.Show(this.plugin, {
             title: 'Welcome',
             message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION}`,
             key: 'toast-welcome',
@@ -120,10 +120,10 @@ export class StructureViewer {
 
     async loadPdbId(pdbId: string, props?: PresetProps) {
         const p = this.props.modelUrlProvider(pdbId)
-        this.load({ fileOrUrl: p.url, format: p.format }, props)
+        await this.load({ fileOrUrl: p.url, format: p.format }, props)
     }
 
     async loadUrl(url: string, props?: PresetProps) {
-        this.load({ fileOrUrl: url, format: 'cif', }, props)
+        await this.load({ fileOrUrl: url, format: 'cif', }, props)
     }
 }
