@@ -18,6 +18,7 @@ import { AssemblySymmetry, AssemblySymmetryProvider } from 'molstar/lib/mol-mode
 import Expression from 'molstar/lib/mol-script/language/expression';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { Color } from 'molstar/lib/mol-util/color';
+import { equalEps, EPSILON } from 'molstar/lib/mol-math/linear-algebra/3d/common';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -316,13 +317,13 @@ export class PresetManager {
         const origin = Vec3()
         Vec3.scale(origin, Vec3.add(origin, aA.start, aA.end), 0.5)
 
-        const dir = Vec3.sub(Vec3(), aA.start, aA.end)
+        const dir = Vec3.sub(Vec3(), aA.end, aA.start)
         const up = Vec3()
 
         if (aB) {
             Vec3.sub(up, aB.end, aB.start)
         } else {
-            if (Vec3.dot(Vec3.unitY, Vec3.sub(Vec3(), aA.end, aA.start)) === 0) {
+            if (equalEps(Vec3.dot(Vec3.unitY, dir), 0, EPSILON)) {
                 Vec3.copy(up, Vec3.unitY)
             } else {
                 Vec3.copy(up, Vec3.unitX)
