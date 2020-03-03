@@ -15,10 +15,7 @@ import { StateTransforms } from 'molstar/lib/mol-plugin/state/transforms';
 import { stringToWords } from 'molstar/lib/mol-util/string';
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
 import { AssemblySymmetryProvider } from 'molstar/lib/mol-model-props/rcsb/assembly-symmetry'
-import { ActionMenu } from 'molstar/lib/mol-plugin-ui/controls/action-menu';
-import { PresetProps } from '../helpers/preset';
-import { ValidationReport } from 'molstar/lib/mol-model-props/rcsb/validation-report';
-import { modelFromCrystallography, modelHasMap, modelHasSymmetry, modelFromNmr, getStructureSize, StructureSize } from '../helpers/util';
+import { modelFromCrystallography, modelHasSymmetry } from '../helpers/util';
 
 interface StructureControlsState extends CollapsableState {
     trajectoryRef: string
@@ -39,7 +36,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         const state = this.plugin.state.dataState;
         const tree = state.build();
 
-        const assembly = this.getAssembly()
+        const assembly = this.getAssembly()?.obj
         const symmetry = this.getSymmetry()
         const dataCtx = { structure: assembly && assembly.data }
 
@@ -83,12 +80,13 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
     onChange = async (p: { param: PD.Base<any>, name: string, value: any }) => {
         // console.log('onChange', p.name, p.value)
         if (p.name === 'assembly') {
-            await this.customState.presetManager.assembly(p.value)
+            await this.customState.presetManager.standard(p.value)
         } else if (p.name === 'model') {
-            await this.customState.presetManager.model(p.value)
+            await this.customState.presetManager.standard(undefined, p.value)
         } else if (p.name === 'symmetry') {
             await this.customState.structureView.setSymmetry(p.value)
             await this.syncSymmetryIndex()
+            this.customState.presetManager.focusOnSymmetry(p.value)
         } else if (p.name === 'colorThemes') {
             await this.setColorTheme(p.value)
         }
@@ -102,7 +100,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         const { themeCtx, registry } = this.plugin.structureRepresentation
         const trajectory = this.getTrajectory()
         const model = this.getModel()
-        const assembly = this.getAssembly()
+        const assembly = this.getAssembly()?.obj
 
         const modelOptions: [number, string][] = []
         const assemblyOptions: [string, string][] = []
@@ -162,7 +160,9 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 symmetryValue = 0
                 for (let i = 0, il = assemblySymmetry.length; i < il; ++i) {
                     const { symbol, kind } = assemblySymmetry[i]
-                    symmetryOptions.push([i, `${i + 1}: ${symbol} ${kind}`])
+                    if (symbol !== 'C1') {
+                        symmetryOptions.push([i, `${i + 1}: ${symbol} ${kind}`])
+                    }
                 }
             }
         }
@@ -193,7 +193,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 isHidden: symmetryOptions.length === 1,
                 description: 'Show a specific assembly symmetry'
             }),
-            colorThemes: PD.Group(colorThemes, { isExpanded: true }),
+            colorThemes: PD.Group(colorThemes, { isExpanded: false }),
         }
     }
 
@@ -204,7 +204,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         const symmetry = this.getSymmetry()
 
         const { registry } = this.plugin.structureRepresentation
-        const types = assembly ? registry.getApplicableTypes(assembly.data) : registry.types
+        const types = assembly?.obj ? registry.getApplicableTypes(assembly.obj.data) : registry.types
 
         const colorThemes: { [k: string]: string } = {}
         for (let i = 0, il = types.length; i < il; ++i) {
@@ -219,16 +219,18 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         }
 
         let assemblyValue: string = AssemblyNames.Deposited
-        if (assembly) {
-            const tags = (assembly as StateObject).tags
-            if (tags && tags.includes('unitcell')) {
-                assemblyValue = AssemblyNames.Unitcell
-            } else if (tags && tags.includes('supercell')) {
-                assemblyValue = AssemblyNames.Supercell
-            } else if (tags && tags.includes('crystal-contacts')) {
+        if (assembly?.params) {
+            const type = assembly.params.values.type
+            if (type.name === 'symmetry') {
+                if (type.params.ijkMin[0] = 0) {
+                    assemblyValue = AssemblyNames.Unitcell
+                } else {
+                    assemblyValue = AssemblyNames.Supercell
+                }
+            } else if (type.name === 'symmetry') {
                 assemblyValue = AssemblyNames.CrystalContacts
             } else {
-                assemblyValue = assembly.data.units[0].conformation.operator.assembly.id || AssemblyNames.Deposited
+                assemblyValue = assembly.params.values.type.params.id || 'deposited'
             }
         }
 
@@ -301,59 +303,11 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
     private getAssembly() {
         if (!this.state.trajectoryRef || !this.plugin.state.dataState.transforms.has(this.state.trajectoryRef)) return
         const assemblies = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Structure, this.state.trajectoryRef))
-        return assemblies.length > 0 ? assemblies[0].obj : undefined
+        return assemblies.length > 0 ? assemblies[0] : undefined
     }
 
     private getSymmetry() {
         return this.plugin.state.dataState.transforms.get(StateElements.AssemblySymmetry)
-    }
-
-    private actionMenu = new ActionMenu();
-
-    private applyPreset = (props: PresetProps) => {
-        this.customState.presetManager.apply(props)
-    }
-
-    private getPresets = () => {
-        const model = this.getModel()
-        const assembly = this.getAssembly()
-
-        const showClashes = assembly && getStructureSize(assembly.data) <= StructureSize.Medium
-
-        const validationItems = [
-            'Validation Report',
-            ActionMenu.Item(`Geometry Quality Coloring${showClashes ? ' & Clashes' : ''}`, {
-                kind: 'validation',
-                colorTheme: ValidationReport.Tag.GeometryQuality,
-                showClashes
-            }),
-        ]
-
-        if (model && modelHasMap(model.data)) {
-            validationItems.push(ActionMenu.Item('Density Fit Coloring', {
-                kind: 'validation',
-                colorTheme: ValidationReport.Tag.DensityFit,
-                showClashes: false
-            }))
-        }
-
-        if (model && modelFromNmr(model.data)) {
-            validationItems.push(ActionMenu.Item('Random Coil Index Coloring', {
-                kind: 'validation',
-                colorTheme: ValidationReport.Tag.RandomCoilIndex,
-                showClashes: false
-            }))
-        }
-
-        return [
-            ActionMenu.Item('Standard', {
-                kind: 'standard'
-            }),
-            ActionMenu.Item('Assembly Symmetry', {
-                kind: 'symmetry'
-            }),
-            validationItems
-        ] as unknown as ActionMenu.Spec
     }
 
     defaultState() {
@@ -371,13 +325,6 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         if (!this.getTrajectory() || !this.getAssembly()) return null
 
         return <div>
-            <div>
-                <div className='msp-control-row'>
-                    <ActionMenu.Toggle menu={this.actionMenu} items={this.getPresets()} label='Apply Preset' onSelect={this.applyPreset} disabled={this.state.isDisabled} />
-                </div>
-                <ActionMenu.Options menu={this.actionMenu} />
-            </div>
-
             <ParameterControls params={this.getParams()} values={this.values} onChange={this.onChange} isDisabled={this.state.isDisabled} />
         </div>
     }

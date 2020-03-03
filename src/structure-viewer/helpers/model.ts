@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
@@ -31,7 +31,7 @@ export class ModelLoader {
             .apply(StateTransforms.Model.ModelFromTrajectory, { modelIndex: 0 }, { ref: StateElements.Model })
     }
 
-    async load({ fileOrUrl, format = 'cif', assemblyId = 'deposited' }: LoadParams) {
+    async load({ fileOrUrl, format = 'cif' }: LoadParams) {
         if (!fileOrUrl) return
 
         const state = this.plugin.state.dataState;
@@ -43,11 +43,6 @@ export class ModelLoader {
             : this.download(state.build().toRoot(), fileOrUrl, isBinary)
         const model = this.model(data);
         await this.applyState(model)
-        await this.init(assemblyId)
-    }
-
-    async init(assemblyId = 'deposited') {
-        await this.customState.structureView.setAssembly(assemblyId)
     }
 
     async applyState(tree: StateBuilder) {

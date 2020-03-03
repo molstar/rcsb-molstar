@@ -15,6 +15,7 @@ import { AssemblySymmetryProvider } from 'molstar/lib/mol-model-props/rcsb/assem
 import { Task } from 'molstar/lib/mol-task';
 import { AssemblySymmetry3D } from 'molstar/lib/mol-plugin/behavior/dynamic/custom-props/rcsb/assembly-symmetry';
 import { ValidationReportProvider } from 'molstar/lib/mol-model-props/rcsb/validation-report';
+import { getStructureSize } from './util';
 
 export class StructureView {
     get customState() {
@@ -38,13 +39,18 @@ export class StructureView {
         const trajectoryRef = this.findTrajectoryRef()
         if (!trajectoryRef || !this.plugin.state.dataState.transforms.has(trajectoryRef)) return
         const assemblies = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Structure, trajectoryRef))
-        return assemblies.length > 0 ? assemblies[0].obj : undefined
+        return assemblies.length > 0 ? assemblies[0] : undefined
     }
 
     getModel() {
         const trajectoryRef = this.findTrajectoryRef()
         const models = this.plugin.state.dataState.select(StateSelection.Generators.rootsOfType(PSO.Molecule.Model, trajectoryRef))
         return models.length > 0 ? models[0].obj : undefined
+    }
+
+    getSize() {
+        const assembly = this.getAssembly()
+        return assembly?.obj && getStructureSize(assembly.obj.data)
     }
 
     private ensureModelUnitcell(tree: StateBuilder.Root, state: State) {
@@ -57,7 +63,7 @@ export class StructureView {
     }
 
     async attachAssemblySymmetry() {
-        const assembly = this.getAssembly()
+        const assembly = this.getAssembly()?.obj
         if (!assembly || assembly.data.isEmpty) return
 
         await this.plugin.runTask(Task.create('Assembly symmetry', async runtime => {
@@ -77,58 +83,20 @@ export class StructureView {
     async setAssembly(id: string) {
         const state = this.plugin.state.dataState;
         const tree = state.build();
-        if (id === AssemblyNames.Unitcell) {
-            const props = {
-                type: {
-                    name: 'symmetry' as const,
-                    params: { ijkMin: Vec3.create(0, 0, 0), ijkMax: Vec3.create(0, 0, 0) }
-                }
-            }
-            tree.delete(StateElements.Assembly)
-                .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureFromModel,
-                    props, { ref: StateElements.Assembly, tags: [ AssemblyNames.Unitcell ] }
-                )
-            this.ensureModelUnitcell(tree, state)
-        } else if (id === AssemblyNames.Supercell) {
-            const props = {
-                type: {
-                    name: 'symmetry' as const,
-                    params: { ijkMin: Vec3.create(-1, -1, -1), ijkMax: Vec3.create(1, 1, 1) }
-                }
-            }
-            tree.delete(StateElements.Assembly)
-                .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureFromModel,
-                    props, { ref: StateElements.Assembly, tags: [ AssemblyNames.Supercell ] }
-                )
-            this.ensureModelUnitcell(tree, state)
-        } else if (id === AssemblyNames.CrystalContacts) {
-            const props = {
-                type: {
-                    name: 'symmetry-mates' as const,
-                    params: { radius: 5 }
-                }
-            }
-            tree.delete(StateElements.ModelUnitcell)
-            tree.delete(StateElements.Assembly)
-                .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureFromModel,
-                    props, { ref: StateElements.Assembly, tags: [ AssemblyNames.CrystalContacts ] }
-                )
+
+        if (state.tree.transforms.has(StateElements.Assembly)) {
+            tree.to(StateElements.Assembly).update(
+                StateTransforms.Model.StructureFromModel,
+                props => ({ ...props, ...getAssemblyProps(id) })
+            )
         } else {
-            const props = {
-                type: {
-                    name: 'assembly' as const,
-                    params: { id }
-                }
-            }
-            tree.delete(StateElements.ModelUnitcell)
-            tree.delete(StateElements.Assembly)
-                .to(StateElements.Model).apply(
-                    StateTransforms.Model.StructureFromModel,
-                    props, { ref: StateElements.Assembly }
-                )
+            tree.to(StateElements.Model).apply(
+                StateTransforms.Model.StructureFromModel,
+                getAssemblyProps(id), { ref: StateElements.Assembly, tags: getAssemblyTag(id) }
+            )
+        }
+        if (id === AssemblyNames.Unitcell || id === AssemblyNames.Supercell) {
+            this.ensureModelUnitcell(tree, state)
         }
         await this.applyState(tree)
         await this.attachAssemblySymmetry()
@@ -151,25 +119,14 @@ export class StructureView {
                     props => ({ ...props, modelIndex })
                 )
             } else {
-                const props = {
-                    type: {
-                        name: 'assembly' as const,
-                        params: { id: AssemblyNames.Deposited }
-                    }
-                }
                 tree.delete(StateElements.Assembly)
                     .to(StateElements.Trajectory).apply(
                         StateTransforms.Model.ModelFromTrajectory,
                         { modelIndex }, { ref: StateElements.Model }
                     )
-                    .apply(
-                        StateTransforms.Model.StructureFromModel,
-                        props, { ref: StateElements.Assembly }
-                    )
             }
         }
         await this.applyState(tree)
-        await this.attachAssemblySymmetry()
     }
 
     async setSymmetry(symmetryIndex: number) {
@@ -184,7 +141,7 @@ export class StructureView {
                     props => ({ ...props, symmetryIndex })
                 )
             } else {
-                const assembly = this.getAssembly()
+                const assembly = this.getAssembly()?.obj
                 if (!assembly || assembly.data.isEmpty) return
 
                 const props = AssemblySymmetry3D.createDefaultParams(assembly, this.plugin)
@@ -199,5 +156,48 @@ export class StructureView {
 
     constructor(private plugin: PluginContext) {
 
+    }
+}
+
+function getAssemblyProps(id: string) {
+    if (id === AssemblyNames.Unitcell) {
+        return {
+            type: {
+                name: 'symmetry' as const,
+                params: { ijkMin: Vec3.create(0, 0, 0), ijkMax: Vec3.create(0, 0, 0) }
+            }
+        }
+    } else if (id === AssemblyNames.Supercell) {
+        return {
+            type: {
+                name: 'symmetry' as const,
+                params: { ijkMin: Vec3.create(-1, -1, -1), ijkMax: Vec3.create(1, 1, 1) }
+            }
+        }
+    } else if (id === AssemblyNames.CrystalContacts) {
+        return {
+            type: {
+                name: 'symmetry-mates' as const,
+                params: { radius: 5 }
+            }
+        }
+    } else {
+        return {
+            type: {
+                name: 'assembly' as const,
+                params: { id }
+            }
+        }
+    }
+}
+
+function getAssemblyTag(id: string) {
+    switch (id) {
+        case AssemblyNames.Unitcell:
+        case AssemblyNames.Supercell:
+        case AssemblyNames.CrystalContacts:
+            return id
+        default:
+            return undefined
     }
 }

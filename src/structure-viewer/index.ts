@@ -12,7 +12,7 @@ import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/command';
 import { PluginBehaviors } from 'molstar/lib/mol-plugin/behavior';
 import { AnimateModelIndex } from 'molstar/lib/mol-plugin/state/animation/built-in';
-import { SupportedFormats, StructureViewerState, StructureViewerProps } from './types';
+import { SupportedFormats, StructureViewerState, StructureViewerProps, LoadParams } from './types';
 import { ControlsWrapper, ViewportWrapper } from './ui/controls';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 import { StructureRepresentationInteraction } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-representation-interaction';
@@ -113,13 +113,17 @@ export class StructureViewer {
         })
     }
 
-    async loadPdbId(pdbId: string, props?: PresetProps) {
-        const p = this.props.modelUrlProvider(pdbId)
-        await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format })
+    async load(load: LoadParams, props?: PresetProps) {
+        await this.customState.modelLoader.load(load)
         await this.customState.presetManager.apply(props)
     }
 
+    async loadPdbId(pdbId: string, props?: PresetProps) {
+        const p = this.props.modelUrlProvider(pdbId)
+        this.load({ fileOrUrl: p.url, format: p.format }, props)
+    }
+
     async loadUrl(url: string, props?: PresetProps) {
-        await this.customState.modelLoader.load({ fileOrUrl: url, format: 'cif', })
+        this.load({ fileOrUrl: url, format: 'cif', }, props)
     }
 }

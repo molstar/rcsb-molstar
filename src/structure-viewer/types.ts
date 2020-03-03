@@ -24,17 +24,6 @@ export interface LoadParams {
     fileOrUrl: File | string,
     /** A supported file format extension string */
     format?: SupportedFormats,
-    /**
-     * The assemblyId to show initially
-     * - 'deposited' for the structure as it is given in the file
-     * - a number as string, e.g. '1', '2', ... must be defined in the file
-     * - 'unitcell' for the unitcell of an X-ray structure
-     * - 'supercell' for the supercell of an X-ray structure
-     * - 'crystal-contacts' for the symmetry mates of an X-ray structure
-     */
-    assemblyId?: string,
-    // TODO The modelId to show initially
-    // modelId?: string
 }
 
 export enum StateElements {

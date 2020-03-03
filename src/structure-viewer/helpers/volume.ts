@@ -23,6 +23,9 @@ export class VolumeData {
     }
 
     async init() {
+        const r = this.state.select(StateSelection.Generators.ofTransformer(CreateVolumeStreamingInfo))[0];
+        if (r) return;
+
         const { props } = this.customState
         const model = this.state.select(StateElements.Model)[0].obj;
         const asm = this.state.select(StateElements.Assembly)[0].obj;

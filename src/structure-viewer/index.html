@@ -45,16 +45,17 @@
                 return m ? decodeURIComponent(m[1]) : undefined
             }
 
-            const pdbId = getQueryParam('pdbId');
-            const url = getQueryParam('url');
-            const assemblyId = getQueryParam('assemblyId') || 'deposited';
+            const pdbId = getQueryParam('pdbId')
+            const url = getQueryParam('url')
+            const _props = getQueryParam('props')
+            const props = _props && JSON.parse(_props)
 
             // create an instance of the plugin
-            var viewer = new app.StructureViewer('app', { showOpenFileControls: !pdbId });
+            var viewer = new app.StructureViewer('app', { showOpenFileControls: !pdbId })
 
             // load pdbId or url
-            if (pdbId) viewer.loadPdbId(pdbId, assemblyId);
-            else if (url) viewer.loadUrl(url, assemblyId);
+            if (pdbId) viewer.loadPdbId(pdbId, props)
+            else if (url) viewer.loadUrl(url, props)
         </script>
         <div id="menu">
             <h2> RCSB PDB Mol* Viewer - Test Page</h2>
