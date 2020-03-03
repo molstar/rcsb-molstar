@@ -83,7 +83,11 @@ type FeatureProps = {
     target: Target
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps
+type DensityProps = {
+    kind: 'density'
+} & BaseProps
+
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps
 
 export class PresetManager {
     get customState() {
@@ -102,6 +106,8 @@ export class PresetManager {
                 return this.symmetry(props.symmetryIndex, props.assemblyId, props.modelIndex)
             case 'validation':
                 return this.validation(props.colorTheme, props.showClashes, props.assemblyId, props.modelIndex)
+            case 'density':
+                return this.density(props.assemblyId, props.modelIndex)
         }
     }
 
@@ -253,6 +259,14 @@ export class PresetManager {
             }
         })
 
+        this.focusOnLoci()
+    }
+
+    async density(assemblyId?: string, modelIndex?: number) {
+        await this.ensureAssembly(assemblyId, modelIndex)
+        await this.customState.structureView.setSymmetry(-1)
+        await this.default()
+        await this.customState.volumeData.setView('cell')
         this.focusOnLoci()
     }
 
