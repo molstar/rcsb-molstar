@@ -47,6 +47,8 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
                 const params = PD.getDefaultValues(themeCtx.colorThemeRegistry.get(name).getParams(dataCtx))
                 if (symmetry && name === 'rcsb-assembly-symmetry-cluster') {
                     Object.assign(params, { symmetryIndex: symmetry.params.symmetryIndex })
+                } else if (repr.params.values.colorTheme.name === name) {
+                    Object.assign(params, repr.params.values.colorTheme.params)
                 }
                 tree.to(repr.transform.ref).update(
                     StateTransforms.Representation.StructureRepresentation3D,
@@ -219,7 +221,7 @@ export class StructureControls<P, S extends StructureControlsState> extends Coll
         }
 
         let assemblyValue: string = AssemblyNames.Deposited
-        if (assembly?.params) {
+        if (assembly?.params?.values?.type) {
             const type = assembly.params.values.type
             if (type.name === 'symmetry') {
                 if (type.params.ijkMin[0] = 0) {
