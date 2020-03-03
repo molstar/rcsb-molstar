@@ -13,10 +13,8 @@ import { StateElements, StructureViewerState } from '../types';
 import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin-ui/viewport';
 import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin-ui/task';
 import { LociLabels } from 'molstar/lib/mol-plugin-ui/controls';
-import { IconButton } from 'molstar/lib/mol-plugin-ui/controls/common';
 import { Toasts } from 'molstar/lib/mol-plugin-ui/toast';
 import { StructureControls } from './structure';
-import { HelpContent } from './help';
 import { OpenFile } from './open';
 
 export class ControlsWrapper extends PluginUIComponent {
@@ -41,31 +39,10 @@ export class ControlsWrapper extends PluginUIComponent {
     }
 }
 
-class HelpViewportControls extends PluginUIComponent<{}, { isExpanded: boolean }> {
-    state = { isExpanded: false }
-
-    toggleExpanded = () => this.setState({ isExpanded: !this.state.isExpanded });
-
-    render() {
-        return <div className='msp-help-viewport-controls'>
-            <div>
-                <div className='msp-semi-transparent-background' />
-                <IconButton icon='help-circle' title='Help' onClick={this.toggleExpanded} />
-            </div>
-            {this.state.isExpanded && <div className='msp-help-viewport-controls-content'>
-                <HelpContent />
-            </div>}
-        </div>;
-    }
-}
-
 export class ViewportWrapper extends PluginUIComponent {
     render() {
         return <>
             <Viewport />
-            <div className='msp-viewport-top-left-controls'>
-                <HelpViewportControls />
-            </div>
             <ViewportControls />
             <div style={{ position: 'absolute', left: '10px', bottom: '10px' }}>
                 <BackgroundTaskProgress />
