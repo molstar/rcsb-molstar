@@ -93,9 +93,10 @@ export class StructureViewer {
                     view: ViewportWrapper,
                 }
             },
+            config: new Map([
+                [PluginConfig.VolumeStreaming.DefaultServer, this.props.volumeServerUrl]
+            ])
         });
-
-        this.plugin.spec.config?.set(PluginConfig.VolumeStreaming.DefaultServer, this.props.volumeServerUrl);
 
         (this.plugin.customState as StructureViewerState) = {
             props: this.props,

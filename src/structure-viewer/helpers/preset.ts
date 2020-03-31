@@ -112,7 +112,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         const modelParams = { modelIndex: p.modelIndex || 0 }
 
         const structureParams: RootStructureDefinition.Params = { name: 'deposited', params: {} }
-        if (p.assemblyId) {
+        if (p.assemblyId && p.assemblyId !== 'deposited' && p.assemblyId !== '0') {
             Object.assign(structureParams, {
                 name: 'assembly',
                 params: { id: p.assemblyId }
