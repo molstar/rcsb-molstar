@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
@@ -23,14 +23,15 @@ const OpenFileAction = StateAction.build({
         }
     }
 })(({ params, state }, ctx: PluginContext) => Task.create('Open File', async taskCtx => {
-    await (ctx.customState as StructureViewerState).modelLoader.load({
-        fileOrUrl: params.file,
-        format: 'cif',
-    })
+
+    if (params.file.type !== 'cif' && params.file.type !== 'bcif') {
+        throw new Error(`unsupported file format '${params.file.type}`)
+    }
+    await (ctx.customState as StructureViewerState).modelLoader.load({ fileOrUrl: params.file, format: params.file.type, })
 }));
 
 export class OpenFile extends PluginUIComponent<{ initiallyCollapsed?: boolean }> {
     render() {
-        return <ApplyActionControl plugin={this.plugin} key={`${OpenFileAction.id}`} state={this.plugin.state.dataState} action={OpenFileAction} nodeRef={StateTransform.RootRef} initiallyCollapsed={this.props.initiallyCollapsed} />
+        return <ApplyActionControl key={`${OpenFileAction.id}`} state={this.plugin.state.data} action={OpenFileAction} nodeRef={StateTransform.RootRef} initiallyCollapsed={this.props.initiallyCollapsed} />
     }
 }

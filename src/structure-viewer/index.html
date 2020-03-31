@@ -60,15 +60,31 @@
         <div id="menu">
             <h2> RCSB PDB Mol* Viewer - Test Page</h2>
             Examples
-            <select id="examples" onchange="viewer.loadPdbId(this.value)">
+            <select id="examples" onchange="loadExample(parseInt(this.value))">
                 <option value=''></option>
             </select>
         </div>
         <script>
+            function loadExample(index) {
+                var e = examples[index]
+                console.log(e)
+                viewer.loadPdbId(e.id, e.props)
+            }
+
             var examples = [
                 {
                     id: '1CRN',
-                    info: 'small: only polymer'
+                    info: 'small: only polymer',
+                    props: {
+                        kind: 'validation'
+                    }
+                },
+                {
+                    id: '3CUP',
+                    info: 'small',
+                    props: {
+                        kind: 'density'
+                    }
                 },
                 {
                     id: '6JI7',
@@ -76,15 +92,39 @@
                 },
                 {
                     id: '3PQR',
-                    info: 'medium: polymer, carbs, ligands'
+                    info: 'medium: polymer, carbs, ligands',
+                    props: {
+                        kind: 'feature',
+                        assemblyId: '2',
+                        target: {
+                            label_comp_id: 'RET'
+                        }
+                    }
+                },
+                {
+                    id: '1NMR',
+                    info: 'medium: nmr models',
+                    props: {
+                        kind: 'standard',
+                        modelIndex: 2
+                    }
                 },
                 {
                     id: '4HHB',
-                    info: 'medium: classic, lots of validation geometry problems'
+                    info: 'medium: classic, lots of validation geometry problems',
+                    props: {
+                        kind: 'standard',
+                        assemblyId: '1'
+                    }
                 },
                 {
                     id: '1A6D',
-                    info: 'medium: dihedral symmetry (D8)'
+                    info: 'medium: dihedral symmetry (D8)',
+                    props: {
+                        kind: 'symmetry',
+                        assemblyId: '1',
+                        symmetryIndex: 1
+                    }
                 },
                 {
                     id: '1LTI',
@@ -213,11 +253,12 @@
             ];
 
             var examplesSelect = document.getElementById('examples');
-            examples.forEach(function(e) {
+            for (var i = 0, il = examples.length; i < il; ++i) {
+                var e = examples[i]
                 var option = document.createElement('option')
-                Object.assign(option, { text: '[' + e.id + '] ' + e.info, value: e.id })
+                Object.assign(option, { text: '[' + e.id + '] ' + e.info, value: i })
                 examplesSelect.appendChild(option)
-            })
+            }
         </script>
     </body>
 </html>

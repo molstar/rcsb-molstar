@@ -46,6 +46,10 @@ const sharedConfig = {
             path.resolve(__dirname, 'build/src/')
         ],
     },
+    watchOptions: {
+        aggregateTimeout: 750
+    },
+    devtool: ''
 }
 
 module.exports = [

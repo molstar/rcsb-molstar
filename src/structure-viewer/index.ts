@@ -12,18 +12,17 @@ import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { PluginBehaviors } from 'molstar/lib/mol-plugin/behavior';
 import { AnimateModelIndex } from 'molstar/lib/mol-plugin-state/animation/built-in';
-import { SupportedFormats, StructureViewerState, StructureViewerProps, LoadParams } from './types';
-import { ControlsWrapper, ViewportWrapper } from './ui/controls';
+import { SupportedFormats, StructureViewerState, StructureViewerProps } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
-import { StructureRepresentationInteraction } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-representation-interaction';
+import { StructureFocusRepresentation } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-focus-representation';
 
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
-import { StructureView } from './helpers/structure';
 import ReactDOM = require('react-dom');
 import React = require('react');
 import { ModelLoader } from './helpers/model';
-import { VolumeData } from './helpers/volume';
-import { PresetManager, PresetProps } from './helpers/preset';
+import { PresetProps } from './helpers/preset';
+import { ControlsWrapper, ViewportWrapper } from './ui/controls';
+import { PluginConfig } from 'molstar/lib/mol-plugin/config';
 require('./skin/rcsb.scss')
 
 /** package version, filled in at bundle build time */
@@ -61,17 +60,18 @@ export class StructureViewer {
                 PluginSpec.Behavior(PluginBehaviors.Representation.HighlightLoci),
                 PluginSpec.Behavior(PluginBehaviors.Representation.SelectLoci),
                 PluginSpec.Behavior(PluginBehaviors.Representation.DefaultLociLabelProvider),
-                PluginSpec.Behavior(PluginBehaviors.Camera.FocusLoci, {
-                    minRadius: 8,
-                    extraRadius: 4
-                }),
-                PluginSpec.Behavior(StructureRepresentationInteraction),
+                PluginSpec.Behavior(PluginBehaviors.Representation.FocusLoci),
+                PluginSpec.Behavior(PluginBehaviors.Camera.FocusLoci),
+                PluginSpec.Behavior(StructureFocusRepresentation),
 
                 PluginSpec.Behavior(PluginBehaviors.CustomProps.AccessibleSurfaceArea),
                 PluginSpec.Behavior(PluginBehaviors.CustomProps.Interactions),
+                PluginSpec.Behavior(PluginBehaviors.CustomProps.SecondaryStructure),
+                PluginSpec.Behavior(PluginBehaviors.CustomProps.ValenceModel),
+                PluginSpec.Behavior(PluginBehaviors.CustomProps.CrossLinkRestraint),
+
                 PluginSpec.Behavior(PluginBehaviors.CustomProps.RCSBAssemblySymmetry),
                 PluginSpec.Behavior(PluginBehaviors.CustomProps.RCSBValidationReport),
-
             ],
             animations: [
                 AnimateModelIndex
@@ -86,18 +86,20 @@ export class StructureViewer {
                     left: 'none',
                     right: ControlsWrapper,
                     bottom: 'none'
-                },
-                viewport: ViewportWrapper
-            }
+                }
+            },
+            components: {
+                viewport: {
+                    view: ViewportWrapper,
+                }
+            },
         });
+
+        this.plugin.spec.config?.set(PluginConfig.VolumeStreaming.DefaultServer, this.props.volumeServerUrl);
 
         (this.plugin.customState as StructureViewerState) = {
             props: this.props,
-
             modelLoader: new ModelLoader(this.plugin),
-            presetManager: new PresetManager(this.plugin),
-            structureView: new StructureView(this.plugin),
-            volumeData: new VolumeData(this.plugin),
         }
 
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
@@ -113,17 +115,14 @@ export class StructureViewer {
         })
     }
 
-    async load(load: LoadParams, props?: PresetProps) {
-        await this.customState.modelLoader.load(load)
-        await this.customState.presetManager.apply(props)
-    }
+    //
 
     async loadPdbId(pdbId: string, props?: PresetProps) {
         const p = this.props.modelUrlProvider(pdbId)
-        await this.load({ fileOrUrl: p.url, format: p.format }, props)
+        await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format }, props)
     }
 
     async loadUrl(url: string, props?: PresetProps) {
-        await this.load({ fileOrUrl: url, format: 'cif', }, props)
+        await this.customState.modelLoader.load({ fileOrUrl: url, format: 'cif', }, props)
     }
 }
