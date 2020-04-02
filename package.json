@@ -1,6 +1,6 @@
 {
     "name": "rcsb-molstar",
-    "version": "0.6.0-dev.3",
+    "version": "0.6.0-dev.4",
     "description": "RCSB PDB apps and props based on Mol*.",
     "homepage": "https://github.com/rcsb/rcsb-molstar#readme",
     "repository": {
