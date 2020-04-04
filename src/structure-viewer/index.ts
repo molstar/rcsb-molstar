@@ -29,6 +29,11 @@ require('./skin/rcsb.scss')
 declare const __RCSB_MOLSTAR_VERSION__: string
 export const RCSB_MOLSTAR_VERSION = __RCSB_MOLSTAR_VERSION__;
 
+/** unix time stamp, to be filled in at bundle build time */
+declare const __VERSION_TIMESTAMP__: number
+export const BUILD_TIMESTAMP = __VERSION_TIMESTAMP__;
+export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
+
 export const DefaultStructureViewerProps: StructureViewerProps = {
     volumeServerUrl: '//maps.rcsb.org/',
     modelUrlProvider: (pdbId: string) => {
@@ -110,7 +115,7 @@ export class StructureViewer {
 
         PluginCommands.Toast.Show(this.plugin, {
             title: 'Welcome',
-            message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION}`,
+            message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION} [${BUILD_DATE.toLocaleString()}]`,
             key: 'toast-welcome',
             timeoutMs: 5000
         })
