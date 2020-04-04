@@ -31,11 +31,9 @@ const sharedConfig = {
             ],
         }),
         new webpack.DefinePlugin({
-            __PLUGIN_VERSION_TIMESTAMP__: webpack.DefinePlugin.runtimeValue(() => `${new Date().valueOf()}`, true),
-            __RCSB_MOLSTAR_VERSION__: webpack.DefinePlugin.runtimeValue(() => {
-                const version = JSON.parse(fs.readFileSync('./package.json')).version;
-                return `'${version}'`;
-            }, true),
+            __VERSION__: webpack.DefinePlugin.runtimeValue(() => JSON.stringify(require('./node_modules/molstar/package.json').version), true),
+            __VERSION_TIMESTAMP__: webpack.DefinePlugin.runtimeValue(() => `${new Date().valueOf()}`, true),
+            __RCSB_MOLSTAR_VERSION__: webpack.DefinePlugin.runtimeValue(() => JSON.stringify(require('./package.json').version), true),
             'process.env.DEBUG': JSON.stringify(process.env.DEBUG)
         }),
         new MiniCssExtractPlugin({ filename: 'app.css' })

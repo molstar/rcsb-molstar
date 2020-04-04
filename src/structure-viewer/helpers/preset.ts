@@ -9,7 +9,7 @@ import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder'
 import Expression from 'molstar/lib/mol-script/language/expression';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
-import { ValidationReportPreset } from 'molstar/lib/mol-plugin/behavior/dynamic/custom-props/rcsb/validation-report';
+import { ValidationReportGeometryQualityPreset } from 'molstar/lib/mol-plugin/behavior/dynamic/custom-props/rcsb/validation-report';
 import { AssemblySymmetryPreset } from 'molstar/lib/mol-plugin/behavior/dynamic/custom-props/rcsb/assembly-symmetry';
 import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
 import { RootStructureDefinition } from 'molstar/lib/mol-plugin-state/helpers/root-structure';
@@ -130,7 +130,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined
 
         if (p.kind === 'validation') {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties, ValidationReportPreset);
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties, ValidationReportGeometryQualityPreset);
         } else if (p.kind === 'symmetry') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
         } else {
