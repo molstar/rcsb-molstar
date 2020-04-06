@@ -5,6 +5,7 @@
  */
 
 import { ModelLoader } from './helpers/model';
+import { PluginContext } from 'molstar/lib/mol-plugin/context';
 
 export type ModelUrlProvider = (pdbId: string) => {
         url: string,
@@ -28,4 +29,7 @@ export interface LoadParams {
 export interface StructureViewerState {
     props: StructureViewerProps
     modelLoader: ModelLoader
+}
+export function StructureViewerState(plugin: PluginContext) {
+    return plugin.customState as StructureViewerState
 }

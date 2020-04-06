@@ -27,7 +27,7 @@ const OpenFileAction = StateAction.build({
     if (params.file.type !== 'cif' && params.file.type !== 'bcif') {
         throw new Error(`unsupported file format '${params.file.type}`)
     }
-    await (ctx.customState as StructureViewerState).modelLoader.load({ fileOrUrl: params.file, format: params.file.type, })
+    await StructureViewerState(ctx).modelLoader.load({ fileOrUrl: params.file, format: params.file.type, })
 }));
 
 export class OpenFile extends PluginUIComponent<{ initiallyCollapsed?: boolean }> {

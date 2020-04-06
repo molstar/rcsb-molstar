@@ -38,7 +38,7 @@ export class StructureTools extends PluginUIComponent {
 
 export class ControlsWrapper extends PluginUIComponent {
     get customState() {
-        return this.plugin.customState as StructureViewerState
+        return StructureViewerState(this.plugin)
     }
 
     render() {

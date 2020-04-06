@@ -11,7 +11,7 @@ import { PresetProps, RcsbPreset } from './preset';
 
 export class ModelLoader {
     get customState() {
-        return this.plugin.customState as StructureViewerState
+        return StructureViewerState(this.plugin)
     }
 
     async clear() {
