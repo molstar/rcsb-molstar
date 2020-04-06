@@ -17,6 +17,9 @@ import { StructureRepresentationPresetProvider } from 'molstar/lib/mol-plugin-st
 import { Structure, StructureSelection, QueryContext, StructureElement } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
+import { StructureViewerState } from '../types';
+import { StateSelection } from 'molstar/lib/mol-state';
+import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -133,22 +136,32 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties, ValidationReportGeometryQualityPreset);
         } else if (p.kind === 'symmetry') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
+
+            StructureViewerState(plugin).collapsed.next({
+                ...StructureViewerState(plugin).collapsed.value,
+                custom: false
+            })
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties, 'auto');
         }
 
-        if (p.kind === 'feature') {
-            const loci = targetToLoci(p.target, structure.obj!.data)
+        if (p.kind === 'feature' && structure.obj) {
+            const loci = targetToLoci(p.target, structure.obj.data)
             const firstResidue = StructureElement.Loci.firstResidue(loci)
             plugin.managers.structure.focus.setFromLoci(firstResidue)
         }
 
-        if (p.kind === 'density') {
-            const structureRef = plugin.managers.structure.hierarchy.selection.structures.filter(s => s.cell.obj === structure.obj)[0]
-            if (structureRef && !structureRef.volumeStreaming) {
+        if (p.kind === 'density' && structure.cell?.parent) {
+            const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
+            if (!volumeRoot) {
                 const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin))
                 await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref))
             }
+
+            StructureViewerState(plugin).collapsed.next({
+                ...StructureViewerState(plugin).collapsed.value,
+                volume: false
+            })
         }
 
         return {

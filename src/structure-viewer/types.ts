@@ -4,12 +4,13 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
+import { BehaviorSubject } from 'rxjs';
 import { ModelLoader } from './helpers/model';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 
 export type ModelUrlProvider = (pdbId: string) => {
-        url: string,
-        format: SupportedFormats
+    url: string,
+    format: SupportedFormats
 }
 
 export interface StructureViewerProps {
@@ -26,9 +27,17 @@ export interface LoadParams {
     format?: SupportedFormats,
 }
 
+export type CollapsedState = {
+    selection: boolean
+    measurements: boolean
+    component: boolean
+    volume: boolean
+    custom: boolean
+}
 export interface StructureViewerState {
     props: StructureViewerProps
     modelLoader: ModelLoader
+    collapsed: BehaviorSubject<CollapsedState>
 }
 export function StructureViewerState(plugin: PluginContext) {
     return plugin.customState as StructureViewerState

@@ -4,6 +4,7 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
+import { BehaviorSubject } from 'rxjs';
 import { DefaultPluginSpec } from 'molstar/lib/mol-plugin';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin'
 import './index.html'
@@ -12,7 +13,7 @@ import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { PluginBehaviors } from 'molstar/lib/mol-plugin/behavior';
 import { AnimateModelIndex } from 'molstar/lib/mol-plugin-state/animation/built-in';
-import { SupportedFormats, StructureViewerState, StructureViewerProps } from './types';
+import { StructureViewerState, StructureViewerProps, CollapsedState } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 import { StructureFocusRepresentation } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-focus-representation';
 
@@ -109,6 +110,13 @@ export class StructureViewer {
         (this.plugin.customState as StructureViewerState) = {
             props: this.props,
             modelLoader: new ModelLoader(this.plugin),
+            collapsed: new BehaviorSubject<CollapsedState>({
+                selection: true,
+                measurements: true,
+                component: false,
+                volume: true,
+                custom: true,
+            }),
         }
 
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
@@ -130,7 +138,7 @@ export class StructureViewer {
         for (const provider of this.props.modelUrlProviders) {
             try {
                 const p = provider(pdbId)
-        await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format }, props)
+                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format }, props)
                 break
             } catch (e) {
                 console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`)

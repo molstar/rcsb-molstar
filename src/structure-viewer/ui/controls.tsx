@@ -9,29 +9,35 @@ import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { StructureViewerState } from '../types';
 import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin-ui/viewport';
 import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin-ui/task';
-import { LociLabels, CustomStructureControls } from 'molstar/lib/mol-plugin-ui/controls';
+import { LociLabels, CustomStructureControls, SelectionViewportControls } from 'molstar/lib/mol-plugin-ui/controls';
 import { Toasts } from 'molstar/lib/mol-plugin-ui/toast';
 import { OpenFile } from './open';
 import { Icon } from 'molstar/lib/mol-plugin-ui/controls/icons';
 import { StructureSourceControls } from 'molstar/lib/mol-plugin-ui/structure/source';
-import { StructureSelectionControls } from 'molstar/lib/mol-plugin-ui/structure/selection';
 import { StructureMeasurementsControls } from 'molstar/lib/mol-plugin-ui/structure/measurements';
 import { StructureComponentControls } from 'molstar/lib/mol-plugin-ui/structure/components';
 import { VolumeStreamingControls } from 'molstar/lib/mol-plugin-ui/structure/volume';
 
-
 export class StructureTools extends PluginUIComponent {
+    get customState() {
+        return StructureViewerState(this.plugin)
+    }
+
+    componentDidMount() {
+        this.subscribe(this.customState.collapsed, () => this.forceUpdate())
+    }
+
     render() {
+        const collapsed = this.customState.collapsed.value
         return <>
             <div className='msp-section-header'><Icon name='tools' />Structure Tools</div>
 
             <StructureSourceControls />
-            <StructureSelectionControls initiallyCollapsed />
-            <StructureMeasurementsControls initiallyCollapsed />
-            <StructureComponentControls initiallyCollapsed />
-            <VolumeStreamingControls initiallyCollapsed />
+            <StructureMeasurementsControls initiallyCollapsed={collapsed.measurements}  />
+            <StructureComponentControls initiallyCollapsed={collapsed.component}  />
+            <VolumeStreamingControls initiallyCollapsed={collapsed.volume}  />
 
-            <CustomStructureControls initiallyCollapsed />
+            <CustomStructureControls initiallyCollapsed={collapsed.custom} />
         </>;
     }
 }
@@ -54,6 +60,7 @@ export class ViewportWrapper extends PluginUIComponent {
     render() {
         return <>
             <Viewport />
+            <SelectionViewportControls />
             <ViewportControls />
             <div style={{ position: 'absolute', left: '10px', bottom: '10px' }}>
                 <BackgroundTaskProgress />
