@@ -36,13 +36,16 @@ export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 
 export const DefaultStructureViewerProps: StructureViewerProps = {
     volumeServerUrl: '//maps.rcsb.org/',
-    modelUrlProvider: (pdbId: string) => {
-        const id = pdbId.toLowerCase()
-        return {
-            url: `//models.rcsb.org/${id}.bcif`,
-            format: 'bcif' as SupportedFormats
-        }
-    },
+    modelUrlProviders: [
+        (pdbId: string) => ({
+            url: `//models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
+            format: 'bcif' as const
+        }),
+        (pdbId: string) => ({
+            url: `//files.rcsb.org/download/${pdbId.toLowerCase()}.cif`,
+            format: 'cif' as const
+        })
+    ],
     showOpenFileControls: false,
 }
 
@@ -124,8 +127,15 @@ export class StructureViewer {
     //
 
     async loadPdbId(pdbId: string, props?: PresetProps) {
-        const p = this.props.modelUrlProvider(pdbId)
+        for (const provider of this.props.modelUrlProviders) {
+            try {
+                const p = provider(pdbId)
         await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format }, props)
+                break
+            } catch (e) {
+                console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`)
+            }
+        }
     }
 
     async loadUrl(url: string, props?: PresetProps) {

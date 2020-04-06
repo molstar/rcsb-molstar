@@ -6,12 +6,14 @@
 
 import { ModelLoader } from './helpers/model';
 
-export interface StructureViewerProps {
-    volumeServerUrl: string,
-    modelUrlProvider: (pdbId: string) => {
+export type ModelUrlProvider = (pdbId: string) => {
         url: string,
         format: SupportedFormats
-    },
+}
+
+export interface StructureViewerProps {
+    volumeServerUrl: string,
+    modelUrlProviders: ModelUrlProvider[],
     showOpenFileControls: boolean,
 }
 
