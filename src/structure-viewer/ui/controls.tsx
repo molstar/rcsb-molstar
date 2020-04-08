@@ -35,7 +35,7 @@ export class StructureTools extends PluginUIComponent {
             <StructureSourceControls />
             <StructureMeasurementsControls initiallyCollapsed={collapsed.measurements}  />
             <StructureComponentControls initiallyCollapsed={collapsed.component}  />
-            <VolumeStreamingControls initiallyCollapsed={collapsed.volume}  />
+            <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume}  />
 
             <CustomStructureControls initiallyCollapsed={collapsed.custom} />
         </>;
