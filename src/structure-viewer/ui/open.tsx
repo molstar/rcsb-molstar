@@ -24,6 +24,9 @@ const OpenFileAction = StateAction.build({
     }
 })(({ params, state }, ctx: PluginContext) => Task.create('Open File', async taskCtx => {
 
+    if (params.file === null) {
+        throw new Error('no file selected')
+    }
     if (params.file.type !== 'cif' && params.file.type !== 'bcif') {
         throw new Error(`unsupported file format '${params.file.type}`)
     }
