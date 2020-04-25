@@ -12,7 +12,6 @@ import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin-ui/task';
 import { LociLabels, CustomStructureControls, SelectionViewportControls } from 'molstar/lib/mol-plugin-ui/controls';
 import { Toasts } from 'molstar/lib/mol-plugin-ui/toast';
 import { OpenFile } from './open';
-import { Icon } from 'molstar/lib/mol-plugin-ui/controls/icons';
 import { StructureSourceControls } from 'molstar/lib/mol-plugin-ui/structure/source';
 import { StructureMeasurementsControls } from 'molstar/lib/mol-plugin-ui/structure/measurements';
 import { StructureComponentControls } from 'molstar/lib/mol-plugin-ui/structure/components';
@@ -30,8 +29,6 @@ export class StructureTools extends PluginUIComponent {
     render() {
         const collapsed = this.customState.collapsed.value
         return <>
-            <div className='msp-section-header'><Icon name='tools' />Structure Tools</div>
-
             <StructureSourceControls />
             <StructureMeasurementsControls initiallyCollapsed={collapsed.measurements}  />
             <StructureComponentControls initiallyCollapsed={collapsed.component}  />

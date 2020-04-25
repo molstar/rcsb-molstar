@@ -9,8 +9,8 @@ import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder'
 import Expression from 'molstar/lib/mol-script/language/expression';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
-import { ValidationReportGeometryQualityPreset } from 'molstar/lib/mol-plugin/behavior/dynamic/custom-props/rcsb/validation-report';
-import { AssemblySymmetryPreset } from 'molstar/lib/mol-plugin/behavior/dynamic/custom-props/rcsb/assembly-symmetry';
+import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
+import { AssemblySymmetryPreset } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
 import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
 import { RootStructureDefinition } from 'molstar/lib/mol-plugin-state/helpers/root-structure';
 import { StructureRepresentationPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';

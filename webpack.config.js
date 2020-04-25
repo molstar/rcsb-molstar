@@ -33,8 +33,7 @@ const sharedConfig = {
             ],
         }),
         new webpack.DefinePlugin({
-            __VERSION__: webpack.DefinePlugin.runtimeValue(() => JSON.stringify(require('./node_modules/molstar/package.json').version), true),
-            __VERSION_TIMESTAMP__: webpack.DefinePlugin.runtimeValue(() => `${new Date().valueOf()}`, true),
+            __BUILD_TIMESTAMP__: webpack.DefinePlugin.runtimeValue(() => `${new Date().valueOf()}`, true),
             __RCSB_MOLSTAR_VERSION__: webpack.DefinePlugin.runtimeValue(() => JSON.stringify(require('./package.json').version), true),
             'process.env.DEBUG': JSON.stringify(process.env.DEBUG)
         }),

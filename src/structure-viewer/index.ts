@@ -11,11 +11,9 @@ import './index.html'
 import './favicon.ico'
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
-import { PluginBehaviors } from 'molstar/lib/mol-plugin/behavior';
 import { AnimateModelIndex } from 'molstar/lib/mol-plugin-state/animation/built-in';
 import { StructureViewerState, StructureViewerProps, CollapsedState } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
-import { StructureFocusRepresentation } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-focus-representation';
 
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
 import ReactDOM = require('react-dom');
@@ -24,6 +22,8 @@ import { ModelLoader } from './helpers/model';
 import { PresetProps } from './helpers/preset';
 import { ControlsWrapper, ViewportWrapper } from './ui/controls';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
+import { RCSBAssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
+import { RCSBValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
 require('./skin/rcsb.scss')
 
 /** package version, filled in at bundle build time */
@@ -31,8 +31,8 @@ declare const __RCSB_MOLSTAR_VERSION__: string
 export const RCSB_MOLSTAR_VERSION = __RCSB_MOLSTAR_VERSION__;
 
 /** unix time stamp, to be filled in at bundle build time */
-declare const __VERSION_TIMESTAMP__: number
-export const BUILD_TIMESTAMP = __VERSION_TIMESTAMP__;
+declare const __BUILD_TIMESTAMP__: number
+export const BUILD_TIMESTAMP = __BUILD_TIMESTAMP__;
 export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 
 export const DefaultStructureViewerProps: StructureViewerProps = {
@@ -66,21 +66,9 @@ export class StructureViewer {
         this.plugin = new PluginContext({
             ...DefaultPluginSpec,
             behaviors: [
-                PluginSpec.Behavior(PluginBehaviors.Representation.HighlightLoci),
-                PluginSpec.Behavior(PluginBehaviors.Representation.SelectLoci),
-                PluginSpec.Behavior(PluginBehaviors.Representation.DefaultLociLabelProvider),
-                PluginSpec.Behavior(PluginBehaviors.Representation.FocusLoci),
-                PluginSpec.Behavior(PluginBehaviors.Camera.FocusLoci),
-                PluginSpec.Behavior(StructureFocusRepresentation),
-
-                PluginSpec.Behavior(PluginBehaviors.CustomProps.AccessibleSurfaceArea),
-                PluginSpec.Behavior(PluginBehaviors.CustomProps.Interactions),
-                PluginSpec.Behavior(PluginBehaviors.CustomProps.SecondaryStructure),
-                PluginSpec.Behavior(PluginBehaviors.CustomProps.ValenceModel),
-                PluginSpec.Behavior(PluginBehaviors.CustomProps.CrossLinkRestraint),
-
-                PluginSpec.Behavior(PluginBehaviors.CustomProps.RCSBAssemblySymmetry),
-                PluginSpec.Behavior(PluginBehaviors.CustomProps.RCSBValidationReport),
+                ...DefaultPluginSpec.behaviors,
+                PluginSpec.Behavior(RCSBAssemblySymmetry),
+                PluginSpec.Behavior(RCSBValidationReport),
             ],
             animations: [
                 AnimateModelIndex

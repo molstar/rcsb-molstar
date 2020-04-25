@@ -8,6 +8,7 @@ import { StructureViewerState, LoadParams } from '../types';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PresetProps, RcsbPreset } from './preset';
+import { Asset } from 'molstar/lib/mol-util/assets';
 
 export class ModelLoader {
     get customState() {
@@ -26,7 +27,7 @@ export class ModelLoader {
         const isBinary = format === 'bcif'
 
         const data = fileOrUrl instanceof File
-            ? (await this.plugin.builders.data.readFile({ file: fileOrUrl, isBinary })).data
+            ? (await this.plugin.builders.data.readFile({ file: Asset.File(fileOrUrl), isBinary })).data
             : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary })
         await this.plugin.builders.structure.parseTrajectory(data, 'mmcif')
 
