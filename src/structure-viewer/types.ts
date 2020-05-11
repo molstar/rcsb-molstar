@@ -30,6 +30,7 @@ export interface LoadParams {
 export type CollapsedState = {
     selection: boolean
     measurements: boolean
+    superposition: boolean
     component: boolean
     volume: boolean
     custom: boolean

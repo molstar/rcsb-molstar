@@ -5,36 +5,13 @@
  */
 
 import * as React from 'react';
-import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
-import { StateAction, StateTransform } from 'molstar/lib/mol-state';
-import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
-import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { Task } from 'molstar/lib/mol-task';
+import { StateTransform } from 'molstar/lib/mol-state';
+import { OpenFiles } from 'molstar/lib/mol-plugin-state/actions/file';
 import { ApplyActionControl } from 'molstar/lib/mol-plugin-ui/state/apply-action';
 import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
-import { StructureViewerState } from '../types';
 
-const OpenFileAction = StateAction.build({
-    display: { name: 'Open mmCIF File', description: 'Load a file and create its default visuals' },
-    from: PluginStateObject.Root,
-    params: (a, ctx: PluginContext) => {
-        return {
-            file: PD.File({ accept: '.cif, .mcif, .mmcif, .bcif, .gz, .zip' })
-        }
-    }
-})(({ params, state }, ctx: PluginContext) => Task.create('Open File', async taskCtx => {
-    const file = params.file?.file;
-    if (!file) {
-        throw new Error('no file selected')
-    }
-    if (file.type !== 'cif' && file.type !== 'bcif') {
-        throw new Error(`unsupported file format '${file.type}`)
-    }
-    await StructureViewerState(ctx).modelLoader.load({ fileOrUrl: file, format: file.type, })
-}));
-
-export class OpenFile extends PluginUIComponent<{ initiallyCollapsed?: boolean }> {
+export class OpenFilesControls extends PluginUIComponent {
     render() {
-        return <ApplyActionControl key={`${OpenFileAction.id}`} state={this.plugin.state.data} action={OpenFileAction} nodeRef={StateTransform.RootRef} initiallyCollapsed={this.props.initiallyCollapsed} />
+        return <ApplyActionControl key={`${OpenFiles.id}`} state={this.plugin.state.data} action={OpenFiles} nodeRef={StateTransform.RootRef} initiallyCollapsed={false} />
     }
 }

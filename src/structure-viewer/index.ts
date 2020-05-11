@@ -82,7 +82,6 @@ export class StructureViewer {
                 controls: {
                     left: 'none',
                     right: ControlsWrapper,
-                    bottom: 'none'
                 }
             },
             components: {
@@ -90,9 +89,9 @@ export class StructureViewer {
                     view: ViewportWrapper,
                 }
             },
-            config: new Map([
+            config: [
                 [PluginConfig.VolumeStreaming.DefaultServer, this.props.volumeServerUrl]
-            ])
+            ]
         });
 
         (this.plugin.customState as StructureViewerState) = {
@@ -101,6 +100,7 @@ export class StructureViewer {
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
                 measurements: true,
+                superposition: true,
                 component: false,
                 volume: true,
                 custom: true,
@@ -110,7 +110,13 @@ export class StructureViewer {
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
 
         const renderer = this.plugin.canvas3d!.props.renderer;
-        PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } })
+        PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
+        PluginCommands.Layout.Update(this.plugin, { state: { regionState: {
+            bottom: this.props.showOpenFileControls ? 'full' : 'hidden',
+            top: 'full',
+            left: 'hidden',
+            right: 'full'
+        } } });
 
         PluginCommands.Toast.Show(this.plugin, {
             title: 'Welcome',

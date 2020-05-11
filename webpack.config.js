@@ -8,7 +8,7 @@ const sharedConfig = {
     module: {
         rules: [
             {
-                test: /\.(woff2?|ttf|otf|eot|svg|html|ico)$/,
+                test: /\.(html|ico)$/,
                 use: [{
                     loader: 'file-loader',
                     options: { name: '[name].[ext]' }
@@ -19,7 +19,6 @@ const sharedConfig = {
                 use: [
                     MiniCssExtractPlugin.loader,
                     { loader: 'css-loader', options: { sourceMap: false } },
-                    { loader: 'resolve-url-loader', options: { sourceMap: false } },
                     { loader: 'sass-loader', options: { sourceMap: false } },
                 ]
             }

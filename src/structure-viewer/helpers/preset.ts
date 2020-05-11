@@ -98,7 +98,7 @@ type DensityProps = {
 export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
-    preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: 'deposited' }, { isHidden: true })
+    preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
 });
 
 export const RcsbPreset = TrajectoryHierarchyPresetProvider({
@@ -114,8 +114,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         const modelParams = { modelIndex: p.modelIndex || 0 }
 
-        const structureParams: RootStructureDefinition.Params = { name: 'deposited', params: {} }
-        if (p.assemblyId && p.assemblyId !== 'deposited' && p.assemblyId !== '0') {
+        const structureParams: RootStructureDefinition.Params = { name: 'model', params: {} }
+        if (p.assemblyId && p.assemblyId !== '' && p.assemblyId !== '0') {
             Object.assign(structureParams, {
                 name: 'assembly',
                 params: { id: p.assemblyId }
