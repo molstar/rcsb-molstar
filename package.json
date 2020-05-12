@@ -23,8 +23,8 @@
         "watch-webpack": "webpack -w --mode development --display minimal",
         "serve": "http-server -p 1335",
         "preversion": "npm run test",
-        "postversion": "git push && git push --tags",
-        "prepublishOnly": "npm run test && npm run build"
+        "version": "npm run build",
+        "postversion": "git push && git push --tags"
     },
     "publishConfig": {
         "registry": "http://nexus3.rcsb.org/repository/npm-rcsb/"
