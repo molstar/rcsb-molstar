@@ -63,6 +63,16 @@
             <select id="examples" onchange="loadExample(parseInt(this.value))">
                 <option value=''></option>
             </select>
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+            Clear
+            <button style="padding: 3px;" onclick="viewer.clear()">all</button>
+
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+            Superposed
+            <button style="padding: 3px;" onclick="superposed()">3PQR | 1U19</button>
         </div>
         <script>
             function loadExample(index) {
@@ -257,6 +267,26 @@
                 var option = document.createElement('option')
                 Object.assign(option, { text: '[' + e.id + '] ' + e.info, value: i })
                 examplesSelect.appendChild(option)
+            }
+
+            //
+
+            function superposed() {
+                viewer.clear()
+                    .then(function() {
+                        return viewer.loadPdbId('3pqr', { kind: 'standard', assemblyId: '1' })
+                    })
+                    .then(function() {
+                        return viewer.loadPdbId('1u19', { kind: 'standard', assemblyId: '1' }, [
+                            -0.67160917400372, 0.28222298510688404, 0.6850488398834855, 0,
+                            0.13262098666685063, 0.9554691407700946, -0.26361033961856695, 0,
+                            -0.7289399153866256, -0.08619120567473626, -0.6791305379047228, 0,
+                            -7.602670654900173, -30.317901981509067, 24.605855585357773, 1
+                        ])
+                    })
+                    .then(function() {
+                        viewer.resetCamera(0)
+                    });
             }
         </script>
     </body>

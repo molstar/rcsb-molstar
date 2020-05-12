@@ -24,6 +24,7 @@ import { ControlsWrapper, ViewportWrapper } from './ui/controls';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
 import { RCSBAssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
 import { RCSBValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
+import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
 require('./skin/rcsb.scss')
 
 /** package version, filled in at bundle build time */
@@ -130,11 +131,19 @@ export class StructureViewer {
 
     //
 
-    async loadPdbId(pdbId: string, props?: PresetProps) {
+    resetCamera(durationMs?: number) {
+        this.plugin.managers.camera.reset(undefined, durationMs);
+    }
+
+    async clear() {
+        await this.customState.modelLoader.clear();
+    }
+
+    async loadPdbId(pdbId: string, props?: PresetProps, matrix?: Mat4) {
         for (const provider of this.props.modelUrlProviders) {
             try {
                 const p = provider(pdbId)
-                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format }, props)
+                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format }, props, matrix)
                 break
             } catch (e) {
                 console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`)
@@ -142,7 +151,7 @@ export class StructureViewer {
         }
     }
 
-    async loadUrl(url: string, props?: PresetProps) {
-        await this.customState.modelLoader.load({ fileOrUrl: url, format: 'cif', }, props)
+    async loadUrl(url: string, props?: PresetProps, matrix?: Mat4) {
+        await this.customState.modelLoader.load({ fileOrUrl: url, format: 'cif', }, props, matrix)
     }
 }
