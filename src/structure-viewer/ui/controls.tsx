@@ -11,7 +11,7 @@ import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin-ui/viewport';
 import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin-ui/task';
 import { LociLabels, CustomStructureControls, SelectionViewportControls } from 'molstar/lib/mol-plugin-ui/controls';
 import { Toasts } from 'molstar/lib/mol-plugin-ui/toast';
-import { OpenFilesControls } from './open';
+import { ImportControls } from './import';
 import { StructureSourceControls } from 'molstar/lib/mol-plugin-ui/structure/source';
 import { StructureMeasurementsControls } from 'molstar/lib/mol-plugin-ui/structure/measurements';
 import { StructureSuperpositionControls } from 'molstar/lib/mol-plugin-ui/structure/superposition';
@@ -47,9 +47,9 @@ export class ControlsWrapper extends PluginUIComponent {
     }
 
     render() {
-        const { showOpenFileControls } = this.customState.props
+        const { showImportControls } = this.customState.props
         return <div className='msp-scrollable-container'>
-            {showOpenFileControls && <OpenFilesControls />}
+            {showImportControls && <ImportControls />}
             <StructureTools />
         </div>;
     }

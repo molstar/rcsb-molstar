@@ -47,7 +47,7 @@ export const DefaultStructureViewerProps: StructureViewerProps = {
             format: 'cif' as const
         })
     ],
-    showOpenFileControls: false,
+    showImportControls: false,
 }
 
 export class StructureViewer {
@@ -90,7 +90,9 @@ export class StructureViewer {
                 }
             },
             config: [
-                [PluginConfig.VolumeStreaming.DefaultServer, this.props.volumeServerUrl]
+                [PluginConfig.VolumeStreaming.DefaultServer, this.props.volumeServerUrl],
+                [PluginConfig.Download.DefaultPdbProvider, 'rcsb'],
+                [PluginConfig.Download.DefaultEmdbProvider, 'rcsb']
             ]
         });
 
@@ -112,7 +114,7 @@ export class StructureViewer {
         const renderer = this.plugin.canvas3d!.props.renderer;
         PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
         PluginCommands.Layout.Update(this.plugin, { state: { regionState: {
-            bottom: this.props.showOpenFileControls ? 'full' : 'hidden',
+            bottom: this.props.showImportControls ? 'full' : 'hidden',
             top: 'full',
             left: 'hidden',
             right: 'full'

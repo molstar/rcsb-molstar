@@ -51,7 +51,7 @@
             const props = _props && JSON.parse(_props)
 
             // create an instance of the plugin
-            var viewer = new app.StructureViewer('app', { showOpenFileControls: !pdbId })
+            var viewer = new app.StructureViewer('app', { showImportControls: !pdbId })
 
             // load pdbId or url
             if (pdbId) viewer.loadPdbId(pdbId, props)

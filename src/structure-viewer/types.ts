@@ -16,7 +16,7 @@ export type ModelUrlProvider = (pdbId: string) => {
 export interface StructureViewerProps {
     volumeServerUrl: string,
     modelUrlProviders: ModelUrlProvider[],
-    showOpenFileControls: boolean,
+    showImportControls: boolean,
 }
 
 export type SupportedFormats = 'cif' | 'bcif'
