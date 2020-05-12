@@ -16,7 +16,7 @@ export class ImportControls extends CollapsableControls {
     protected defaultState() {
         return {
             header: 'Import',
-            isCollapsed: true,
+            isCollapsed: false,
             brand: { accent:  'gray' as const, svg: FileOutlineSvg }
         }
     }
