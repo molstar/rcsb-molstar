@@ -151,6 +151,13 @@ export class StructureViewer {
         }
     }
 
+    async loadPdbIds(args: { pdbId: string, props?: PresetProps, matrix?: Mat4 }[]) {
+        for (const { pdbId, props, matrix } of args) {
+            await this.loadPdbId(pdbId, props, matrix);
+        }
+        this.resetCamera(0);
+    }
+
     async loadUrl(url: string, props?: PresetProps, matrix?: Mat4) {
         await this.customState.modelLoader.load({ fileOrUrl: url, format: 'cif', }, props, matrix)
     }
