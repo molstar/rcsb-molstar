@@ -11,8 +11,7 @@ import './index.html'
 import './favicon.ico'
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
-import { AnimateModelIndex } from 'molstar/lib/mol-plugin-state/animation/built-in';
-import { StructureViewerState, StructureViewerProps, CollapsedState } from './types';
+import { ViewerState as ViewerState, CollapsedState, ModelUrlProvider } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
@@ -25,6 +24,10 @@ import { PluginConfig } from 'molstar/lib/mol-plugin/config';
 import { RCSBAssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
 import { RCSBValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
+import { PluginState } from 'molstar/lib/mol-plugin/state';
+import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
+import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
+import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 require('./skin/rcsb.scss')
 
 /** package version, filled in at bundle build time */
@@ -36,69 +39,97 @@ declare const __BUILD_TIMESTAMP__: number
 export const BUILD_TIMESTAMP = __BUILD_TIMESTAMP__;
 export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 
-export const DefaultStructureViewerProps: StructureViewerProps = {
-    volumeServerUrl: '//maps.rcsb.org/',
+const Extensions = {
+    'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
+    'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport)
+};
+
+const DefaultViewerProps = {
+    showImportControls: false,
     modelUrlProviders: [
         (pdbId: string) => ({
             url: `//models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
-            format: 'bcif' as const
+            format: 'mmcif',
+            isBinary: true
         }),
         (pdbId: string) => ({
             url: `//files.rcsb.org/download/${pdbId.toLowerCase()}.cif`,
-            format: 'cif' as const
+            format: 'mmcif',
+            isBinary: false
         })
-    ],
-    showImportControls: false,
-}
+    ] as ModelUrlProvider[],
 
-export class StructureViewer {
+    extensions: ObjectKeys(Extensions),
+    layoutIsExpanded: false,
+    layoutShowControls: true,
+    layoutControlsDisplay: 'reactive' as PluginLayoutControlsDisplay,
+    layoutShowSequence: true,
+    layoutShowLog: false,
+
+    viewportShowExpand: true,
+    viewportShowSelectionMode: true,
+    viewportShowAnimation: false,
+    volumeStreamingServer: '//maps.rcsb.org/',
+};
+type ViewerProps = typeof DefaultViewerProps
+
+export class Viewer {
     private readonly plugin: PluginContext;
-    private readonly props: Readonly<StructureViewerProps>
+    private readonly modelUrlProviders: ModelUrlProvider[];
 
     private get customState() {
-        return this.plugin.customState as StructureViewerState
+        return this.plugin.customState as ViewerState
     }
 
-    constructor(target: string | HTMLElement, props: Partial<StructureViewerProps> = {}) {
+    constructor(target: string | HTMLElement, props: Partial<ViewerProps> = {}) {
         target = typeof target === 'string' ? document.getElementById(target)! : target
 
-        this.props = { ...DefaultStructureViewerProps, ...props }
+        const o = { ...DefaultViewerProps, ...props }
 
-        this.plugin = new PluginContext({
-            ...DefaultPluginSpec,
+        const spec: PluginSpec = {
+            actions: [...DefaultPluginSpec.actions],
             behaviors: [
                 ...DefaultPluginSpec.behaviors,
-                PluginSpec.Behavior(RCSBAssemblySymmetry),
-                PluginSpec.Behavior(RCSBValidationReport),
+                ...o.extensions.map(e => Extensions[e]),
             ],
-            animations: [
-                AnimateModelIndex
-            ],
+            animations: [...DefaultPluginSpec.animations || []],
+            customParamEditors: DefaultPluginSpec.customParamEditors,
             layout: {
                 initial: {
-                    isExpanded: false,
-                    showControls: true,
-                    controlsDisplay: 'reactive'
+                    isExpanded: o.layoutIsExpanded,
+                    showControls: o.layoutShowControls,
+                    controlsDisplay: o.layoutControlsDisplay,
                 },
                 controls: {
+                    ...DefaultPluginSpec.layout && DefaultPluginSpec.layout.controls,
+                    top: o.layoutShowSequence ? undefined : 'none',
+                    bottom: o.layoutShowLog ? undefined : 'none',
                     left: 'none',
                     right: ControlsWrapper,
                 }
             },
             components: {
+                ...DefaultPluginSpec.components,
+                remoteState: 'none',
                 viewport: {
-                    view: ViewportWrapper,
+                    view: ViewportWrapper
                 }
             },
             config: [
-                [PluginConfig.VolumeStreaming.DefaultServer, this.props.volumeServerUrl],
+                [PluginConfig.Viewport.ShowExpand, o.viewportShowExpand],
+                [PluginConfig.Viewport.ShowSelectionMode, o.viewportShowSelectionMode],
+                [PluginConfig.Viewport.ShowAnimation, o.viewportShowAnimation],
+                [PluginConfig.VolumeStreaming.DefaultServer, o.volumeStreamingServer],
                 [PluginConfig.Download.DefaultPdbProvider, 'rcsb'],
                 [PluginConfig.Download.DefaultEmdbProvider, 'rcsb']
             ]
-        });
+        };
 
-        (this.plugin.customState as StructureViewerState) = {
-            props: this.props,
+        this.plugin = new PluginContext(spec);
+        this.modelUrlProviders = o.modelUrlProviders;
+
+        (this.plugin.customState as ViewerState) = {
+            showImportControls: o.showImportControls,
             modelLoader: new ModelLoader(this.plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
@@ -114,12 +145,6 @@ export class StructureViewer {
 
         const renderer = this.plugin.canvas3d!.props.renderer;
         PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
-        PluginCommands.Layout.Update(this.plugin, { state: { regionState: {
-            bottom: this.props.showImportControls ? 'full' : 'hidden',
-            top: 'full',
-            left: 'hidden',
-            right: 'full'
-        } } });
 
         PluginCommands.Toast.Show(this.plugin, {
             title: 'Welcome',
@@ -135,15 +160,16 @@ export class StructureViewer {
         this.plugin.managers.camera.reset(undefined, durationMs);
     }
 
-    async clear() {
-        await this.customState.modelLoader.clear();
+    clear() {
+        const state = this.plugin.state.data;
+        return PluginCommands.State.RemoveObject(this.plugin, { state, ref: state.tree.root.ref })
     }
 
     async loadPdbId(pdbId: string, props?: PresetProps, matrix?: Mat4) {
-        for (const provider of this.props.modelUrlProviders) {
+        for (const provider of this.modelUrlProviders) {
             try {
                 const p = provider(pdbId)
-                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format }, props, matrix)
+                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, props, matrix)
                 break
             } catch (e) {
                 console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`)
@@ -158,7 +184,11 @@ export class StructureViewer {
         this.resetCamera(0);
     }
 
-    async loadUrl(url: string, props?: PresetProps, matrix?: Mat4) {
-        await this.customState.modelLoader.load({ fileOrUrl: url, format: 'cif', }, props, matrix)
+    loadStructureFromUrl(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps, matrix?: Mat4) {
+        return this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, props, matrix)
+    }
+
+    loadSnapshotFromUrl(url: string, type: PluginState.SnapshotType) {
+        return PluginCommands.State.Snapshots.OpenUrl(this.plugin, { url, type });
     }
 }

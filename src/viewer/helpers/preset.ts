@@ -17,7 +17,7 @@ import { StructureRepresentationPresetProvider } from 'molstar/lib/mol-plugin-st
 import { Structure, StructureSelection, QueryContext, StructureElement } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
-import { StructureViewerState } from '../types';
+import { ViewerState } from '../types';
 import { StateSelection } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 
@@ -137,8 +137,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         } else if (p.kind === 'symmetry') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
 
-            StructureViewerState(plugin).collapsed.next({
-                ...StructureViewerState(plugin).collapsed.value,
+            ViewerState(plugin).collapsed.next({
+                ...ViewerState(plugin).collapsed.value,
                 custom: false
             })
         } else {
@@ -158,8 +158,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref))
             }
 
-            StructureViewerState(plugin).collapsed.next({
-                ...StructureViewerState(plugin).collapsed.value,
+            ViewerState(plugin).collapsed.next({
+                ...ViewerState(plugin).collapsed.value,
                 volume: false
             })
         }

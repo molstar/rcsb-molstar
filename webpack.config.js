@@ -1,5 +1,4 @@
 const path = require('path');
-const fs = require('fs');
 const webpack = require('webpack');
 const ExtraWatchWebpackPlugin = require('extra-watch-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -36,7 +35,7 @@ const sharedConfig = {
             __RCSB_MOLSTAR_VERSION__: webpack.DefinePlugin.runtimeValue(() => JSON.stringify(require('./package.json').version), true),
             'process.env.DEBUG': JSON.stringify(process.env.DEBUG)
         }),
-        new MiniCssExtractPlugin({ filename: 'app.css' })
+        new MiniCssExtractPlugin({ filename: 'rcsb-molstar.css' })
     ],
     resolve: {
         modules: [
@@ -53,12 +52,12 @@ const sharedConfig = {
 module.exports = [
     {
         node: { fs: 'empty' },
-        entry: path.resolve(__dirname, `build/src/structure-viewer/index.js`),
+        entry: path.resolve(__dirname, `build/src/viewer/index.js`),
         output: {
-            library: 'app',
+            library: 'rcsbMolstar',
             libraryTarget: 'umd',
-            filename: `app.js`,
-            path: path.resolve(__dirname, `build/dist/structure-viewer`)
+            filename: `rcsb-molstar.js`,
+            path: path.resolve(__dirname, `build/dist/viewer`)
         },
         ...sharedConfig
     },

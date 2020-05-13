@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
-import { StructureViewerState } from '../types';
+import { ViewerState } from '../types';
 import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin-ui/viewport';
 import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin-ui/task';
 import { LociLabels, CustomStructureControls, SelectionViewportControls } from 'molstar/lib/mol-plugin-ui/controls';
@@ -20,7 +20,7 @@ import { VolumeStreamingControls } from 'molstar/lib/mol-plugin-ui/structure/vol
 
 export class StructureTools extends PluginUIComponent {
     get customState() {
-        return StructureViewerState(this.plugin)
+        return ViewerState(this.plugin)
     }
 
     componentDidMount() {
@@ -42,14 +42,9 @@ export class StructureTools extends PluginUIComponent {
 }
 
 export class ControlsWrapper extends PluginUIComponent {
-    get customState() {
-        return StructureViewerState(this.plugin)
-    }
-
     render() {
-        const { showImportControls } = this.customState.props
         return <div className='msp-scrollable-container'>
-            {showImportControls && <ImportControls />}
+            {ViewerState(this.plugin).showImportControls && <ImportControls />}
             <StructureTools />
         </div>;
     }
