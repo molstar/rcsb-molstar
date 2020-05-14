@@ -36,9 +36,6 @@
     "author": "RCSB PDB and Mol* Contributors",
     "license": "MIT",
     "devDependencies": {
-        "@types/argparse": "^1.0.38",
-        "@types/node": "^13.13.5",
-        "@types/node-fetch": "^2.5.7",
         "@types/react": "^16.9.35",
         "@types/react-dom": "^16.9.8",
         "@typescript-eslint/eslint-plugin": "^2.32.0",
@@ -50,8 +47,7 @@
         "extra-watch-webpack-plugin": "^1.0.3",
         "file-loader": "^6.0.0",
         "mini-css-extract-plugin": "^0.9.0",
-        "molstar": "^0.7.1-dev.4",
-        "node-fetch": "^2.6.0",
+        "molstar": "^0.7.1-dev.6",
         "node-sass": "^4.14.1",
         "raw-loader": "^4.0.1",
         "react": "^16.13.1",
@@ -63,5 +59,6 @@
         "typescript": "3.8.3",
         "webpack": "^4.43.0",
         "webpack-cli": "^3.3.11"
-    }
+    },
+    "dependencies": {}
 }
