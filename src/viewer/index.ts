@@ -19,7 +19,7 @@ import ReactDOM = require('react-dom');
 import React = require('react');
 import { ModelLoader } from './helpers/model';
 import { PresetProps } from './helpers/preset';
-import { ControlsWrapper, ViewportWrapper } from './ui/controls';
+import { ControlsWrapper } from './ui/controls';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
 import { RCSBAssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
 import { RCSBValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
@@ -46,6 +46,7 @@ const Extensions = {
 
 const DefaultViewerProps = {
     showImportControls: false,
+    showSessionControls: false,
     modelUrlProviders: [
         (pdbId: string) => ({
             url: `//models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
@@ -68,7 +69,6 @@ const DefaultViewerProps = {
 
     viewportShowExpand: true,
     viewportShowSelectionMode: true,
-    viewportShowAnimation: false,
     volumeStreamingServer: '//maps.rcsb.org/',
 };
 type ViewerProps = typeof DefaultViewerProps
@@ -111,14 +111,11 @@ export class Viewer {
             components: {
                 ...DefaultPluginSpec.components,
                 remoteState: 'none',
-                viewport: {
-                    view: ViewportWrapper
-                }
             },
             config: [
                 [PluginConfig.Viewport.ShowExpand, o.viewportShowExpand],
                 [PluginConfig.Viewport.ShowSelectionMode, o.viewportShowSelectionMode],
-                [PluginConfig.Viewport.ShowAnimation, o.viewportShowAnimation],
+                [PluginConfig.Viewport.ShowAnimation, false],
                 [PluginConfig.VolumeStreaming.DefaultServer, o.volumeStreamingServer],
                 [PluginConfig.Download.DefaultPdbProvider, 'rcsb'],
                 [PluginConfig.Download.DefaultEmdbProvider, 'rcsb']
@@ -130,6 +127,7 @@ export class Viewer {
 
         (this.plugin.customState as ViewerState) = {
             showImportControls: o.showImportControls,
+            showSessionControls: o.showSessionControls,
             modelLoader: new ModelLoader(this.plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,

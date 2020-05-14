@@ -7,16 +7,14 @@
 import * as React from 'react';
 import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { ViewerState } from '../types';
-import { Viewport, ViewportControls } from 'molstar/lib/mol-plugin-ui/viewport';
-import { BackgroundTaskProgress } from 'molstar/lib/mol-plugin-ui/task';
-import { LociLabels, CustomStructureControls, SelectionViewportControls } from 'molstar/lib/mol-plugin-ui/controls';
-import { Toasts } from 'molstar/lib/mol-plugin-ui/toast';
+import { CustomStructureControls } from 'molstar/lib/mol-plugin-ui/controls';
 import { ImportControls } from './import';
 import { StructureSourceControls } from 'molstar/lib/mol-plugin-ui/structure/source';
 import { StructureMeasurementsControls } from 'molstar/lib/mol-plugin-ui/structure/measurements';
 import { StructureSuperpositionControls } from 'molstar/lib/mol-plugin-ui/structure/superposition';
 import { StructureComponentControls } from 'molstar/lib/mol-plugin-ui/structure/components';
 import { VolumeStreamingControls } from 'molstar/lib/mol-plugin-ui/structure/volume';
+import { SessionControls } from './session';
 
 export class StructureTools extends PluginUIComponent {
     get customState() {
@@ -45,24 +43,8 @@ export class ControlsWrapper extends PluginUIComponent {
     render() {
         return <div className='msp-scrollable-container'>
             {ViewerState(this.plugin).showImportControls && <ImportControls />}
+            {ViewerState(this.plugin).showSessionControls && <SessionControls />}
             <StructureTools />
         </div>;
-    }
-}
-
-export class ViewportWrapper extends PluginUIComponent {
-    render() {
-        return <>
-            <Viewport />
-            <SelectionViewportControls />
-            <ViewportControls />
-            <div style={{ position: 'absolute', left: '10px', bottom: '10px' }}>
-                <BackgroundTaskProgress />
-            </div>
-            <div className='msp-highlight-toast-wrapper'>
-                <LociLabels />
-                <Toasts />
-            </div>
-        </>;
     }
 }

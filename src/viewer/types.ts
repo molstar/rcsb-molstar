@@ -34,6 +34,7 @@ export type CollapsedState = {
 }
 export interface ViewerState {
     showImportControls: boolean
+    showSessionControls: boolean
     modelLoader: ModelLoader
     collapsed: BehaviorSubject<CollapsedState>
 }
