@@ -149,6 +149,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const loci = targetToLoci(p.target, structure.obj.data)
             const firstResidue = StructureElement.Loci.firstResidue(loci)
             plugin.managers.structure.focus.setFromLoci(firstResidue)
+            plugin.managers.camera.focusLoci(firstResidue)
         }
 
         if (p.kind === 'density' && structure.cell?.parent) {
