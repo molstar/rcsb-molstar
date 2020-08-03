@@ -18,7 +18,7 @@ import { ColorNames } from 'molstar/lib/mol-util/color/names';
 import ReactDOM = require('react-dom');
 import React = require('react');
 import { ModelLoader } from './helpers/model';
-import { PresetProps } from './helpers/preset';
+import { PresetProps, RcsbPreset } from './helpers/preset';
 import { ControlsWrapper } from './ui/controls';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
 import { RCSBAssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
@@ -28,6 +28,7 @@ import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
+import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 require('./skin/rcsb.scss')
 
 /** package version, filled in at bundle build time */
@@ -188,5 +189,26 @@ export class Viewer {
 
     loadSnapshotFromUrl(url: string, type: PluginState.SnapshotType) {
         return PluginCommands.State.Snapshots.OpenUrl(this.plugin, { url, type });
+    }
+
+    async loadStructureFromData(data: string | number[], format: BuiltInTrajectoryFormat, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4) {
+        const _data = await this.plugin.builders.data.rawData({ data, label: props?.dataLabel });
+        const trajectory = await this.plugin.builders.structure.parseTrajectory(_data, format)
+
+        const selector = await this.plugin.builders.structure.hierarchy.applyPreset(trajectory, RcsbPreset, {
+            preset: props || { kind: 'standard', assemblyId: '' }
+        });
+
+        if (matrix && selector) {
+            const params = {
+                transform: {
+                    name: 'matrix' as const,
+                    params: { data: matrix, transpose: false }
+                }
+            };
+            const b = this.plugin.state.data.build().to(selector.structureProperties)
+                .insert(StateTransforms.Model.TransformStructureConformation, params);
+            await this.plugin.runTask(this.plugin.state.data.updateTree(b));
+        }
     }
 }
