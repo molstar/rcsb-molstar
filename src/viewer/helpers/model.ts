@@ -24,7 +24,6 @@ export class ModelLoader {
 
     async parse(parse: ParseParams, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4) {
         const { data, format } = parse;
-        console.log(typeof data);
         const _data = await this.plugin.builders.data.rawData({ data, label: props?.dataLabel });
         await this.handleTrajectory(_data, format, props, matrix);
     }

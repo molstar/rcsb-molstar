@@ -70,6 +70,9 @@ const DefaultViewerProps = {
     viewportShowExpand: true,
     viewportShowSelectionMode: true,
     volumeStreamingServer: '//maps.rcsb.org/',
+
+    backgroundColor: ColorNames.white,
+    showWelcomeToast: true
 };
 type ViewerProps = typeof DefaultViewerProps
 
@@ -142,14 +145,16 @@ export class Viewer {
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
 
         const renderer = this.plugin.canvas3d!.props.renderer;
-        PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: ColorNames.white } } });
+        PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
 
-        PluginCommands.Toast.Show(this.plugin, {
-            title: 'Welcome',
-            message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION} [${BUILD_DATE.toLocaleString()}]`,
-            key: 'toast-welcome',
-            timeoutMs: 5000
-        })
+        if (o.showWelcomeToast) {
+            PluginCommands.Toast.Show(this.plugin, {
+                title: 'Welcome',
+                message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION} [${BUILD_DATE.toLocaleString()}]`,
+                key: 'toast-welcome',
+                timeoutMs: 5000
+            })
+        }
     }
 
     //
