@@ -51,7 +51,9 @@
             var url = getQueryParam('url')
             var _props = getQueryParam('props')
             var props = _props && JSON.parse(_props)
-
+            var _loadPdbIds = getQueryParam('loadPdbIds')
+            var loadPdbIds = _loadPdbIds && JSON.parse(_loadPdbIds)
+            
             // create an instance of the plugin
             var viewer = new rcsbMolstar.Viewer('viewer', {
                 showImportControls: !pdbId,
@@ -62,6 +64,7 @@
 
             // load pdbId or url
             if (pdbId) viewer.loadPdbId(pdbId, props)
+            else if (loadPdbIds) viewer.loadPdbIds(loadPdbIds);
             else if (url) viewer.loadUrl(url, props)
         </script>
         <div id="menu">
