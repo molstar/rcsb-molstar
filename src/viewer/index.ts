@@ -72,7 +72,16 @@ const DefaultViewerProps = {
     volumeStreamingServer: '//maps.rcsb.org/',
 
     backgroundColor: ColorNames.white,
-    showWelcomeToast: true
+    showWelcomeToast: true,
+
+    panelVisibility: {
+        selection: false,
+        measurements: true,
+        superposition: false,
+        component: true,
+        volume: false,
+        custom: false
+    }
 };
 type ViewerProps = typeof DefaultViewerProps
 
@@ -107,7 +116,7 @@ export class Viewer {
                     ...DefaultPluginSpec.layout && DefaultPluginSpec.layout.controls,
                     top: o.layoutShowSequence ? undefined : 'none',
                     bottom: o.layoutShowLog ? undefined : 'none',
-                    left: 'none',
+                    // left: 'none',
                     right: ControlsWrapper,
                 }
             },
@@ -140,6 +149,7 @@ export class Viewer {
                 volume: true,
                 custom: true,
             }),
+            visibility: new BehaviorSubject<CollapsedState>({ ...o.panelVisibility })
         }
 
         this.plugin.init();

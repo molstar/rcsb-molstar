@@ -40,11 +40,20 @@ export type CollapsedState = {
     volume: boolean
     custom: boolean
 }
+export type VisibilityState = {
+    selection: boolean
+    measurements: boolean
+    superposition: boolean
+    component: boolean
+    volume: boolean
+    custom: boolean
+}
 export interface ViewerState {
     showImportControls: boolean
     showSessionControls: boolean
     modelLoader: ModelLoader
     collapsed: BehaviorSubject<CollapsedState>
+    visibility: BehaviorSubject<VisibilityState>
 }
 export function ViewerState(plugin: PluginContext) {
     return plugin.customState as ViewerState
