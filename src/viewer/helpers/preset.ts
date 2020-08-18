@@ -20,6 +20,8 @@ import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/vol
 import { ViewerState } from '../types';
 import { StateSelection } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
+import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
+import { StructureSelectionFromExpression, TransformStructureConformation } from 'molstar/lib/mol-plugin-state/transforms/model';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -71,6 +73,18 @@ type BaseProps = {
     modelIndex?: number
 }
 
+type SubsetProps = {
+    kind: 'subset'
+    blocks: {
+        asymId: string
+        matrix: Mat4
+        seqIdRange?: {
+            beg: number
+            end: number
+        }
+    }[]
+} & BaseProps
+
 type ValidationProps = {
     kind: 'validation'
     colorTheme?: string
@@ -95,7 +109,7 @@ type DensityProps = {
     kind: 'density'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | SubsetProps
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -132,7 +146,28 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined
 
-        if (p.kind === 'validation') {
+        if (p.kind === 'subset') {
+
+            var selections = new Array();
+            var representations = new Array();
+            p.blocks.forEach( async block => {
+                const _sele = plugin.state.data.build().to(structureProperties).apply(StructureSelectionFromExpression, {
+                    expression: MS.struct.generator.atomGroups({
+                        'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), block.asymId]),
+                    }),
+                    label: `Chain ${block.asymId}`
+                })
+                .apply(TransformStructureConformation, { 
+                    transform: { name: 'matrix', params: { data: block.matrix, transpose: false } }
+                });
+                const sele = await _sele.commit();
+                selections.push(sele);
+
+                const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon');
+                representations.push(repr);
+            });
+            
+        } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties, ValidationReportGeometryQualityPreset);
         } else if (p.kind === 'symmetry') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
