@@ -47,7 +47,7 @@
         "extra-watch-webpack-plugin": "^1.0.3",
         "file-loader": "^6.0.0",
         "mini-css-extract-plugin": "^0.9.0",
-        "molstar": "^1.1.7",
+        "molstar": "^1.1.13",
         "node-sass": "^4.14.1",
         "raw-loader": "^4.0.1",
         "react": "^16.13.1",
