@@ -75,6 +75,7 @@ type BaseProps = {
 
 type SubsetProps = {
     kind: 'subset'
+    index: number,
     blocks: {
         asymId: string
         matrix: Mat4
@@ -148,25 +149,34 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         if (p.kind === 'subset') {
 
-            var selections = new Array();
-            var representations = new Array();
+            const selections = new Array();
+            const representations = new Array();
+
             p.blocks.forEach( async block => {
+
+                structureProperties.data!.inheritedPropertyData.subset = {
+                    beg: block.seqIdRange!.beg,
+                    end: block.seqIdRange!.end,
+                    index: p.index
+                }
+
                 const _sele = plugin.state.data.build().to(structureProperties).apply(StructureSelectionFromExpression, {
                     expression: MS.struct.generator.atomGroups({
                         'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), block.asymId]),
                     }),
                     label: `Chain ${block.asymId}`
-                })
-                .apply(TransformStructureConformation, { 
+                }).apply(TransformStructureConformation, {
                     transform: { name: 'matrix', params: { data: block.matrix, transpose: false } }
                 });
                 const sele = await _sele.commit();
                 selections.push(sele);
 
-                const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon');
+                const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon', {
+                    theme: { globalName: 'superpose' }
+                });
                 representations.push(repr);
             });
-            
+
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties, ValidationReportGeometryQualityPreset);
         } else if (p.kind === 'symmetry') {

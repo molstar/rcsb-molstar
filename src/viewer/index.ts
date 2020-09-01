@@ -28,6 +28,7 @@ import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
+import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 require('./skin/rcsb.scss')
 
 /** package version, filled in at bundle build time */
@@ -157,6 +158,8 @@ export class Viewer {
 
         const renderer = this.plugin.canvas3d!.props.renderer;
         PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
+
+        this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
 
         if (o.showWelcomeToast) {
             PluginCommands.Toast.Show(this.plugin, {
