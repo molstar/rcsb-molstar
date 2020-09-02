@@ -8,28 +8,30 @@ import { ThemeDataContext } from 'molstar/lib/mol-theme/theme';
 import { ColorTheme } from 'molstar/lib/mol-theme/color';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { Color } from 'molstar/lib/mol-util/color';
-import { StructureElement, StructureProperties } from 'molstar/lib/mol-model/structure';
+import { StructureElement, StructureProperties, Structure } from 'molstar/lib/mol-model/structure';
 import { Location } from 'molstar/lib/mol-model/location';
-import { ColorNames } from 'molstar/lib/mol-util/color/names';
+import { ColorLists } from 'molstar/lib/mol-util/color/lists';
 
 const DefaultColor = Color(0xCCCCCC);
-
-const colorMap = new Map();
-colorMap.set(0, ColorNames.green);
-colorMap.set(1, ColorNames.blue);
 
 export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorTheme<{}> {
 
     console.log(ctx.structure?.inheritedPropertyData.subset);
 
-    const index = ctx.structure?.inheritedPropertyData.subset.index;
+    let colorCode = ctx.structure?.inheritedPropertyData.subset.color
+    if (colorCode === undefined) {
+        const index = Structure.Index.get(ctx.structure!).value || 0;
+        const { list } = ColorLists['many-distinct']
+        colorCode = list[index % list.length];
+    }
+
     const beg = ctx.structure?.inheritedPropertyData.subset.beg;
     const end = ctx.structure?.inheritedPropertyData.subset.end;
     const color = (location: Location): Color => {
         if (StructureElement.Location.is(location)) {
             const seqId = StructureProperties.residue.label_seq_id(location);
-            if ( beg>=seqId && seqId<=end ) {
-                return colorMap.get(index);
+            if ( beg<=seqId && seqId<=end ) {
+                return colorCode;
             }
         }
         return DefaultColor;

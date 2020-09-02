@@ -75,14 +75,14 @@ type BaseProps = {
 
 type SubsetProps = {
     kind: 'subset'
-    index: number,
     blocks: {
         asymId: string
         matrix: Mat4
         seqIdRange?: {
             beg: number
             end: number
-        }
+        },
+        color?: number
     }[]
 } & BaseProps
 
@@ -157,7 +157,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 structureProperties.data!.inheritedPropertyData.subset = {
                     beg: block.seqIdRange!.beg,
                     end: block.seqIdRange!.end,
-                    index: p.index
+                    color: block!.color
                 }
 
                 const _sele = plugin.state.data.build().to(structureProperties).apply(StructureSelectionFromExpression, {
