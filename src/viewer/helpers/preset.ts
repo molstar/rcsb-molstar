@@ -147,9 +147,11 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         if (p.kind === 'feature' && structure.obj) {
             const loci = targetToLoci(p.target, structure.obj.data)
-            const firstResidue = StructureElement.Loci.firstResidue(loci)
-            plugin.managers.structure.focus.setFromLoci(firstResidue)
-            plugin.managers.camera.focusLoci(firstResidue)
+            // if target is only defined by chain: then don't force first residue
+            const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
+            const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci)
+            plugin.managers.structure.focus.setFromLoci(target)
+            plugin.managers.camera.focusLoci(target)
         }
 
         if (p.kind === 'density' && structure.cell?.parent) {
