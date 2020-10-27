@@ -212,4 +212,8 @@ export class Viewer {
     async loadStructureFromData(data: string | number[], format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4) {
         return this.customState.modelLoader.parse({ data, format, isBinary }, props, matrix);
     }
+
+    handleResize() {
+        this.plugin.layout.events.updated.next();
+    }
 }
