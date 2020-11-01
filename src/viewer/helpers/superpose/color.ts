@@ -16,8 +16,6 @@ const DefaultColor = Color(0xCCCCCC);
 
 export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorTheme<{}> {
 
-    console.log(ctx.structure?.inheritedPropertyData.subset);
-
     let colorCode = ctx.structure?.inheritedPropertyData.subset.color
     if (colorCode === undefined) {
         const index = Structure.Index.get(ctx.structure!).value || 0;
