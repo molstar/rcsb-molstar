@@ -86,6 +86,18 @@ type SubsetProps = {
     }[]
 } & BaseProps
 
+type ColorRangesProps = {
+    kind: 'color-ranges'
+    colorRanges: {
+        asymId: string
+        seqIdRange?: {
+            beg: number
+            end: number
+        },
+        color: number
+    }[]
+} & BaseProps
+
 type ValidationProps = {
     kind: 'validation'
     colorTheme?: string
@@ -110,7 +122,7 @@ type DensityProps = {
     kind: 'density'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | SubsetProps
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | SubsetProps | ColorRangesProps
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -147,7 +159,27 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined
 
-        if (p.kind === 'subset') {
+        if (p.kind === 'color-ranges') {
+
+            const entryId = model.data?.entryId;
+
+            const selections = new Array();
+            const _sele = plugin.state.data.build().to(structureProperties).apply(StructureSelectionFromExpression, {
+                expression: MS.struct.generator.all,
+                label: `${entryId}`
+            });
+            const sele = await _sele.commit();
+            selections.push(sele);
+
+            const representations = new Array();
+            const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon', {
+                theme: { globalName: 'superpose' }
+            });
+            representations.push(repr);
+
+        } else if (p.kind === 'subset') {
+
+            const entryId = model.data?.entryId;
 
             const selections = new Array();
             const representations = new Array();
@@ -164,7 +196,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     expression: MS.struct.generator.atomGroups({
                         'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), block.asymId]),
                     }),
-                    label: `Chain ${block.asymId}`
+                    label: `${entryId}.${block.asymId}`
                 }).apply(TransformStructureConformation, {
                     transform: { name: 'matrix', params: { data: block.matrix, transpose: false } }
                 });
