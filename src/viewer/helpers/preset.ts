@@ -73,28 +73,39 @@ type BaseProps = {
     modelIndex?: number
 }
 
+type ColorProp = {
+    name: 'color',
+    value: number
+};
+
+type PropSet = {
+    args: ColorProp,
+    location: {
+        beg: number
+        end: number
+    }
+};
+
 type SubsetProps = {
     kind: 'subset'
     blocks: {
         asymId: string
-        matrix: Mat4
-        seqIdRange?: {
-            beg: number
-            end: number
-        },
-        color?: number
+        matrix: Mat4,
+        selection?: {
+            location: {
+                beg: number
+                end: number
+            }
+        }[],
+        propset: PropSet[]
     }[]
 } & BaseProps
 
-type ColorRangesProps = {
-    kind: 'color-ranges'
-    colorRanges: {
-        asymId: string
-        seqIdRange?: {
-            beg: number
-            end: number
-        },
-        color: number
+type PropsetProps = {
+    kind: 'prop-set'
+    blocks: {
+        asymId: string,
+        propset: PropSet[]
     }[]
 } & BaseProps
 
@@ -122,7 +133,7 @@ type DensityProps = {
     kind: 'density'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | SubsetProps | ColorRangesProps
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | SubsetProps | PropsetProps
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -159,19 +170,33 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined
 
-        if (p.kind === 'color-ranges') {
+        if (p.kind === 'prop-set') {
 
             const entryId = model.data?.entryId;
 
             const selections = new Array();
             const _sele = plugin.state.data.build().to(structureProperties).apply(StructureSelectionFromExpression, {
-                expression: MS.struct.generator.all,
+                expression: MS.struct.generator.all(),
                 label: `${entryId}`
             });
             const sele = await _sele.commit();
             selections.push(sele);
 
+            sele.data!.inheritedPropertyData.colors = {};
+
             const representations = new Array();
+            p.blocks.forEach( async block => {
+                let colorLookup = new Map();
+                block.propset.forEach(prop => {
+                    if (prop.args.name === 'color') {
+                        for (let i=prop.location.beg; i<=prop.location.end; i++) {
+                            colorLookup.set(i, prop.args.value);
+                        }
+                    }
+                });
+                sele.data!.inheritedPropertyData.colors[block.asymId] = colorLookup;
+            });
+
             const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon', {
                 theme: { globalName: 'superpose' }
             });
@@ -186,11 +211,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
             p.blocks.forEach( async block => {
 
-                structureProperties.data!.inheritedPropertyData.subset = {
-                    beg: block.seqIdRange!.beg,
-                    end: block.seqIdRange!.end,
-                    color: block!.color
-                }
+                structureProperties.data!.inheritedPropertyData.colors = {};
 
                 const _sele = plugin.state.data.build().to(structureProperties).apply(StructureSelectionFromExpression, {
                     expression: MS.struct.generator.atomGroups({
@@ -202,6 +223,16 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 });
                 const sele = await _sele.commit();
                 selections.push(sele);
+
+                let colorLookup = new Map();
+                block.propset.forEach(prop => {
+                    if (prop.args.name === 'color') {
+                        for (let i=prop.location.beg; i<=prop.location.end; i++){
+                            colorLookup.set(i, prop.args.value);
+                        }
+                    }
+                });
+                sele.data!.inheritedPropertyData.colors[block.asymId] = colorLookup;
 
                 const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon', {
                     theme: { globalName: 'superpose' }

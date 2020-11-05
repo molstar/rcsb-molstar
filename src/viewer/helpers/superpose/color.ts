@@ -16,19 +16,20 @@ const DefaultColor = Color(0xCCCCCC);
 
 export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorTheme<{}> {
 
-    let colorCode = ctx.structure?.inheritedPropertyData.subset.color
-    if (colorCode === undefined) {
-        const index = Structure.Index.get(ctx.structure!).value || 0;
-        const { list } = ColorLists['many-distinct']
-        colorCode = list[index % list.length];
-    }
+    let colorLookup = ctx.structure?.inheritedPropertyData.colors;
 
-    const beg = ctx.structure?.inheritedPropertyData.subset.beg;
-    const end = ctx.structure?.inheritedPropertyData.subset.end;
+    const index = Structure.Index.get(ctx.structure!).value || 0;
+    const { list } = ColorLists['many-distinct']
+    let colorCode = list[index % list.length];
+
     const color = (location: Location): Color => {
         if (StructureElement.Location.is(location)) {
+            const asymId = StructureProperties.chain.label_asym_id(location);
             const seqId = StructureProperties.residue.label_seq_id(location);
-            if ( beg<=seqId && seqId<=end ) {
+            if (colorLookup[asymId]?.has(seqId) ) {
+                if (colorLookup[asymId]?.get(seqId) !== undefined) {
+                    colorCode = colorLookup[asymId]?.get(seqId);
+                }
                 return colorCode;
             }
         }
