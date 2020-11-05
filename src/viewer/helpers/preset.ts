@@ -80,10 +80,7 @@ type ColorProp = {
 
 type PropSet = {
     args: ColorProp,
-    location: {
-        beg: number
-        end: number
-    }
+    positions: number[]
 };
 
 type SubsetProps = {
@@ -92,10 +89,8 @@ type SubsetProps = {
         asymId: string
         matrix: Mat4,
         selection?: {
-            location: {
-                beg: number
-                end: number
-            }
+            beg: number
+            end: number
         }[],
         propset: PropSet[]
     }[]
@@ -189,8 +184,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 let colorLookup = new Map();
                 block.propset.forEach(prop => {
                     if (prop.args.name === 'color') {
-                        for (let i=prop.location.beg; i<=prop.location.end; i++) {
-                            colorLookup.set(i, prop.args.value);
+                        for (let i = 0; i < prop.positions.length; i++) {
+                            colorLookup.set(prop.positions[i], prop.args.value);
                         }
                     }
                 });
@@ -227,8 +222,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 let colorLookup = new Map();
                 block.propset.forEach(prop => {
                     if (prop.args.name === 'color') {
-                        for (let i=prop.location.beg; i<=prop.location.end; i++){
-                            colorLookup.set(i, prop.args.value);
+                        for (let i = 0; i < prop.positions.length; i++) {
+                            colorLookup.set(prop.positions[i], prop.args.value);
                         }
                     }
                 });
