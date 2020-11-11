@@ -169,7 +169,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
             await PluginCommands.Toast.Show(plugin, {
                 title: 'Electron Density',
-                message: 'Click on a residue display electron density, click background to reset.',
+                message: 'Click on a residue to display electron density, click background to reset.',
                 key: 'toast-density',
                 timeoutMs: 60000
             })
