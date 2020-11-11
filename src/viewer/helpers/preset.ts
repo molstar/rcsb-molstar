@@ -20,6 +20,7 @@ import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/vol
 import { ViewerState } from '../types';
 import { StateSelection } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
+import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -164,6 +165,13 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
                 volume: false
+            })
+
+            await PluginCommands.Toast.Show(plugin, {
+                title: 'Electron Density',
+                message: 'Click on a residue display electron density, click background to reset.',
+                key: 'toast-density',
+                timeoutMs: 60000
             })
         }
 
