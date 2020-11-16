@@ -26,7 +26,7 @@ export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorThem
         if (StructureElement.Location.is(location)) {
             const asymId = StructureProperties.chain.label_asym_id(location);
             const seqId = StructureProperties.residue.label_seq_id(location);
-            if (colorLookup[asymId]?.has(seqId) ) {
+            if (colorLookup?.[asymId]?.has(seqId)) {
                 if (colorLookup[asymId]?.get(seqId) !== undefined) {
                     colorCode = colorLookup[asymId]?.get(seqId);
                 }
