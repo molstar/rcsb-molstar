@@ -21,6 +21,8 @@ import { ViewerState } from '../types';
 import { StateSelection } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
+import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
+import { PluginCommand } from 'molstar/lib/mol-plugin/command';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -166,6 +168,12 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 ...ViewerState(plugin).collapsed.value,
                 volume: false
             })
+
+            plugin.behaviors.interaction.click.subscribe((e: InteractivityManager.ClickEvent) => {
+                if(e.current && e.current.loci && e.current.loci.kind !== 'empty-loci'){
+                    PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
+                }
+            });
 
             await PluginCommands.Toast.Show(plugin, {
                 title: 'Electron Density',
