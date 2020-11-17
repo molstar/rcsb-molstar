@@ -22,7 +22,6 @@ import { StateSelection } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
-import { PluginCommand } from 'molstar/lib/mol-plugin/command';
 
 type Target = {
     readonly auth_seq_id?: number
