@@ -20,8 +20,8 @@ import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/vol
 import { ViewerState } from '../types';
 import { StateSelection } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
-// import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
-// import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
+import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
+import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -163,18 +163,18 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref))
             }
 
-            // await PluginCommands.Toast.Show(plugin, {
-            //     title: 'Electron Density',
-            //     message: 'Click on a residue to display electron density, click background to reset.',
-            //     key: 'toast-density',
-            //     timeoutMs: 60000
-            // })
+            await PluginCommands.Toast.Show(plugin, {
+                title: 'Electron Density',
+                message: 'Click on a residue to display electron density, click background to reset.',
+                key: 'toast-density',
+                timeoutMs: 60000
+            })
 
-            // plugin.behaviors.interaction.click.subscribe(async (e: InteractivityManager.ClickEvent) => {
-            //     if (e.current && e.current.loci && e.current.loci.kind !== 'empty-loci') {
-            //         await PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
-            //     }
-            // });
+            plugin.behaviors.interaction.click.subscribe(async (e: InteractivityManager.ClickEvent) => {
+                if (e.current && e.current.loci && e.current.loci.kind !== 'empty-loci') {
+                    await PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
+                }
+            });
 
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
