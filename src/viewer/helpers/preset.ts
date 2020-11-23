@@ -170,16 +170,16 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 timeoutMs: 60000
             })
 
+            plugin.behaviors.interaction.click.subscribe(async (e: InteractivityManager.ClickEvent) => {
+                if (e.current && e.current.loci && e.current.loci.kind !== 'empty-loci') {
+                    await PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
+                }
+            });
+
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
                 volume: false
             })
-
-            plugin.behaviors.interaction.click.subscribe((e: InteractivityManager.ClickEvent) => {
-                if(e.current && e.current.loci && e.current.loci.kind !== 'empty-loci'){
-                    PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
-                }
-            });
         }
 
         return {
