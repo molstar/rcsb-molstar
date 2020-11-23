@@ -163,18 +163,18 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref))
             }
 
-            await PluginCommands.Toast.Show(plugin, {
-                title: 'Electron Density',
-                message: 'Click on a residue to display electron density, click background to reset.',
-                key: 'toast-density',
-                timeoutMs: 60000
-            })
+            // await PluginCommands.Toast.Show(plugin, {
+            //     title: 'Electron Density',
+            //     message: 'Click on a residue to display electron density, click background to reset.',
+            //     key: 'toast-density',
+            //     timeoutMs: 60000
+            // })
 
-            plugin.behaviors.interaction.click.subscribe(async (e: InteractivityManager.ClickEvent) => {
-                if (e.current && e.current.loci && e.current.loci.kind !== 'empty-loci') {
-                    await PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
-                }
-            });
+            // plugin.behaviors.interaction.click.subscribe(async (e: InteractivityManager.ClickEvent) => {
+            //     if (e.current && e.current.loci && e.current.loci.kind !== 'empty-loci') {
+            //         await PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
+            //     }
+            // });
 
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
