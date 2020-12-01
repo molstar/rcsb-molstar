@@ -18,15 +18,15 @@ import { SessionControls } from './session';
 
 export class StructureTools extends PluginUIComponent {
     get customState() {
-        return ViewerState(this.plugin)
+        return ViewerState(this.plugin);
     }
 
     componentDidMount() {
-        this.subscribe(this.customState.collapsed, () => this.forceUpdate())
+        this.subscribe(this.customState.collapsed, () => this.forceUpdate());
     }
 
     render() {
-        const collapsed = this.customState.collapsed.value
+        const collapsed = this.customState.collapsed.value;
         return <>
             <StructureSourceControls />
             <StructureMeasurementsControls initiallyCollapsed={collapsed.measurements} />

@@ -47,5 +47,5 @@ export interface ViewerState {
     collapsed: BehaviorSubject<CollapsedState>
 }
 export function ViewerState(plugin: PluginContext) {
-    return plugin.customState as ViewerState
+    return plugin.customState as ViewerState;
 }

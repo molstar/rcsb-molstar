@@ -18,13 +18,13 @@ export class ImportControls extends CollapsableControls {
             header: 'Import',
             isCollapsed: false,
             brand: { accent:  'gray' as const, svg: FileOutlineSvg }
-        }
+        };
     }
 
     renderControls() {
         return <div className={'msp-control-offset'} style={{ paddingTop: '1px' }}>
             <ApplyActionControl key={`${OpenFiles.id}`} state={this.plugin.state.data} action={OpenFiles} nodeRef={StateTransform.RootRef} initiallyCollapsed={true} />
             <ApplyActionControl key={`${DownloadStructure.id}`} state={this.plugin.state.data} action={DownloadStructure} nodeRef={StateTransform.RootRef} initiallyCollapsed={true} />
-        </div>
+        </div>;
     }
 }

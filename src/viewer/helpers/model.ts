@@ -14,11 +14,11 @@ import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/tr
 
 export class ModelLoader {
     async load(load: LoadParams, props?: PresetProps, matrix?: Mat4) {
-        const { fileOrUrl, format, isBinary } = load
+        const { fileOrUrl, format, isBinary } = load;
 
         const data = fileOrUrl instanceof File
             ? (await this.plugin.builders.data.readFile({ file: Asset.File(fileOrUrl), isBinary })).data
-            : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary })
+            : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary });
         await this.handleTrajectory(data, format, props, matrix);
     }
 
@@ -29,7 +29,7 @@ export class ModelLoader {
     }
 
     async handleTrajectory(data: any, format: BuiltInTrajectoryFormat, props?: PresetProps, matrix?: Mat4) {
-        const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format)
+        const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format);
 
         const selector = await this.plugin.builders.structure.hierarchy.applyPreset(trajectory, RcsbPreset, {
             preset: props || { kind: 'standard', assemblyId: '' }

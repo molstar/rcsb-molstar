@@ -6,9 +6,9 @@
 
 import { BehaviorSubject } from 'rxjs';
 import { DefaultPluginSpec } from 'molstar/lib/mol-plugin';
-import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin'
-import './index.html'
-import './favicon.ico'
+import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
+import './index.html';
+import './favicon.ico';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { ViewerState as ViewerState, CollapsedState, ModelUrlProvider } from './types';
@@ -28,14 +28,14 @@ import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
-require('./skin/rcsb.scss')
+require('./skin/rcsb.scss');
 
 /** package version, filled in at bundle build time */
-declare const __RCSB_MOLSTAR_VERSION__: string
+declare const __RCSB_MOLSTAR_VERSION__: string;
 export const RCSB_MOLSTAR_VERSION = __RCSB_MOLSTAR_VERSION__;
 
 /** unix time stamp, to be filled in at bundle build time */
-declare const __BUILD_TIMESTAMP__: number
+declare const __BUILD_TIMESTAMP__: number;
 export const BUILD_TIMESTAMP = __BUILD_TIMESTAMP__;
 export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 
@@ -81,13 +81,13 @@ export class Viewer {
     private readonly modelUrlProviders: ModelUrlProvider[];
 
     private get customState() {
-        return this.plugin.customState as ViewerState
+        return this.plugin.customState as ViewerState;
     }
 
     constructor(target: string | HTMLElement, props: Partial<ViewerProps> = {}) {
-        target = typeof target === 'string' ? document.getElementById(target)! : target
+        target = typeof target === 'string' ? document.getElementById(target)! : target;
 
-        const o = { ...DefaultViewerProps, ...props }
+        const o = { ...DefaultViewerProps, ...props };
 
         const spec: PluginSpec = {
             actions: [...DefaultPluginSpec.actions],
@@ -140,10 +140,10 @@ export class Viewer {
                 volume: true,
                 custom: true,
             }),
-        }
+        };
 
         this.plugin.init();
-        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
+        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target);
 
         const renderer = this.plugin.canvas3d!.props.renderer;
         PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
@@ -154,7 +154,7 @@ export class Viewer {
                 message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION} [${BUILD_DATE.toLocaleString()}]`,
                 key: 'toast-welcome',
                 timeoutMs: 5000
-            })
+            });
         }
     }
 
@@ -166,17 +166,17 @@ export class Viewer {
 
     clear() {
         const state = this.plugin.state.data;
-        return PluginCommands.State.RemoveObject(this.plugin, { state, ref: state.tree.root.ref })
+        return PluginCommands.State.RemoveObject(this.plugin, { state, ref: state.tree.root.ref });
     }
 
     async loadPdbId(pdbId: string, props?: PresetProps, matrix?: Mat4) {
         for (const provider of this.modelUrlProviders) {
             try {
-                const p = provider(pdbId)
-                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, props, matrix)
-                break
+                const p = provider(pdbId);
+                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, props, matrix);
+                break;
             } catch (e) {
-                console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`)
+                console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`);
             }
         }
     }
@@ -189,7 +189,7 @@ export class Viewer {
     }
 
     loadStructureFromUrl(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps, matrix?: Mat4) {
-        return this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, props, matrix)
+        return this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, props, matrix);
     }
 
     loadSnapshotFromUrl(url: string, type: PluginState.SnapshotType) {
