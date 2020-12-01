@@ -29,14 +29,10 @@ From the root of the project:
 
 and navigate to `build/dist/structure-viewer/`
 
-## Publish
-
-The publish will send the package to our own registry at http://nexus3.rcsb.org/repository/npm-rcsb/ (not to NPM as this is currently a private project).
-
 ## Prerelease
-    npm version prerelease # asumes the current version ends with '-dev.X'
+    npm version prerelease # assumes the current version ends with '-dev.X'
     npm publish --tag next
 
 ## Release
-    npm version 0.X.0 # provide valid semver string
+    npm version 1.X.0 # provide valid semver string
     npm publish
