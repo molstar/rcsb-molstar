@@ -1,5 +1,5 @@
 {
-    "name": "rcsb-molstar",
+    "name": "@rcsb/rcsb-molstar",
     "version": "1.0.11",
     "description": "RCSB PDB apps and props based on Mol*.",
     "homepage": "https://github.com/rcsb/rcsb-molstar#readme",
@@ -27,7 +27,7 @@
         "postversion": "git push && git push --tags"
     },
     "publishConfig": {
-        "registry": "http://nexus3.rcsb.org/repository/npm-rcsb/"
+        "registry": "https://registry.npmjs.org/"
     },
     "main": "build/src/index.js",
     "files": [
