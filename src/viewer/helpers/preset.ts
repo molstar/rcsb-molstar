@@ -83,22 +83,15 @@ type PropSet = {
     positions: number[]
 };
 
-type SubsetProps = {
-    kind: 'subset'
-    blocks: {
-        asymId: string
-        matrix: Mat4,
-        selection?: {
-            beg: number
-            end: number
-        }[],
-        propset: PropSet[]
-    }[]
-} & BaseProps
-
 type PropsetProps = {
-    kind: 'prop-set'
-    blocks: {
+    kind: 'prop-set',
+    selection?: {
+        asymId: string,
+        beg?: number,
+        end?: number,
+        matrix?: Mat4
+    }[],
+    representation: {
         asymId: string,
         propset: PropSet[]
     }[]
@@ -128,7 +121,7 @@ type DensityProps = {
     kind: 'density'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | SubsetProps | PropsetProps
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -163,80 +156,55 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         const unitcell = await builder.tryCreateUnitcell(modelProperties, undefined, { isHidden: true });
 
-        let representation: StructureRepresentationPresetProvider.Result | undefined = undefined
+        let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
         if (p.kind === 'prop-set') {
 
             const entryId = model.data?.entryId;
 
             const selections = new Array();
-            const _sele = plugin.state.data.build().to(structureProperties).apply(StructureSelectionFromExpression, {
-                expression: MS.struct.generator.all(),
-                label: `${entryId}`
-            });
-            const sele = await _sele.commit();
-            selections.push(sele);
-
-            sele.data!.inheritedPropertyData.colors = {};
-
-            const representations = new Array();
-            p.blocks.forEach( async block => {
-                let colorLookup = new Map();
-                block.propset.forEach(prop => {
-                    if (prop.args.name === 'color') {
-                        for (let i = 0; i < prop.positions.length; i++) {
-                            colorLookup.set(prop.positions[i], prop.args.value);
-                        }
+            if (p.selection) {
+                for (const s of p.selection) {
+                    const range = {asymId:s.asymId, beg:s.beg, end:s.end};
+                    let _sele = plugin.state.data.build().to(structureProperties)
+                        .apply(StructureSelectionFromExpression, generateSelection(entryId, range));
+                    if (s.matrix) {
+                        _sele.apply(TransformStructureConformation, {transform: { name: 'matrix', params: { data: s.matrix, transpose: false }}});
                     }
-                });
-                sele.data!.inheritedPropertyData.colors[block.asymId] = colorLookup;
-            });
-
-            const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon', {
-                theme: { globalName: 'superpose' }
-            });
-            representations.push(repr);
-
-        } else if (p.kind === 'subset') {
-
-            const entryId = model.data?.entryId;
-
-            const selections = new Array();
-            const representations = new Array();
-
-            p.blocks.forEach( async block => {
-
-                structureProperties.data!.inheritedPropertyData.colors = {};
-
-                const _sele = plugin.state.data.build().to(structureProperties).apply(StructureSelectionFromExpression, {
-                    expression: MS.struct.generator.atomGroups({
-                        'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), block.asymId]),
-                    }),
-                    label: `${entryId}.${block.asymId}`
-                }).apply(TransformStructureConformation, {
-                    transform: { name: 'matrix', params: { data: block.matrix, transpose: false } }
-                });
+                    const sele = await _sele.commit();
+                    selections.push(sele);
+                }
+            } else {
+                const _sele = plugin.state.data.build().to(structureProperties)
+                    .apply(StructureSelectionFromExpression, generateSelection(entryId));
                 const sele = await _sele.commit();
                 selections.push(sele);
+            }
 
-                let colorLookup = new Map();
-                block.propset.forEach(prop => {
-                    if (prop.args.name === 'color') {
-                        for (let i = 0; i < prop.positions.length; i++) {
-                            colorLookup.set(prop.positions[i], prop.args.value);
-                        }
+            const representations = new Array();
+            for (const r of p.representation) {
+                for (const sele of selections) {
+                    if(!sele.data!.inheritedPropertyData.colors) {
+                        sele.data!.inheritedPropertyData.colors = {};
                     }
-                });
-                sele.data!.inheritedPropertyData.colors[block.asymId] = colorLookup;
-
-                const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon', {
-                    theme: { globalName: 'superpose' }
-                });
-                representations.push(repr);
-            });
-
+                    let colorLookup = sele.data!.inheritedPropertyData.colors[r.asymId] || new Map();
+                    r.propset.forEach(prop => {
+                        if (prop.args.name === 'color') {
+                            for (let i = 0; i < prop.positions.length; i++) {
+                                colorLookup.set(prop.positions[i], prop.args.value);
+                            }
+                        }
+                    });
+                    sele.data!.inheritedPropertyData.colors[r.asymId] = colorLookup;
+                    const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon', {
+                        theme: { globalName: 'superpose' }
+                    });
+                    representations.push(repr);
+                }
+            }
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties, ValidationReportGeometryQualityPreset);
+
         } else if (p.kind === 'symmetry') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
 
@@ -280,3 +248,50 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         };
     }
 });
+
+function generateSelection(entryId: string | undefined, range?: {asymId: string, beg: number | undefined, end: number | undefined}) {
+
+    if (!entryId) return {};
+
+    if (range) {
+        const residues: number[] = (range.beg && range.end) ? createRange(range.beg, range.end) : [];
+        const test = createTest(range.asymId, residues);
+        const label = createLabel(entryId, range);
+        return {
+            expression: MS.struct.generator.atomGroups(test),
+            label: `${label}`
+        }
+    } else {
+        return {
+            expression: MS.struct.generator.all(),
+            label: `${entryId}`
+        }
+    }
+}
+
+const createTest = (asymId: string, residues: number[]) => {
+    if (residues.length > 0) {
+        return {
+            'chain-test': testChain(asymId),
+            'residue-test': testResidues(residues)
+        };
+    } else {
+        return {'chain-test': testChain(asymId)};
+    }
+}
+
+const testChain = (asymId: string) => {
+    return MS.core.rel.eq([MS.ammp('label_asym_id'), asymId]);
+}
+
+const testResidues = (residueSet: number[]) => {
+    return MS.core.set.has([MS.set(...residueSet), MS.ammp('label_seq_id')]);
+}
+
+const createRange = (start: number, end: number) => [...Array(end - start + 1)].map((_, i) => start + i);
+
+const createLabel = (entryId: string, range: {asymId: string, beg: number | undefined, end: number | undefined}) => {
+    let label = ''.concat(entryId, '.', range.asymId);
+    if ( ! (range.beg && range.end) ) return label;
+    return ''.concat(label, ':', ''.concat(range.beg.toString(),'-',range.end.toString()))
+}
