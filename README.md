@@ -1,5 +1,11 @@
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](./LICENSE)
 
+RCSB PDB implementation of [Mol* (/'mol-star/)](https://github.com/molstar/molstar).
+Try it [here](https://rcsb.org/3d-view/).
+
+## Install
+    npm install @rcsb/rcsb-molstar
+
 ## Building & Running
 
 ### Build:
