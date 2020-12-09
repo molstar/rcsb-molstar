@@ -7,16 +7,15 @@
 import { BehaviorSubject } from 'rxjs';
 import { DefaultPluginSpec } from 'molstar/lib/mol-plugin';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
-import './index.html';
-import './favicon.ico';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { ViewerState as ViewerState, CollapsedState, ModelUrlProvider } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
-import ReactDOM = require('react-dom');
-import React = require('react');
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+
 import { ModelLoader } from './helpers/model';
 import { PresetProps } from './helpers/preset';
 import { ControlsWrapper } from './ui/controls';
@@ -28,15 +27,14 @@ import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
-require('./skin/rcsb.scss');
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
-export const RCSB_MOLSTAR_VERSION = __RCSB_MOLSTAR_VERSION__;
+export const RCSB_MOLSTAR_VERSION = typeof __RCSB_MOLSTAR_VERSION__ != 'undefined' ? __RCSB_MOLSTAR_VERSION__ : 'none';
 
 /** unix time stamp, to be filled in at bundle build time */
 declare const __BUILD_TIMESTAMP__: number;
-export const BUILD_TIMESTAMP = __BUILD_TIMESTAMP__;
+export const BUILD_TIMESTAMP = typeof __BUILD_TIMESTAMP__ != 'undefined' ? __BUILD_TIMESTAMP__ : 'none';
 export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 
 const Extensions = {
@@ -74,7 +72,7 @@ const DefaultViewerProps = {
     backgroundColor: ColorNames.white,
     showWelcomeToast: true
 };
-type ViewerProps = typeof DefaultViewerProps
+export type ViewerProps = typeof DefaultViewerProps
 
 export class Viewer {
     private readonly plugin: PluginContext;
@@ -144,10 +142,25 @@ export class Viewer {
 
         this.plugin.init();
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target);
-
-        const renderer = this.plugin.canvas3d!.props.renderer;
-        PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
-
+        // TODO Check why this.plugin.canvas3d can be null
+        // this.plugin.canvas3d can be null. The value is not assigned until React Plugin component is mounted
+        // Next wait Promise guarantees that its value is defined
+        const wait: Promise<null> = new Promise<null>((resolve, reject)=>{
+            const recursive: () => void = () => {
+                if(this.plugin.canvas3d != null){
+                    resolve();
+                }else{
+                    setTimeout(()=>{
+                        recursive();
+                    }, 100);
+                }
+            };
+            recursive();
+        });
+        wait.then(result=>{
+            const renderer = this.plugin.canvas3d!.props.renderer;
+            PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
+        });
         if (o.showWelcomeToast) {
             PluginCommands.Toast.Show(this.plugin, {
                 title: 'Welcome',
@@ -198,5 +211,10 @@ export class Viewer {
 
     async loadStructureFromData(data: string | number[], format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4) {
         return this.customState.modelLoader.parse({ data, format, isBinary }, props, matrix);
+    }
+
+    pluginCall(f: (plugin: PluginContext) => void){
+
+        f(this.plugin);
     }
 }

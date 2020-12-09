@@ -1,6 +1,6 @@
 {
-    "name": "@rcsb/rcsb-molstar",
-    "version": "1.0.11",
+    "name": "@rcsb-bioinsilico/rcsb-molstar",
+    "version": "1.0.22",
     "description": "RCSB PDB apps and props based on Mol*.",
     "homepage": "https://github.com/rcsb/rcsb-molstar#readme",
     "repository": {
@@ -31,7 +31,8 @@
     },
     "main": "build/src/index.js",
     "files": [
-        "build/dist/"
+        "build/dist/",
+        "build/src/viewer/"
     ],
     "author": "RCSB PDB and Mol* Contributors",
     "license": "MIT",
@@ -60,5 +61,6 @@
         "webpack": "^4.44.1",
         "webpack-cli": "^3.3.12"
     },
-    "dependencies": {}
+    "dependencies": {
+    }
 }

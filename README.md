@@ -27,7 +27,7 @@ From the root of the project:
 
     http-server -p PORT-NUMBER
 
-and navigate to `build/dist/structure-viewer/`
+and navigate to `build/dist/viewer/`
 
 ## Prerelease
     npm version prerelease # assumes the current version ends with '-dev.X'
