@@ -52,5 +52,5 @@ export const SuperposeColorThemeProvider: ColorTheme.Provider<{}, 'superpose'> =
     factory: SuperposeColorTheme,
     getParams: () => ({}),
     defaultValues: PD.getDefaultValues({}),
-    isApplicable: (ctx: ThemeDataContext) => !!ctx.structure && !!ctx.structure.inheritedPropertyData.subset,
+    isApplicable: (ctx: ThemeDataContext) => !!ctx.structure && !!ctx.structure.inheritedPropertyData.colors,
 };
