@@ -18,7 +18,7 @@ import { Structure, StructureSelection, QueryContext, StructureElement } from 'm
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 import { ViewerState } from '../types';
-import { StateSelection } from 'molstar/lib/mol-state';
+import { StateSelection, StateObjectSelector, StateObject, StateTransformer } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
 import { StructureSelectionFromExpression, TransformStructureConformation } from 'molstar/lib/mol-plugin-state/transforms/model';
@@ -68,6 +68,8 @@ function targetToLoci(target: Target, structure: Structure): StructureElement.Lo
     return StructureSelection.toLociWithSourceUnits(selection)
 }
 
+type Range = {asymId: string, beg?: number, end?: number}
+
 type BaseProps = {
     assemblyId?: string
     modelIndex?: number
@@ -85,12 +87,9 @@ type PropSet = {
 
 type PropsetProps = {
     kind: 'prop-set',
-    selection?: {
-        asymId: string,
-        beg?: number,
-        end?: number,
+    selection?: (Range & {
         matrix?: Mat4
-    }[],
+    })[],
     representation: {
         asymId: string,
         propset: PropSet[]
@@ -127,6 +126,8 @@ const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
 });
 
+type StructureObject = StateObjectSelector<PluginStateObject.Molecule.Structure, StateTransformer<StateObject<any, StateObject.Type<any>>, StateObject<any, StateObject.Type<any>>, any>>
+
 export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     id: 'preset-trajectory-rcsb',
     display: { name: 'RCSB' },
@@ -151,34 +152,44 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         const model = await builder.createModel(trajectory, modelParams);
         const modelProperties = await builder.insertModelProperties(model);
 
-        const structure = await builder.createStructure(modelProperties || model, structureParams);
-        const structureProperties = await builder.insertStructureProperties(structure);
+        let structure: StructureObject | undefined = undefined;
+        let structureProperties: StructureObject | undefined = undefined;
+
+        const needLocalStructure = p.kind === 'prop-set' && !!p.selection?.[0]?.matrix;
+        if (!needLocalStructure) {
+            structure = await builder.createStructure(modelProperties || model, structureParams);
+            structureProperties = await builder.insertStructureProperties(structure);
+        }
 
         const unitcell = await builder.tryCreateUnitcell(modelProperties, undefined, { isHidden: true });
 
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
         if (p.kind === 'prop-set') {
-
             const entryId = model.data?.entryId;
 
-            const selections = new Array();
+            const selections: StructureObject[] = [];
             if (p.selection) {
-                for (const s of p.selection) {
-                    const structure = await builder.createStructure(modelProperties || model, structureParams);
-                    const structureProperties = await builder.insertStructureProperties(structure);
-                    const range = {asymId:s.asymId, beg:s.beg, end:s.end};
-                    let _sele = plugin.state.data.build().to(structureProperties)
-                        .apply(TransformStructureConformation, {transform: { name: 'matrix', params: { data: s.matrix || Mat4.identity(), transpose: false }}})
-                        .apply(StructureSelectionFromExpression, generateSelection(entryId, range));
-                    const sele = await _sele.commit();
-                    selections.push(sele);
+                if (needLocalStructure) {
+                    for (const s of p.selection) {
+                        const _structure = await builder.createStructure(modelProperties || model, structureParams);
+                        const _structureProperties = await builder.insertStructureProperties(_structure);
+                        const sele = plugin.state.data.build().to(_structureProperties)
+                            .apply(TransformStructureConformation, {transform: { name: 'matrix', params: { data: s.matrix, transpose: false }}})
+                            .apply(StructureSelectionFromExpression, createSelection(entryId, s));
+                        selections.push(await sele.commit());
+                    }
+                } else {
+                    for (const s of p.selection) {
+                        const sele = plugin.state.data.build().to(structureProperties!)
+                            .apply(StructureSelectionFromExpression, createSelection(entryId, s));
+                        selections.push(await sele.commit());
+                    }
                 }
             } else {
-                const _sele = plugin.state.data.build().to(structureProperties)
-                    .apply(StructureSelectionFromExpression, generateSelection(entryId));
-                const sele = await _sele.commit();
-                selections.push(sele);
+                const sele = plugin.state.data.build().to(structureProperties!)
+                    .apply(StructureSelectionFromExpression, createSelection(entryId));
+                selections.push(await sele.commit());
             }
 
             const representations = new Array();
@@ -197,26 +208,26 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     });
                     sele.data!.inheritedPropertyData.colors[r.asymId] = colorLookup;
                     const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon', {
-                        theme: { globalName: 'superpose' }
+                        theme: { globalName: 'superpose', focus: { name: 'superpose' } }
                     });
                     representations.push(repr);
                 }
             }
         } else if (p.kind === 'validation') {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties, ValidationReportGeometryQualityPreset);
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
 
         } else if (p.kind === 'symmetry') {
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
 
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
                 custom: false
             })
         } else {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties, 'auto');
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
 
-        if (p.kind === 'feature' && structure.obj) {
+        if (p.kind === 'feature' && structure?.obj) {
             const loci = targetToLoci(p.target, structure.obj.data)
             // if target is only defined by chain: then don't force first residue
             const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
@@ -225,7 +236,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             plugin.managers.camera.focusLoci(target)
         }
 
-        if (p.kind === 'density' && structure.cell?.parent) {
+        if (p.kind === 'density' && structure?.cell?.parent) {
             const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
             if (!volumeRoot) {
                 const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin))
@@ -249,7 +260,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     }
 });
 
-function generateSelection(entryId: string | undefined, range?: {asymId: string, beg: number | undefined, end: number | undefined}) {
+function createSelection(entryId: string | undefined, range?: Range) {
 
     if (!entryId) return {};
 
@@ -290,7 +301,7 @@ const testResidues = (residueSet: number[]) => {
 
 const createRange = (start: number, end: number) => [...Array(end - start + 1)].map((_, i) => start + i);
 
-const createLabel = (entryId: string, range: {asymId: string, beg: number | undefined, end: number | undefined}) => {
+const createLabel = (entryId: string, range: Range) => {
     let label = ''.concat(entryId, '.', range.asymId);
     if ( ! (range.beg && range.end) ) return label;
     return ''.concat(label, ':', ''.concat(range.beg.toString(),'-',range.end.toString()))
