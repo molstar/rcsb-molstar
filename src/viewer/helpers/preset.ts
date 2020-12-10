@@ -165,12 +165,12 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const selections = new Array();
             if (p.selection) {
                 for (const s of p.selection) {
+                    const structure = await builder.createStructure(modelProperties || model, structureParams);
+                    const structureProperties = await builder.insertStructureProperties(structure);
                     const range = {asymId:s.asymId, beg:s.beg, end:s.end};
                     let _sele = plugin.state.data.build().to(structureProperties)
+                        .apply(TransformStructureConformation, {transform: { name: 'matrix', params: { data: s.matrix || Mat4.identity(), transpose: false }}})
                         .apply(StructureSelectionFromExpression, generateSelection(entryId, range));
-                    if (s.matrix) {
-                        _sele.apply(TransformStructureConformation, {transform: { name: 'matrix', params: { data: s.matrix, transpose: false }}});
-                    }
                     const sele = await _sele.commit();
                     selections.push(sele);
                 }
