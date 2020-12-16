@@ -2,7 +2,6 @@
  * Copyright (c) 2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
- * @author Alexander Rose <alex.rose@weirdbyte.de>
  */
 
 import * as React from 'react';
@@ -17,8 +16,9 @@ import {
 } from 'molstar/lib/mol-plugin-ui/controls/icons';
 import {ActionMenu} from 'molstar/lib/mol-plugin-ui/controls/action-menu';
 import {StructureSelectionHistoryEntry} from 'molstar/lib/mol-plugin-state/manager/structure/selection';
-import {StructureElement} from 'molstar/lib/mol-model/structure/structure';
+import {StructureElement, StructureProperties} from 'molstar/lib/mol-model/structure/structure';
 import {ToggleSelectionModeButton} from 'molstar/lib/mol-plugin-ui/structure/selection';
+import {OrderedSet} from 'molstar/lib/mol-data/int';
 
 // TODO use prod
 // const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
@@ -44,6 +44,7 @@ export class StrucmotifSubmitControls extends CollapsableControls {
 const _SearchIcon = <svg width='24px' height='24px' viewBox='0 0 24 24'><path d='M8 5v14l11-7z' /></svg>;
 export function SearchIconSvg() { return _SearchIcon; }
 
+const location = StructureElement.Location.create(void 0);
 export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean }> {
     state = { isBusy: false }
 
@@ -62,20 +63,25 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
     }
 
     submitSearch = () => {
-        // TODO ensure selection is from single structure
-        // TODO ensure selection references only polymeric entities
-        // TODO ensure selection granularity is/was residue
         const pdbId: Set<string> = new Set();
-        const residueIds = [
-            { label_asym_id: 'B', struct_oper_id: '1', label_seq_id: 42 },
-            { label_asym_id: 'B', struct_oper_id: '1', label_seq_id: 87 },
-            { label_asym_id: 'C', struct_oper_id: '1', label_seq_id: 47 }
-        ];
+        const residueIds: { label_asym_id: string, struct_oper_id?: string, label_seq_id: number }[] = [];
+
         const loci = this.plugin.managers.structure.selection.additionsHistory;
-        console.log(loci[0].loci.structure);
+        let structure;
         for (let l of loci) {
-            pdbId.add(l.loci.structure.model.entry);
+            structure = l.loci.structure;
+            pdbId.add(structure.model.entry);
+            // TODO ensure selection references only polymeric entities
+            // only first element and only first index will be considered (ignoring multiple residues)
+            const e = l.loci.elements[0];
+            StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
+            residueIds.push({
+                label_asym_id: StructureProperties.chain.label_asym_id(location),
+                // struct_oper_id: '1',
+                label_seq_id: StructureProperties.residue.label_seq_id(location)
+            });
         }
+
         if (pdbId.size > 1) {
             console.warn('motifs can only be extracted from a single model');
             return;
@@ -84,36 +90,37 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
             console.warn(`maximum motif size is ${MAX_MOTIF_SIZE} residues`);
             return;
         }
+
         const query = {
-            'query': {
-                'type': 'group',
-                'logical_operator': 'and',
-                'nodes': [{
-                    'type': 'terminal',
-                    'service': 'strucmotif',
-                    'parameters': {
-                        'value': {
-                            'data': '4CHA'/* pdbId.values().next().value as string*/,
-                            'residue_ids': residueIds
+            query: {
+                type: 'group',
+                logical_operator: 'and',
+                nodes: [{
+                    type: 'terminal',
+                    service: 'strucmotif',
+                    parameters: {
+                        value: {
+                            data: pdbId.values().next().value as string,
+                            residue_ids: residueIds
                         },
-                        'score_cutoff': 5,
-                        'exchanges': []
+                        score_cutoff: 5,
+                        exchanges: []
                     },
-                    'label': 'strucmotif',
-                    'node_id': 0
+                    label: 'strucmotif',
+                    node_id: 0
                 }],
-                'label': 'query-builder'
+                label: 'query-builder'
             },
-            'return_type': 'assembly',
-            'request_options': {
-                'pager': {
-                    'start': 0,
-                    'rows': 100
+            return_type: 'assembly',
+            request_options: {
+                pager: {
+                    start: 0,
+                    rows: 100
                 },
-                'scoring_strategy': 'combined',
-                'sort': [{
-                    'sort_by': 'score',
-                    'direction': 'desc'
+                scoring_strategy: 'combined',
+                sort: [{
+                    sort_by: 'score',
+                    direction: 'desc'
                 }]
             },
             // TODO needed?
@@ -122,18 +129,21 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
             // 'query_id': 'a4efda380aee3ef202dc59447a419e80'
             // }
         };
-        // TODO figure out of Mol* can compose sierra/BioJava operator
+        // TODO figure out if Mol* can compose sierra/BioJava operator
         // TODO probably there should be a sierra-endpoint that handles mapping of Mol* operator ids to sierra/BioJava ones
-        console.log(encodeURIComponent(JSON.stringify(query)).replace('%22', '"'));
         window.open(ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)), '_blank');
     }
 
     get actions(): ActionMenu.Items {
         const history = this.selection.additionsHistory;
-        const ret: ActionMenu.Item[] = [
-            { kind: 'item', label: `Submit Search ${history.length < 3 ? ' (3 selections required)' : ''}`, value: this.submitSearch, disabled: history.length < 3 },
+        return [
+            {
+                kind: 'item',
+                label: `Submit Search ${history.length < 3 ? ' (3 selections required)' : ''}`,
+                value: this.submitSearch,
+                disabled: history.length < 3
+            },
         ];
-        return ret;
     }
 
     selectAction: ActionMenu.OnSelect = item => {
