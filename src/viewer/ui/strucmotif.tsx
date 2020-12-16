@@ -21,8 +21,7 @@ import {ToggleSelectionModeButton} from 'molstar/lib/mol-plugin-ui/structure/sel
 import {OrderedSet} from 'molstar/lib/mol-data/int';
 
 // TODO use prod
-// const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
-const ADVANCED_SEARCH_URL = 'http://localhost:8080/search?request=';
+const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
 const MAX_MOTIF_SIZE = 10;
 
 export class StrucmotifSubmitControls extends CollapsableControls {
@@ -68,7 +67,8 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
 
         const loci = this.plugin.managers.structure.selection.additionsHistory;
         let structure;
-        for (let l of loci) {
+        for (let i = 0; i < Math.min(MAX_MOTIF_SIZE, loci.length); i++) {
+            const l = loci[i];
             structure = l.loci.structure;
             pdbId.add(structure.model.entry);
             // TODO ensure selection references only polymeric entities
@@ -77,7 +77,7 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
             StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
             residueIds.push({
                 label_asym_id: StructureProperties.chain.label_asym_id(location),
-                // struct_oper_id: '1',
+                struct_oper_id: '1', // TODO impl
                 label_seq_id: StructureProperties.residue.label_seq_id(location)
             });
         }
