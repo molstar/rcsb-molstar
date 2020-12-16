@@ -30,9 +30,9 @@ export class StructureTools extends PluginUIComponent {
         const collapsed = this.customState.collapsed.value;
         return <>
             <StructureSourceControls />
-            <StrucmotifSubmitControls initiallyCollapsed={collapsed.strucmotifSubmit} />
             <StructureMeasurementsControls initiallyCollapsed={collapsed.measurements} />
             <StructureSuperpositionControls initiallyCollapsed={collapsed.superposition} />
+            <StrucmotifSubmitControls initiallyCollapsed={collapsed.strucmotifSubmit} />
             <StructureComponentControls initiallyCollapsed={collapsed.component} />
             <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />
 
