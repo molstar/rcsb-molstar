@@ -27,7 +27,7 @@
         "postversion": "git push && git push --tags"
     },
     "publishConfig": {
-        "registry": "https://registry.npmjs.org/"
+        "registry": "http://nexus3.rcsb.org/repository/npm-rcsb/"
     },
     "main": "build/src/index.js",
     "files": [
