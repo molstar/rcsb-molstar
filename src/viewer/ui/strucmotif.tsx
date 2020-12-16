@@ -40,6 +40,7 @@ export class StrucmotifSubmitControls extends CollapsableControls {
     }
 }
 
+// TODO nice svg - magnifying glass or something search-y
 const _SearchIcon = <svg width='24px' height='24px' viewBox='0 0 24 24'><path d='M8 5v14l11-7z' /></svg>;
 export function SearchIconSvg() { return _SearchIcon; }
 
@@ -104,6 +105,7 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
                             residue_ids: residueIds
                         },
                         score_cutoff: 5,
+                        // TODO should the Mol* UI have the option to define exchanges?
                         exchanges: []
                     },
                     label: 'strucmotif',
