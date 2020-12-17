@@ -125,11 +125,9 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
                     direction: 'desc'
                 }]
             },
-            // TODO needed?
-            // 'request_info': {
-            // 'src': 'ui',
-            // 'query_id': 'a4efda380aee3ef202dc59447a419e80'
-            // }
+            'request_info': {
+                'src': 'ui'
+            }
         };
         // TODO figure out if Mol* can compose sierra/BioJava operator
         // TODO probably there should be a sierra-endpoint that handles mapping of Mol* operator ids to sierra/BioJava ones
