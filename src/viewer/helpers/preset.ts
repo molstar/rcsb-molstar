@@ -21,7 +21,8 @@ import { ViewerState } from '../types';
 import { StateSelection, StateObjectSelector, StateObject, StateTransformer } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
-import { StructureSelectionFromExpression, TransformStructureConformation } from 'molstar/lib/mol-plugin-state/transforms/model';
+import { StructureSelectionFromExpression, CustomStructureProperties } from 'molstar/lib/mol-plugin-state/transforms/model';
+import { FlexibleStructureFromModel as FlexibleStructureFromModel } from './superpose/flexible-structure';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -85,7 +86,7 @@ type PropSet = {
     positions: number[]
 };
 
-type PropsetProps = {
+export type PropsetProps = {
     kind: 'prop-set',
     selection?: (Range & {
         matrix?: Mat4
@@ -155,8 +156,10 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         let structure: StructureObject | undefined = undefined;
         let structureProperties: StructureObject | undefined = undefined;
 
-        const needLocalStructure = p.kind === 'prop-set' && !!p.selection?.[0]?.matrix;
-        if (!needLocalStructure) {
+        // if flexible transformation is allowed, we may need to create a single structure component
+        // from transformed substructures
+        const allowsFlexTransform = p.kind === 'prop-set';
+        if (!allowsFlexTransform) {
             structure = await builder.createStructure(modelProperties || model, structureParams);
             structureProperties = await builder.insertStructureProperties(structure);
         }
@@ -166,31 +169,34 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
         if (p.kind === 'prop-set') {
-            const entryId = model.data?.entryId;
 
+            // this creates a single structure from selections/transformations as specified
+            const _structure = plugin.state.data.build().to(modelProperties)
+                .apply(FlexibleStructureFromModel, { selection: p.selection });
+            structure = await _structure.commit();
+
+            const _structureProperties = plugin.state.data.build().to(structure)
+                .apply(CustomStructureProperties);
+            structureProperties = await _structureProperties.commit();
+
+            const entryId = model.data?.entryId;
             const selections: StructureObject[] = [];
             if (p.selection) {
-                if (needLocalStructure) {
-                    for (const s of p.selection) {
-                        const _structure = await builder.createStructure(modelProperties || model, structureParams);
-                        const _structureProperties = await builder.insertStructureProperties(_structure);
-                        const sele = plugin.state.data.build().to(_structureProperties)
-                            .apply(TransformStructureConformation, {transform: { name: 'matrix', params: { data: s.matrix, transpose: false }}})
-                            .apply(StructureSelectionFromExpression, createSelection(entryId, s));
-                        selections.push(await sele.commit());
-                    }
-                } else {
-                    for (const s of p.selection) {
-                        const sele = plugin.state.data.build().to(structureProperties!)
-                            .apply(StructureSelectionFromExpression, createSelection(entryId, s));
-                        selections.push(await sele.commit());
-                    }
+                for (const s of p.selection) {
+                    const sele = plugin.state.data.build().to(structureProperties!)
+                        .apply(StructureSelectionFromExpression, createSelection(entryId, s));
+                    selections.push(await sele.commit());
                 }
             } else {
                 const sele = plugin.state.data.build().to(structureProperties!)
                     .apply(StructureSelectionFromExpression, createSelection(entryId));
                 selections.push(await sele.commit());
             }
+
+            console.log(selections);
+
+            // At this we have a structure that contains only the transformed substructres
+            // The color theme data should be added to `structureProperties.data?.inheritedPropertyData`
 
             const representations = new Array();
             for (const r of p.representation) {
@@ -213,6 +219,12 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     representations.push(repr);
                 }
             }
+
+            // // this adds a single component
+            // representation = await plugin.builders.structure.representation.applyPreset(structureProperties, 'polymer-cartoon', {
+            //     theme: { globalName: 'superpose', focus: { name: 'superpose' } }
+            // });
+
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
 
@@ -260,7 +272,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     }
 });
 
-function createSelection(entryId: string | undefined, range?: Range) {
+export function createSelection(entryId: string | undefined, range?: Range) {
 
     if (!entryId) return {};
 
@@ -280,7 +292,7 @@ function createSelection(entryId: string | undefined, range?: Range) {
     }
 }
 
-const createTest = (asymId: string, residues: number[]) => {
+export const createTest = (asymId: string, residues: number[]) => {
     if (residues.length > 0) {
         return {
             'chain-test': testChain(asymId),
@@ -299,7 +311,7 @@ const testResidues = (residueSet: number[]) => {
     return MS.core.set.has([MS.set(...residueSet), MS.ammp('label_seq_id')]);
 }
 
-const createRange = (start: number, end: number) => [...Array(end - start + 1)].map((_, i) => start + i);
+export const createRange = (start: number, end: number) => [...Array(end - start + 1)].map((_, i) => start + i);
 
 const createLabel = (entryId: string, range: Range) => {
     let label = ''.concat(entryId, '.', range.asymId);
