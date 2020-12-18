@@ -156,7 +156,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         let structure: StructureObject | undefined = undefined;
         let structureProperties: StructureObject | undefined = undefined;
 
-        // if flexible transformation is allowed, we may need to create a single structure component
+        // If flexible transformation is allowed, we may need to create a single structure component
         // from transformed substructures
         const allowsFlexTransform = p.kind === 'prop-set';
         if (!allowsFlexTransform) {
@@ -170,7 +170,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         if (p.kind === 'prop-set') {
 
-            // this creates a single structure from selections/transformations as specified
+            // This creates a single structure from selections/transformations as specified
             const _structure = plugin.state.data.build().to(modelProperties)
                 .apply(FlexibleStructureFromModel, { selection: p.selection });
             structure = await _structure.commit();
@@ -179,6 +179,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 .apply(CustomStructureProperties);
             structureProperties = await _structureProperties.commit();
 
+            // At this we have a structure that contains only the transformed substructres
             const entryId = model.data?.entryId;
             const selections: StructureObject[] = [];
             if (p.selection) {
@@ -192,11 +193,6 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     .apply(StructureSelectionFromExpression, createSelection(entryId));
                 selections.push(await sele.commit());
             }
-
-            console.log(selections);
-
-            // At this we have a structure that contains only the transformed substructres
-            // The color theme data should be added to `structureProperties.data?.inheritedPropertyData`
 
             const representations = new Array();
             for (const r of p.representation) {
@@ -219,11 +215,6 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     representations.push(repr);
                 }
             }
-
-            // // this adds a single component
-            // representation = await plugin.builders.structure.representation.applyPreset(structureProperties, 'polymer-cartoon', {
-            //     theme: { globalName: 'superpose', focus: { name: 'superpose' } }
-            // });
 
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
