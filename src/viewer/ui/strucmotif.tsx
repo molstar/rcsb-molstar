@@ -6,13 +6,13 @@
 
 import * as React from 'react';
 import {CollapsableControls, PurePluginUIComponent} from 'molstar/lib/mol-plugin-ui/base';
-import {Button, IconButton} from 'molstar/lib/mol-plugin-ui/controls/common';
+import {Button, IconButton, ToggleButton} from 'molstar/lib/mol-plugin-ui/controls/common';
 import {
     ArrowDownwardSvg,
     ArrowUpwardSvg,
     DeleteOutlinedSvg,
     HelpOutlineSvg,
-    Icon
+    Icon, TuneSvg
 } from 'molstar/lib/mol-plugin-ui/controls/icons';
 import {ActionMenu} from 'molstar/lib/mol-plugin-ui/controls/action-menu';
 import {StructureSelectionHistoryEntry} from 'molstar/lib/mol-plugin-state/manager/structure/selection';
@@ -21,10 +21,13 @@ import {ToggleSelectionModeButton} from 'molstar/lib/mol-plugin-ui/structure/sel
 import {OrderedSet} from 'molstar/lib/mol-data/int';
 
 // TODO use prod
-const ADVANCED_SEARCH_URL = 'https://localhost:8080/search?request=';
-// const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
+// const ADVANCED_SEARCH_URL = 'https://localhost:8080/search?request=';
+const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
 const MAX_MOTIF_SIZE = 10;
 
+/**
+ * The top-level component that exposes the strucmotif search.
+ */
 export class StrucmotifSubmitControls extends CollapsableControls {
     protected defaultState() {
         return {
@@ -46,8 +49,14 @@ const _SearchIcon = <svg width='24px' height='24px' viewBox='0 0 24 24'><path d=
 export function SearchIconSvg() { return _SearchIcon; }
 
 const location = StructureElement.Location.create(void 0);
-export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean }> {
-    state = { isBusy: false }
+
+type ExchangeState = 'exchanges-0' | 'exchanges-1' | 'exchanges-2' | 'exchanges-3' | 'exchanges-4' | 'exchanges-5' | 'exchanges-6' | 'exchanges-7' | 'exchanges-8' | 'exchanges-9';
+
+/**
+ * The inner component of strucmotif search that can be collapsed.
+ */
+class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, action?: ExchangeState }> {
+    state = { isBusy: false, action: void 0 as ExchangeState | undefined }
 
     componentDidMount() {
         this.subscribe(this.selection.events.additionsHistoryUpdated, () => {
@@ -151,6 +160,8 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
         (item?.value as any)();
     }
 
+    toggleExchanges = (idx: number) => this.setState({ action: this.state.action === `exchanges-${idx}` ? void 0 : `exchanges-${idx}` as ExchangeState });
+
     highlight(loci: StructureElement.Loci) {
         this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci }, false);
     }
@@ -165,13 +176,16 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
 
     historyEntry(e: StructureSelectionHistoryEntry, idx: number) {
         const history = this.plugin.managers.structure.selection.additionsHistory;
-        return <div className='msp-flex-row' key={e.id}>
-            <Button noOverflow title='Click to focus. Hover to highlight.' onClick={() => this.focusLoci(e.loci)} style={{ width: 'auto', textAlign: 'left' }} onMouseEnter={() => this.highlight(e.loci)} onMouseLeave={this.plugin.managers.interactivity.lociHighlights.clearHighlights}>
-                {idx}. <span dangerouslySetInnerHTML={{ __html: e.label }} />
-            </Button>
-            {history.length > 1 && <IconButton svg={ArrowUpwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'up')} flex='20px' title={'Move up'} />}
-            {history.length > 1 && <IconButton svg={ArrowDownwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'down')} flex='20px' title={'Move down'} />}
-            <IconButton svg={DeleteOutlinedSvg} small={true} className='msp-form-control' onClick={() => this.plugin.managers.structure.selection.modifyHistory(e, 'remove')} flex title={'Remove'} />
+        return <div key={e.id}>
+            <div className='msp-flex-row'>
+                <Button noOverflow title='Click to focus. Hover to highlight.' onClick={() => this.focusLoci(e.loci)} style={{ width: 'auto', textAlign: 'left' }} onMouseEnter={() => this.highlight(e.loci)} onMouseLeave={this.plugin.managers.interactivity.lociHighlights.clearHighlights}>
+                    {idx}. <span dangerouslySetInnerHTML={{ __html: e.label }} />
+                </Button>
+                <ToggleButton icon={TuneSvg} className='msp-form-control' title='Define Exchanges' toggle={() => this.toggleExchanges(idx)} isSelected={this.state.action === `exchanges-${idx}`} disabled={this.state.isBusy} style={{ flex: '0 0 40px', padding: 0 }} />
+                {history.length > 1 && <IconButton svg={ArrowUpwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'up')} flex='20px' title={'Move up'} />}
+                {history.length > 1 && <IconButton svg={ArrowDownwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'down')} flex='20px' title={'Move down'} />}
+                <IconButton svg={DeleteOutlinedSvg} small={true} className='msp-form-control' onClick={() => this.plugin.managers.structure.selection.modifyHistory(e, 'remove')} flex title={'Remove'} />
+            </div>
         </div>;
     }
 
