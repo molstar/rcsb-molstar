@@ -21,7 +21,8 @@ import {ToggleSelectionModeButton} from 'molstar/lib/mol-plugin-ui/structure/sel
 import {OrderedSet} from 'molstar/lib/mol-data/int';
 
 // TODO use prod
-const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
+const ADVANCED_SEARCH_URL = 'https://localhost:8080/search?request=';
+// const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
 const MAX_MOTIF_SIZE = 10;
 
 export class StrucmotifSubmitControls extends CollapsableControls {
@@ -105,7 +106,7 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
                             residue_ids: residueIds
                         },
                         score_cutoff: 5,
-                        // TODO should the Mol* UI have the option to define exchanges?
+                        // TODO add UI to define exchanges
                         exchanges: []
                     },
                     label: 'strucmotif',
@@ -130,7 +131,6 @@ export class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean 
             }
         };
         // TODO figure out if Mol* can compose sierra/BioJava operator
-        // TODO probably there should be a sierra-endpoint that handles mapping of Mol* operator ids to sierra/BioJava ones
         window.open(ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)), '_blank');
     }
 
