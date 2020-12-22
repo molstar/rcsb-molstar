@@ -19,6 +19,7 @@ import {StructureSelectionHistoryEntry} from 'molstar/lib/mol-plugin-state/manag
 import {StructureElement, StructureProperties} from 'molstar/lib/mol-model/structure/structure';
 import {ToggleSelectionModeButton} from 'molstar/lib/mol-plugin-ui/structure/selection';
 import {OrderedSet} from 'molstar/lib/mol-data/int';
+import {ExchangesControl} from './exchanges';
 
 // TODO use prod
 // const ADVANCED_SEARCH_URL = 'https://localhost:8080/search?request=';
@@ -55,8 +56,12 @@ type ExchangeState = 'exchanges-0' | 'exchanges-1' | 'exchanges-2' | 'exchanges-
 /**
  * The inner component of strucmotif search that can be collapsed.
  */
-class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, action?: ExchangeState }> {
-    state = { isBusy: false, action: void 0 as ExchangeState | undefined }
+class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residueMap: Map<StructureSelectionHistoryEntry, Residue>, action?: ExchangeState }> {
+    state = {
+        isBusy: false,
+        residueMap: new Map<StructureSelectionHistoryEntry, Residue>(),
+        action: void 0 as ExchangeState | undefined
+    };
 
     componentDidMount() {
         this.subscribe(this.selection.events.additionsHistoryUpdated, () => {
@@ -166,33 +171,43 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, action
         this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci }, false);
     }
 
-    moveHistory(e: StructureSelectionHistoryEntry, direction: 'up' | 'down') {
+    moveHistory(e: Residue, direction: 'up' | 'down') {
         this.setState({ action: void 0 });
-        this.plugin.managers.structure.selection.modifyHistory(e, direction, MAX_MOTIF_SIZE);
+        this.plugin.managers.structure.selection.modifyHistory(e.entry, direction, MAX_MOTIF_SIZE);
+        this.updateResidues();
     }
 
-    modifyHistory(e: StructureSelectionHistoryEntry, a: 'remove', idx: number) {
+    modifyHistory(e: Residue, a: 'remove', idx: number) {
         this.setState({ action: void 0 });
-        this.plugin.managers.structure.selection.modifyHistory(e, a);
+        this.plugin.managers.structure.selection.modifyHistory(e.entry, a);
+        this.updateResidues();
+    }
+
+    updateResidues() {
+        const newResidueMap = new Map<StructureSelectionHistoryEntry, Residue>();
+        this.selection.additionsHistory.forEach(entry => {
+            newResidueMap.set(entry, this.state.residueMap.get(entry)!);
+        });
+        this.setState({ residueMap: newResidueMap });
     }
 
     focusLoci(loci: StructureElement.Loci) {
         this.plugin.managers.camera.focusLoci(loci);
     }
 
-    historyEntry(e: StructureSelectionHistoryEntry, idx: number) {
+    historyEntry(e: Residue, idx: number) {
         const history = this.plugin.managers.structure.selection.additionsHistory;
-        return <div key={e.id}>
+        return <div key={e.entry.id}>
             <div className='msp-flex-row'>
-                <Button noOverflow title='Click to focus. Hover to highlight.' onClick={() => this.focusLoci(e.loci)} style={{ width: 'auto', textAlign: 'left' }} onMouseEnter={() => this.highlight(e.loci)} onMouseLeave={this.plugin.managers.interactivity.lociHighlights.clearHighlights}>
-                    {idx}. <span dangerouslySetInnerHTML={{ __html: e.label }} />
+                <Button noOverflow title='Click to focus. Hover to highlight.' onClick={() => this.focusLoci(e.entry.loci)} style={{ width: 'auto', textAlign: 'left' }} onMouseEnter={() => this.highlight(e.entry.loci)} onMouseLeave={this.plugin.managers.interactivity.lociHighlights.clearHighlights}>
+                    {idx}. <span dangerouslySetInnerHTML={{ __html: e.entry.label }} />
                 </Button>
                 <ToggleButton icon={TuneSvg} className='msp-form-control' title='Define Exchanges' toggle={() => this.toggleExchanges(idx)} isSelected={this.state.action === `exchanges-${idx}`} disabled={this.state.isBusy} style={{ flex: '0 0 40px', padding: 0 }} />
                 {history.length > 1 && <IconButton svg={ArrowUpwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'up')} flex='20px' title={'Move up'} />}
                 {history.length > 1 && <IconButton svg={ArrowDownwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'down')} flex='20px' title={'Move down'} />}
                 <IconButton svg={DeleteOutlinedSvg} small={true} className='msp-form-control' onClick={() => this.modifyHistory(e, 'remove', idx)} flex title={'Remove'} />
             </div>
-            { this.state.action === `exchanges-${idx}` && <div className='msp-flex-row'>Options...</div> }
+            { this.state.action === `exchanges-${idx}` && <ExchangesControl /> }
         </div>;
     }
 
@@ -201,7 +216,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, action
 
         const entries: JSX.Element[] = [];
         for (let i = 0, _i = Math.min(history.length, 10); i < _i; i++) {
-            entries.push(this.historyEntry(history[i], i + 1));
+            entries.push(this.historyEntry(new Residue(history[i]), i + 1));
         }
 
         return <>
@@ -219,5 +234,25 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, action
         return <>
             {this.add()}
         </>;
+    }
+}
+
+export class Residue {
+    readonly exchanges: Set<string>;
+
+    constructor(readonly entry: StructureSelectionHistoryEntry) {
+        this.exchanges = new Set<string>();
+    }
+
+    toggleExchange(val: string): void {
+        if (this.hasExchange(val)) {
+            this.exchanges.delete(val);
+        } else {
+            this.exchanges.add(val);
+        }
+    }
+
+    hasExchange(val: string): boolean {
+        return this.exchanges.has(val);
     }
 }
