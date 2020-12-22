@@ -167,7 +167,13 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, action
     }
 
     moveHistory(e: StructureSelectionHistoryEntry, direction: 'up' | 'down') {
-        this.plugin.managers.structure.selection.modifyHistory(e, direction, 4);
+        this.setState({ action: void 0 });
+        this.plugin.managers.structure.selection.modifyHistory(e, direction, MAX_MOTIF_SIZE);
+    }
+
+    modifyHistory(e: StructureSelectionHistoryEntry, a: 'remove', idx: number) {
+        this.setState({ action: void 0 });
+        this.plugin.managers.structure.selection.modifyHistory(e, a);
     }
 
     focusLoci(loci: StructureElement.Loci) {
@@ -184,8 +190,9 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, action
                 <ToggleButton icon={TuneSvg} className='msp-form-control' title='Define Exchanges' toggle={() => this.toggleExchanges(idx)} isSelected={this.state.action === `exchanges-${idx}`} disabled={this.state.isBusy} style={{ flex: '0 0 40px', padding: 0 }} />
                 {history.length > 1 && <IconButton svg={ArrowUpwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'up')} flex='20px' title={'Move up'} />}
                 {history.length > 1 && <IconButton svg={ArrowDownwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'down')} flex='20px' title={'Move down'} />}
-                <IconButton svg={DeleteOutlinedSvg} small={true} className='msp-form-control' onClick={() => this.plugin.managers.structure.selection.modifyHistory(e, 'remove')} flex title={'Remove'} />
+                <IconButton svg={DeleteOutlinedSvg} small={true} className='msp-form-control' onClick={() => this.modifyHistory(e, 'remove', idx)} flex title={'Remove'} />
             </div>
+            { this.state.action === `exchanges-${idx}` && <div className='msp-flex-row'>Options...</div> }
         </div>;
     }
 
