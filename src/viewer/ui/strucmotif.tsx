@@ -87,7 +87,6 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             const l = loci[i];
             structure = l.loci.structure;
             pdbId.add(structure.model.entry);
-            // TODO ensure selection references only polymeric entities
             // only first element and only first index will be considered (ignoring multiple residues)
             const e = l.loci.elements[0];
             StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
@@ -99,11 +98,15 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         }
 
         if (pdbId.size > 1) {
-            console.warn('motifs can only be extracted from a single model');
+            this.plugin.log.warn('motifs can only be extracted from a single model');
             return;
         }
         if (residueIds.length > MAX_MOTIF_SIZE) {
-            console.warn(`maximum motif size is ${MAX_MOTIF_SIZE} residues`);
+            this.plugin.log.warn(`maximum motif size is ${MAX_MOTIF_SIZE} residues`);
+            return;
+        }
+        if (residueIds.filter(v => v.label_seq_id === 0).length > 0) {
+            this.plugin.log.warn('selections may only contain polymeric entities');
             return;
         }
 
