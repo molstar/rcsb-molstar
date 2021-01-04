@@ -24,7 +24,8 @@ import {ExchangesControl} from './exchanges';
 // TODO use prod
 // const ADVANCED_SEARCH_URL = 'https://localhost:8080/search?request=';
 const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
-const MIN_MOTIF_SIZE = 2;
+// TODO consider 2 as value
+const MIN_MOTIF_SIZE = 3;
 const MAX_MOTIF_SIZE = 10;
 
 /**
@@ -99,15 +100,15 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         }
 
         if (pdbId.size > 1) {
-            this.plugin.log.warn('motifs can only be extracted from a single model');
+            this.plugin.log.warn('Motifs can only be extracted from a single model!');
             return;
         }
         if (residueIds.length > MAX_MOTIF_SIZE) {
-            this.plugin.log.warn(`maximum motif size is ${MAX_MOTIF_SIZE} residues`);
+            this.plugin.log.warn(`Maximum motif size is ${MAX_MOTIF_SIZE} residues!`);
             return;
         }
         if (residueIds.filter(v => v.label_seq_id === 0).length > 0) {
-            this.plugin.log.warn('selections may only contain polymeric entities');
+            this.plugin.log.warn('Selections may only contain polymeric entities!');
             return;
         }
 
