@@ -24,6 +24,7 @@ import {ExchangesControl} from './exchanges';
 // TODO use prod
 // const ADVANCED_SEARCH_URL = 'https://localhost:8080/search?request=';
 const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
+const MIN_MOTIF_SIZE = 2;
 const MAX_MOTIF_SIZE = 10;
 
 /**
@@ -156,9 +157,9 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         return [
             {
                 kind: 'item',
-                label: `Submit Search ${history.length < 3 ? ' (3 selections required)' : ''}`,
+                label: `Submit Search ${history.length < MIN_MOTIF_SIZE ? ' (' + MIN_MOTIF_SIZE + ' selections required)' : ''}`,
                 value: this.submitSearch,
-                disabled: history.length < 3
+                disabled: history.length < MIN_MOTIF_SIZE
             },
         ];
     }
