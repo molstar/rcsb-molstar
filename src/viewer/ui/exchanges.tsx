@@ -42,25 +42,12 @@ export class ExchangesControl extends React.PureComponent<{ handler: Residue }> 
     onClickSwatch = (e: React.MouseEvent<HTMLButtonElement>) => {
         const tlc = e.currentTarget.getAttribute('data-id')!;
         this.props.handler.toggleExchange(tlc);
-        console.log(this.props.handler.exchanges);
-        // if (this.props.handler.hasExchange(tlc)) {
-        // this.setState(({ exchanges }) => {
-        //     const newExchanges = new Set(exchanges);
-        //     newExchanges.delete(tlc);
-        //
-        //     return {
-        //         exchanges: newExchanges
-        //     };
-        // });
-        // } else {
-        // this.setState(({ exchanges }) => ({
-        //     exchanges: new Set(exchanges).add(tlc)
-        // }));
-        // }
+        // TODO better use state?
+        this.forceUpdate();
     }
 
     swatch() {
-        // TODO update of isSelected style is delayed
+        // TODO update of isSelected style is delayed - this seems to be a browser-related bug
         return <div className='msp-combined-color-swatch'>
             {DefaultExchanges.map(e => {
                 const isSelected = this.props.handler.hasExchange(e[0]);
