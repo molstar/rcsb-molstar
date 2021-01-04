@@ -37,9 +37,9 @@ export const DefaultExchanges = [
     ['U', 'Uridine']
 ];
 
-export class ExchangesControl extends React.PureComponent<{}, { exchanges: Set<string> }> {
+export class ExchangesControl extends React.PureComponent<{ exchanges: Set<string> }, { exchanges: Set<string> }> {
     state = {
-        exchanges: new Set<string>()
+        exchanges: this.props.exchanges
     }
 
     onClickSwatch = (e: React.MouseEvent<HTMLButtonElement>) => {

@@ -54,6 +54,7 @@ export function SearchIconSvg() { return _SearchIcon; }
 const location = StructureElement.Location.create(void 0);
 
 type ExchangeState = 'exchanges-0' | 'exchanges-1' | 'exchanges-2' | 'exchanges-3' | 'exchanges-4' | 'exchanges-5' | 'exchanges-6' | 'exchanges-7' | 'exchanges-8' | 'exchanges-9';
+type ResidueSelection = { label_asym_id: string, struct_oper_id: string, label_seq_id: number }
 
 /**
  * The inner component of strucmotif search that can be collapsed.
@@ -61,6 +62,7 @@ type ExchangeState = 'exchanges-0' | 'exchanges-1' | 'exchanges-2' | 'exchanges-
 class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residueMap: Map<StructureSelectionHistoryEntry, Residue>, action?: ExchangeState }> {
     state = {
         isBusy: false,
+        // map between Mol* of selection entries and additional exchange state
         residueMap: new Map<StructureSelectionHistoryEntry, Residue>(),
         action: void 0 as ExchangeState | undefined
     };
@@ -81,7 +83,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
     submitSearch = () => {
         const pdbId: Set<string> = new Set();
-        const residueIds: { label_asym_id: string, struct_oper_id?: string, label_seq_id: number }[] = [];
+        const residueIds: ResidueSelection[] = [];
 
         const loci = this.plugin.managers.structure.selection.additionsHistory;
         let structure;
@@ -92,11 +94,22 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             // only first element and only first index will be considered (ignoring multiple residues)
             const e = l.loci.elements[0];
             StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
+
+            // handle pure residue-info
+            const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
             residueIds.push({
                 label_asym_id: StructureProperties.chain.label_asym_id(location),
-                struct_oper_id: '1', // TODO impl
+                // can be empty array if model is selected
+                struct_oper_id: struct_oper_list_ids?.length ? struct_oper_list_ids.join('x') : '1',
                 label_seq_id: StructureProperties.residue.label_seq_id(location)
             });
+
+            // handle potential exchanges
+            console.log(this.state.residueMap);
+            const residueMapEntry = this.state.residueMap.get(l);
+            if (residueMapEntry?.exchanges) {
+                console.log(residueMapEntry.exchanges);
+            }
         }
 
         if (pdbId.size > 1) {
@@ -196,6 +209,12 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         this.setState({ residueMap: newResidueMap });
     }
 
+    updateExchanges = (key: StructureSelectionHistoryEntry, ex: Set<string>) => {
+        this.setState({
+
+        });
+    }
+
     focusLoci(loci: StructureElement.Loci) {
         this.plugin.managers.camera.focusLoci(loci);
     }
@@ -212,7 +231,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                 {history.length > 1 && <IconButton svg={ArrowDownwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'down')} flex='20px' title={'Move down'} />}
                 <IconButton svg={DeleteOutlinedSvg} small={true} className='msp-form-control' onClick={() => this.modifyHistory(e, 'remove', idx)} flex title={'Remove'} />
             </div>
-            { this.state.action === `exchanges-${idx}` && <ExchangesControl /> }
+            { this.state.action === `exchanges-${idx}` && <ExchangesControl exchanges={e.exchanges} /> }
         </div>;
     }
 
