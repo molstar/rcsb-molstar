@@ -55,6 +55,7 @@ const location = StructureElement.Location.create(void 0);
 
 type ExchangeState = 'exchanges-0' | 'exchanges-1' | 'exchanges-2' | 'exchanges-3' | 'exchanges-4' | 'exchanges-5' | 'exchanges-6' | 'exchanges-7' | 'exchanges-8' | 'exchanges-9';
 type ResidueSelection = { label_asym_id: string, struct_oper_id: string, label_seq_id: number }
+type Exchange = { residue_id: ResidueSelection, allowed: string[] }
 
 /**
  * The inner component of strucmotif search that can be collapsed.
@@ -84,6 +85,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
     submitSearch = () => {
         const pdbId: Set<string> = new Set();
         const residueIds: ResidueSelection[] = [];
+        const exchanges: Exchange[] = [];
 
         const loci = this.plugin.managers.structure.selection.additionsHistory;
         let structure;
@@ -97,18 +99,18 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
             // handle pure residue-info
             const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
-            residueIds.push({
+            const residueId = {
                 label_asym_id: StructureProperties.chain.label_asym_id(location),
                 // can be empty array if model is selected
                 struct_oper_id: struct_oper_list_ids?.length ? struct_oper_list_ids.join('x') : '1',
                 label_seq_id: StructureProperties.residue.label_seq_id(location)
-            });
+            };
+            residueIds.push(residueId);
 
             // handle potential exchanges
-            console.log(this.state.residueMap);
-            const residueMapEntry = this.state.residueMap.get(l);
-            if (residueMapEntry?.exchanges) {
-                console.log(residueMapEntry.exchanges);
+            const residueMapEntry = this.state.residueMap.get(l)!;
+            if (residueMapEntry.exchanges?.size > 0) {
+                exchanges.push({ residue_id: residueId, allowed: Array.from(residueMapEntry.exchanges.values()) });
             }
         }
 
@@ -138,8 +140,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                             residue_ids: residueIds
                         },
                         score_cutoff: 5,
-                        // TODO add UI to define exchanges
-                        exchanges: []
+                        exchanges: exchanges
                     },
                     label: 'strucmotif',
                     node_id: 0
@@ -162,7 +163,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                 'src': 'ui'
             }
         };
-        // TODO figure out if Mol* can compose sierra/BioJava operator
+        console.log(query);
         window.open(ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)), '_blank');
     }
 
@@ -195,7 +196,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         this.updateResidues();
     }
 
-    modifyHistory(e: Residue, a: 'remove', idx: number) {
+    modifyHistory(e: Residue, a: 'remove') {
         this.setState({ action: void 0 });
         this.plugin.managers.structure.selection.modifyHistory(e.entry, a);
         this.updateResidues();
@@ -207,12 +208,6 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             newResidueMap.set(entry, this.state.residueMap.get(entry)!);
         });
         this.setState({ residueMap: newResidueMap });
-    }
-
-    updateExchanges = (key: StructureSelectionHistoryEntry, ex: Set<string>) => {
-        this.setState({
-
-        });
     }
 
     focusLoci(loci: StructureElement.Loci) {
@@ -229,9 +224,9 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                 <ToggleButton icon={TuneSvg} className='msp-form-control' title='Define Exchanges' toggle={() => this.toggleExchanges(idx)} isSelected={this.state.action === `exchanges-${idx}`} disabled={this.state.isBusy} style={{ flex: '0 0 40px', padding: 0 }} />
                 {history.length > 1 && <IconButton svg={ArrowUpwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'up')} flex='20px' title={'Move up'} />}
                 {history.length > 1 && <IconButton svg={ArrowDownwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'down')} flex='20px' title={'Move down'} />}
-                <IconButton svg={DeleteOutlinedSvg} small={true} className='msp-form-control' onClick={() => this.modifyHistory(e, 'remove', idx)} flex title={'Remove'} />
+                <IconButton svg={DeleteOutlinedSvg} small={true} className='msp-form-control' onClick={() => this.modifyHistory(e, 'remove')} flex title={'Remove'} />
             </div>
-            { this.state.action === `exchanges-${idx}` && <ExchangesControl exchanges={e.exchanges} /> }
+            { this.state.action === `exchanges-${idx}` && <ExchangesControl handler={e} /> }
         </div>;
     }
 
@@ -240,7 +235,14 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
         const entries: JSX.Element[] = [];
         for (let i = 0, _i = Math.min(history.length, 10); i < _i; i++) {
-            entries.push(this.historyEntry(new Residue(history[i]), i + 1));
+            let residue;
+            if (this.state.residueMap.has(history[i])) {
+                residue = this.state.residueMap.get(history[i]);
+            } else {
+                residue = new Residue(history[i]);
+                this.state.residueMap.set(history[i], residue);
+            }
+            entries.push(this.historyEntry(residue!, i + 1));
         }
 
         return <>
