@@ -38,12 +38,10 @@ export const DefaultExchanges = [
     ['U', 'Uridine']
 ];
 
-export class ExchangesControl extends React.PureComponent<{ handler: Residue }> {
+export class ExchangesControl extends React.Component<{ handler: Residue }> {
     onClickSwatch = (e: React.MouseEvent<HTMLButtonElement>) => {
         const tlc = e.currentTarget.getAttribute('data-id')!;
         this.props.handler.toggleExchange(tlc);
-        // TODO better use state?
-        this.forceUpdate();
     }
 
     swatch() {

@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react';
-import {CollapsableControls, PurePluginUIComponent} from 'molstar/lib/mol-plugin-ui/base';
+import {CollapsableControls, PluginUIComponent} from 'molstar/lib/mol-plugin-ui/base';
 import {Button, IconButton, ToggleButton} from 'molstar/lib/mol-plugin-ui/controls/common';
 import {
     ArrowDownwardSvg,
@@ -22,7 +22,6 @@ import {OrderedSet} from 'molstar/lib/mol-data/int';
 import {ExchangesControl} from './exchanges';
 
 // TODO use prod
-// const ADVANCED_SEARCH_URL = 'https://localhost:8080/search?request=';
 const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
 // TODO consider 2 as value
 const MIN_MOTIF_SIZE = 3;
@@ -60,10 +59,10 @@ type Exchange = { residue_id: ResidueSelection, allowed: string[] }
 /**
  * The inner component of strucmotif search that can be collapsed.
  */
-class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residueMap: Map<StructureSelectionHistoryEntry, Residue>, action?: ExchangeState }> {
+class SubmitControls extends PluginUIComponent<{}, { isBusy: boolean, residueMap: Map<StructureSelectionHistoryEntry, Residue>, action?: ExchangeState }> {
     state = {
         isBusy: false,
-        // map between Mol* of selection entries and additional exchange state
+        // map between selection entries of Mol* and additional exchange state
         residueMap: new Map<StructureSelectionHistoryEntry, Residue>(),
         action: void 0 as ExchangeState | undefined
     };
@@ -163,7 +162,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                 'src': 'ui'
             }
         };
-        console.log(query);
+        console.log(query.query.nodes[0].parameters);
         window.open(ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)), '_blank');
     }
 
@@ -235,14 +234,14 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
         const entries: JSX.Element[] = [];
         for (let i = 0, _i = Math.min(history.length, 10); i < _i; i++) {
-            let residue;
+            let residue: Residue;
             if (this.state.residueMap.has(history[i])) {
-                residue = this.state.residueMap.get(history[i]);
+                residue = this.state.residueMap.get(history[i])!;
             } else {
-                residue = new Residue(history[i]);
+                residue = new Residue(history[i], this.updateResidues.bind(this));
                 this.state.residueMap.set(history[i], residue);
             }
-            entries.push(this.historyEntry(residue!, i + 1));
+            entries.push(this.historyEntry(residue, i + 1));
         }
 
         return <>
@@ -266,7 +265,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 export class Residue {
     readonly exchanges: Set<string>;
 
-    constructor(readonly entry: StructureSelectionHistoryEntry) {
+    constructor(readonly entry: StructureSelectionHistoryEntry, readonly callback: () => void) {
         this.exchanges = new Set<string>();
     }
 
@@ -276,6 +275,8 @@ export class Residue {
         } else {
             this.exchanges.add(val);
         }
+        // this will update state of parent component
+        this.callback();
     }
 
     hasExchange(val: string): boolean {
