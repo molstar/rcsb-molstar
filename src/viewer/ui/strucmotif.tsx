@@ -46,8 +46,12 @@ export class StrucmotifSubmitControls extends CollapsableControls {
     }
 }
 
-// TODO nice svg - magnifying glass or something search-y
-const _SearchIcon = <svg width='24px' height='24px' viewBox='0 0 24 24'><path d='M8 5v14l11-7z' /></svg>;
+const _SearchIcon = <svg width='24px' height='24px' viewBox='0 0 12 12'>
+    <g strokeWidth='1.5' fill='none'>
+        <path d='M11.29 11.71l-4-4' />
+        <circle cx='5' cy='5' r='4' />
+    </g>
+</svg>;
 export function SearchIconSvg() { return _SearchIcon; }
 
 const location = StructureElement.Location.create(void 0);
