@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react';
-import {CollapsableControls, PluginUIComponent} from 'molstar/lib/mol-plugin-ui/base';
+import {CollapsableControls, PurePluginUIComponent} from 'molstar/lib/mol-plugin-ui/base';
 import {Button, IconButton, ToggleButton} from 'molstar/lib/mol-plugin-ui/controls/common';
 import {
     ArrowDownwardSvg,
@@ -59,7 +59,7 @@ type Exchange = { residue_id: ResidueSelection, allowed: string[] }
 /**
  * The inner component of strucmotif search that can be collapsed.
  */
-class SubmitControls extends PluginUIComponent<{}, { isBusy: boolean, residueMap: Map<StructureSelectionHistoryEntry, Residue>, action?: ExchangeState }> {
+class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residueMap: Map<StructureSelectionHistoryEntry, Residue>, action?: ExchangeState }> {
     state = {
         isBusy: false,
         // map between selection entries of Mol* and additional exchange state
