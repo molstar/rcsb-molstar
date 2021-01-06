@@ -50,6 +50,7 @@ export type VisibilityState = {
 }
 export interface ViewerState {
     showImportControls: boolean
+    showExportControls: boolean
     showSessionControls: boolean
     modelLoader: ModelLoader
     collapsed: BehaviorSubject<CollapsedState>

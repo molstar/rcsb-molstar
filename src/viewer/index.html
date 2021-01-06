@@ -57,6 +57,7 @@
             // create an instance of the plugin
             var viewer = new rcsbMolstar.Viewer('viewer', {
                 showImportControls: !pdbId,
+                showExportControls: !pdbId,
                 showSessionControls: !pdbId,
                 layoutShowLog: !pdbId,
                 layoutShowControls: !isEmbedded,
@@ -83,8 +84,10 @@
 
             Superposed
             <button style="padding: 3px;" onclick="superposed()">3PQR | 1U19</button>
+
         </div>
         <script>
+
             function loadExample(index) {
                 var e = examples[index]
                 viewer.loadPdbId(e.id, e.props)

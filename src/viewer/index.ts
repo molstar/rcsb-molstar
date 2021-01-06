@@ -29,6 +29,7 @@ import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/tr
 import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
+import { encodeStructureData, downloadAsZipFile } from './helpers/export';
 require('./skin/rcsb.scss')
 
 /** package version, filled in at bundle build time */
@@ -47,6 +48,7 @@ const Extensions = {
 
 const DefaultViewerProps = {
     showImportControls: false,
+    showExportControls: false,
     showSessionControls: false,
     modelUrlProviders: [
         (pdbId: string) => ({
@@ -140,6 +142,7 @@ export class Viewer {
 
         (this.plugin.customState as ViewerState) = {
             showImportControls: o.showImportControls,
+            showExportControls: o.showExportControls,
             showSessionControls: o.showSessionControls,
             modelLoader: new ModelLoader(this.plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
@@ -215,5 +218,10 @@ export class Viewer {
 
     handleResize() {
         this.plugin.layout.events.updated.next();
+    }
+
+    async exportLoadedStructures() {
+        const content = encodeStructureData(this.plugin);
+        downloadAsZipFile(content);
     }
 }
