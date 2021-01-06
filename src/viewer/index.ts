@@ -27,6 +27,13 @@ import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
+import {Structure} from "molstar/lib/mol-model/structure/structure";
+import {Script} from "molstar/lib/mol-script/script";
+import {MolScriptBuilder} from "molstar/lib/mol-script/language/builder";
+import {SetUtils} from "molstar/lib/mol-util/set";
+import {Loci} from "molstar/lib/mol-model/loci";
+import {StructureSelection} from "molstar/lib/mol-model/structure/query";
+import {StructureRef} from "molstar/lib/mol-plugin-state/manager/structure/hierarchy-state";
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -214,7 +221,40 @@ export class Viewer {
     }
 
     pluginCall(f: (plugin: PluginContext) => void){
-
         f(this.plugin);
+    }
+
+    getPlugin(): PluginContext {
+        return this.plugin;
+    }
+
+    public select(modelId: string, asymId: string, x: number, y: number): void {
+        const data: Structure | undefined = getStructureWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
+        if (data == null) return;
+        const seq_id: Array<number> = new Array<number>();
+        for(let n = x; n <= y; n++){
+            seq_id.push(n);
+        }
+        const sel = Script.getStructureSelection(Q => Q.struct.generator.atomGroups({
+            'chain-test': Q.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')]),
+            'residue-test': Q.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seq_id))), MolScriptBuilder.ammp('label_seq_id')])
+        }), data);
+        const loci: Loci = StructureSelection.toLociWithSourceUnits(sel);
+        this.plugin.managers.structure.selection.fromLoci('set', loci);
+    }
+
+    public clearSelection(): void {
+        this.plugin.managers.interactivity.lociSelects.deselectAll();
+    }
+}
+
+function getStructureWithModelId(structures: StructureRef[], modelId: string): Structure|undefined{
+    for(const structure of structures){
+        if(!structure.cell?.obj?.data?.units)
+            continue;
+        const unit =  structure.cell.obj.data.units[0];
+        const id: string = unit.model.id;
+        if(id === modelId)
+            return structure.cell.obj.data;
     }
 }
