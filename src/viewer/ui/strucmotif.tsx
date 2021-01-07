@@ -271,6 +271,11 @@ export class Residue {
 
     constructor(readonly entry: StructureSelectionHistoryEntry, readonly callback: () => void) {
         this.exchanges = new Set<string>();
+        // by default: explicitly 'activate' original residue type
+        const structure = entry.loci.structure;
+        const e = entry.loci.elements[0];
+        StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
+        this.exchanges.add(StructureProperties.atom.label_comp_id(location));
     }
 
     toggleExchange(val: string): void {
