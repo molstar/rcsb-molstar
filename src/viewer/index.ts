@@ -172,6 +172,24 @@ export class Viewer {
                 timeoutMs: 5000
             })
         }
+        this.prevExpanded = this.plugin.layout.state.isExpanded;
+        this.plugin.layout.events.updated.subscribe(() => this.toggleControls());
+    }
+
+    private prevExpanded: boolean;
+
+    private toggleControls(): void {
+
+        const currExpanded = this.plugin.layout.state.isExpanded;
+        const expanedChanged = (this.prevExpanded !== currExpanded);
+        if (!expanedChanged) return;
+
+        if (currExpanded && !this.plugin.layout.state.showControls) {
+            this.plugin.layout.setProps({showControls: true});
+        } else if (!currExpanded && this.plugin.layout.state.showControls) {
+            this.plugin.layout.setProps({showControls: false});
+        }
+        this.prevExpanded = this.plugin.layout.state.isExpanded;
     }
 
     //
