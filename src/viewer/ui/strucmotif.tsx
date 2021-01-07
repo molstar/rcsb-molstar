@@ -23,7 +23,6 @@ import {ExchangesControl} from './exchanges';
 
 // TODO use prod
 const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
-// TODO consider 2 as value
 const MIN_MOTIF_SIZE = 3;
 const MAX_MOTIF_SIZE = 10;
 
@@ -56,7 +55,7 @@ export function SearchIconSvg() { return _SearchIcon; }
 
 const location = StructureElement.Location.create(void 0);
 
-type ExchangeState = 'exchanges-0' | 'exchanges-1' | 'exchanges-2' | 'exchanges-3' | 'exchanges-4' | 'exchanges-5' | 'exchanges-6' | 'exchanges-7' | 'exchanges-8' | 'exchanges-9';
+type ExchangeState = number;
 type ResidueSelection = { label_asym_id: string, struct_oper_id: string, label_seq_id: number }
 type Exchange = { residue_id: ResidueSelection, allowed: string[] }
 
@@ -73,6 +72,8 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
     componentDidMount() {
         this.subscribe(this.selection.events.additionsHistoryUpdated, () => {
+            // invalidate potentially expanded exchange panel
+            this.setState({ action: void 0 });
             this.forceUpdate();
         });
 
@@ -131,42 +132,19 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         }
 
         const query = {
-            query: {
-                type: 'group',
-                logical_operator: 'and',
-                nodes: [{
-                    type: 'terminal',
-                    service: 'strucmotif',
-                    parameters: {
-                        value: {
-                            data: pdbId.values().next().value as string,
-                            residue_ids: residueIds
-                        },
-                        score_cutoff: 5,
-                        exchanges: exchanges
-                    },
-                    label: 'strucmotif',
-                    node_id: 0
-                }],
-                label: 'query-builder'
-            },
-            return_type: 'assembly',
-            request_options: {
-                pager: {
-                    start: 0,
-                    rows: 100
+            type: 'terminal',
+            service: 'strucmotif',
+            parameters: {
+                value: {
+                    data: pdbId.values().next().value as string,
+                    residue_ids: residueIds
                 },
-                scoring_strategy: 'combined',
-                sort: [{
-                    sort_by: 'score',
-                    direction: 'desc'
-                }]
+                score_cutoff: 5,
+                exchanges: exchanges
             },
-            'request_info': {
-                'src': 'ui'
-            }
+            return_type: 'assembly'
         };
-        console.log(query.query.nodes[0].parameters);
+        console.log(query.parameters);
         window.open(ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)), '_blank');
     }
 
@@ -187,7 +165,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         (item?.value as any)();
     }
 
-    toggleExchanges = (idx: number) => this.setState({ action: this.state.action === `exchanges-${idx}` ? void 0 : `exchanges-${idx}` as ExchangeState });
+    toggleExchanges = (idx: number) => this.setState({ action: (this.state.action === idx ? void 0 : idx) as ExchangeState });
 
     highlight(loci: StructureElement.Loci) {
         this.plugin.managers.interactivity.lociHighlights.highlightOnly({ loci }, false);
@@ -224,12 +202,12 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                 <Button noOverflow title='Click to focus. Hover to highlight.' onClick={() => this.focusLoci(e.entry.loci)} style={{ width: 'auto', textAlign: 'left' }} onMouseEnter={() => this.highlight(e.entry.loci)} onMouseLeave={this.plugin.managers.interactivity.lociHighlights.clearHighlights}>
                     {idx}. <span dangerouslySetInnerHTML={{ __html: e.entry.label }} />
                 </Button>
-                <ToggleButton icon={TuneSvg} className='msp-form-control' title='Define exchanges' toggle={() => this.toggleExchanges(idx)} isSelected={this.state.action === `exchanges-${idx}`} disabled={this.state.isBusy} style={{ flex: '0 0 40px', padding: 0 }} />
+                <ToggleButton icon={TuneSvg} className='msp-form-control' title='Define exchanges' toggle={() => this.toggleExchanges(idx)} isSelected={this.state.action === idx} disabled={this.state.isBusy} style={{ flex: '0 0 40px', padding: 0 }} />
                 {history.length > 1 && <IconButton svg={ArrowUpwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'up')} flex='20px' title={'Move up'} />}
                 {history.length > 1 && <IconButton svg={ArrowDownwardSvg} small={true} className='msp-form-control' onClick={() => this.moveHistory(e, 'down')} flex='20px' title={'Move down'} />}
                 <IconButton svg={DeleteOutlinedSvg} small={true} className='msp-form-control' onClick={() => this.modifyHistory(e, 'remove')} flex title={'Remove'} />
             </div>
-            { this.state.action === `exchanges-${idx}` && <ExchangesControl handler={e} /> }
+            { this.state.action === idx && <ExchangesControl handler={e} /> }
         </div>;
     }
 
