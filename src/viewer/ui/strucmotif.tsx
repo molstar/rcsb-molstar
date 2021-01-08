@@ -23,7 +23,8 @@ import {OrderedSet} from 'molstar/lib/mol-data/int';
 import {ExchangesControl} from './exchanges';
 
 // TODO use prod
-const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?request=';
+const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?query=';
+const RETURN_TYPE = '&return_type=assembly';
 const MIN_MOTIF_SIZE = 3;
 const MAX_MOTIF_SIZE = 10;
 
@@ -140,7 +141,6 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             return;
         }
 
-        // TODO fix
         const query = {
             type: 'terminal',
             service: 'strucmotif',
@@ -151,11 +151,10 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                 },
                 score_cutoff: 5,
                 exchanges: exchanges
-            },
-            return_type: 'assembly'
+            }
         };
-        console.log(query.parameters);
-        window.open(ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)), '_blank');
+        console.log(query);
+        window.open(ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE, '_blank');
     }
 
     get actions(): ActionMenu.Items {
