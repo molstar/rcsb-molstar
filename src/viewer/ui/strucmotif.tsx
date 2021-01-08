@@ -12,7 +12,8 @@ import {
     ArrowUpwardSvg,
     DeleteOutlinedSvg,
     HelpOutlineSvg,
-    Icon, TuneSvg
+    Icon,
+    TuneSvg
 } from 'molstar/lib/mol-plugin-ui/controls/icons';
 import {ActionMenu} from 'molstar/lib/mol-plugin-ui/controls/action-menu';
 import {StructureSelectionHistoryEntry} from 'molstar/lib/mol-plugin-state/manager/structure/selection';
@@ -52,6 +53,14 @@ const _SearchIcon = <svg width='24px' height='24px' viewBox='0 0 12 12'>
     </g>
 </svg>;
 export function SearchIconSvg() { return _SearchIcon; }
+
+// const _ExchangeIcon = <svg width='24px' height='24px' viewBox='0 0 24 24'>
+//     <g>
+//         <path d="m 15.684325,4 -1.41,1.41 5.58,5.59 H 7.6843275 v 2 H 19.854325 l -5.59,5.58 1.42,1.42 8,-8 z" />
+//         <path d="m 8.3156725,20 1.41,-1.41 -5.58,-5.59 H 16.315675 v -2 H 4.1456725 l 5.59,-5.58 -1.42,-1.42 -8,8 z" />
+//     </g>
+// </svg>;
+// export function ExchangeIconSvg() { return _ExchangeIcon; }
 
 const location = StructureElement.Location.create(void 0);
 
@@ -255,6 +264,7 @@ export class Residue {
         StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
         this.exchanges.add(StructureProperties.atom.label_comp_id(location));
     }
+    // TODO subscribe to parent
 
     toggleExchange(val: string): void {
         if (this.hasExchange(val)) {
