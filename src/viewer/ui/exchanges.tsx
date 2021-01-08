@@ -45,7 +45,7 @@ export class ExchangesControl extends React.Component<{ handler: Residue }> {
     }
 
     swatch() {
-        // TODO update of isSelected style is delayed - this seems to be a browser-related bug
+        // TODO update of isSelected style is delayed - this seems to be a Chrome-related bug
         return <div className='msp-combined-color-swatch'>
             {DefaultExchanges.map(e => {
                 const isSelected = this.props.handler.hasExchange(e[0]);

@@ -120,7 +120,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             };
             residueIds.push(residueId);
 
-            // handle potential exchanges
+            // handle potential exchanges - can be empty if deselected by users
             const residueMapEntry = this.state.residueMap.get(l)!;
             if (residueMapEntry.exchanges?.size > 0) {
                 exchanges.push({ residue_id: residueId, allowed: Array.from(residueMapEntry.exchanges.values()) });
@@ -140,6 +140,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             return;
         }
 
+        // TODO fix
         const query = {
             type: 'terminal',
             service: 'strucmotif',
@@ -229,7 +230,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             if (this.state.residueMap.has(history[i])) {
                 residue = this.state.residueMap.get(history[i])!;
             } else {
-                residue = new Residue(history[i], this.updateResidues.bind(this));
+                residue = new Residue(history[i], this);
                 this.state.residueMap.set(history[i], residue);
             }
             entries.push(this.historyEntry(residue, i + 1));
@@ -256,7 +257,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 export class Residue {
     readonly exchanges: Set<string>;
 
-    constructor(readonly entry: StructureSelectionHistoryEntry, readonly callback: () => void) {
+    constructor(readonly entry: StructureSelectionHistoryEntry, readonly parent: SubmitControls) {
         this.exchanges = new Set<string>();
         // by default: explicitly 'activate' original residue type
         const structure = entry.loci.structure;
@@ -264,7 +265,6 @@ export class Residue {
         StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
         this.exchanges.add(StructureProperties.atom.label_comp_id(location));
     }
-    // TODO subscribe to parent
 
     toggleExchange(val: string): void {
         if (this.hasExchange(val)) {
@@ -273,7 +273,7 @@ export class Residue {
             this.exchanges.add(val);
         }
         // this will update state of parent component
-        this.callback();
+        this.parent.forceUpdate();
     }
 
     hasExchange(val: string): boolean {
