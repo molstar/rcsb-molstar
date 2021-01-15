@@ -131,18 +131,24 @@ const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin
 
 type StructureObject = StateObjectSelector<PluginStateObject.Molecule.Structure, StateTransformer<StateObject<any, StateObject.Type<any>>, StateObject<any, StateObject.Type<any>>, any>>
 
-const BuiltInPresetGroupName = 'Superposition';
-
 const CommonParams = StructureRepresentationPresetProvider.CommonParams;
 
 const reprBuilder = StructureRepresentationPresetProvider.reprBuilder;
 const updateFocusRepr = StructureRepresentationPresetProvider.updateFocusRepr;
 
+type SelectionExpression = {
+    tag: string
+    type: StructureRepresentationRegistry.BuiltIn
+    label: string
+    expression: Expression
+};
+
 export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPresetProvider({
     id: 'preset-superposition-representation-rcsb',
     display: {
-        name: 'Test', group: BuiltInPresetGroupName,
-        description: 'Test'
+        group: 'Superposition',
+        name: 'Alignment',
+        description: 'Show representations based on the structural alignment data.'
     },
     params: () => ({
         ...CommonParams,
@@ -161,23 +167,19 @@ export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPres
         for (const expr of params.selectionExpressions) {
 
             const comp = await plugin.builders.structure.tryCreateComponentFromExpression(structureCell, expr.expression, expr.label, { label: expr.label });
-
-            const c = {
-                [expr.label]: comp
-            };
-            Object.assign(components, c);
+            Object.assign(components, {[expr.label]: comp});
 
             const { update, builder, typeParams, color } = reprBuilder(plugin, params);
 
-            const r = {
+            Object.assign(representations, {
                 [expr.label]: builder.buildRepresentation(update, comp, {type: expr.type,
                     typeParams: { ...typeParams, ...cartoonProps }, color: color as any}, { tag: expr.tag }),
-            };
-            Object.assign(representations, r);
+            });
 
             await update.commit({ revertOnError: false });
 
         }
+        // needed to apply same coloring scheme to focus representation
         await updateFocusRepr(plugin, structure, params.theme?.focus?.name, params.theme?.focus?.params);
 
         return representations;
@@ -253,8 +255,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const entryId = model.data!.entryId;
             let selectionExpressions: SelectionExpression[] = [];
             if (p.selection) {
-                for (const sele of p.selection) {
-                    selectionExpressions = selectionExpressions.concat(createSelectionExpression(entryId, sele));
+                for (const range of p.selection) {
+                    selectionExpressions = selectionExpressions.concat(createSelectionExpression(entryId, range));
                 }
             } else {
                 selectionExpressions = selectionExpressions.concat(createSelectionExpression(entryId));
@@ -314,13 +316,6 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         };
     }
 });
-
-type SelectionExpression = {
-    tag: string
-    type: StructureRepresentationRegistry.BuiltIn
-    label: string
-    expression: Expression
-};
 
 export function createSelectionExpression(entryId: string, range?: Range): SelectionExpression[] {
     if (range) {
