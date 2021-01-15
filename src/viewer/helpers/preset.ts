@@ -18,11 +18,13 @@ import { Structure, StructureSelection, QueryContext, StructureElement } from 'm
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 import { ViewerState } from '../types';
-import { StateSelection, StateObjectSelector, StateObject, StateTransformer } from 'molstar/lib/mol-state';
+import { StateSelection, StateObjectSelector, StateObject, StateTransformer, StateObjectRef } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
-import { StructureSelectionFromExpression, CustomStructureProperties } from 'molstar/lib/mol-plugin-state/transforms/model';
+import { CustomStructureProperties } from 'molstar/lib/mol-plugin-state/transforms/model';
 import { FlexibleStructureFromModel as FlexibleStructureFromModel } from './superpose/flexible-structure';
+import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
+import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -69,7 +71,7 @@ function targetToLoci(target: Target, structure: Structure): StructureElement.Lo
     return StructureSelection.toLociWithSourceUnits(selection)
 }
 
-type Range = {asymId: string, beg?: number, end?: number}
+type Range = { asymId: string, beg?: number, end?: number }
 
 type BaseProps = {
     assemblyId?: string
@@ -129,6 +131,59 @@ const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin
 
 type StructureObject = StateObjectSelector<PluginStateObject.Molecule.Structure, StateTransformer<StateObject<any, StateObject.Type<any>>, StateObject<any, StateObject.Type<any>>, any>>
 
+const BuiltInPresetGroupName = 'Superposition';
+
+const CommonParams = StructureRepresentationPresetProvider.CommonParams;
+
+const reprBuilder = StructureRepresentationPresetProvider.reprBuilder;
+const updateFocusRepr = StructureRepresentationPresetProvider.updateFocusRepr;
+
+export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPresetProvider({
+    id: 'preset-superposition-representation-rcsb',
+    display: {
+        name: 'Test', group: BuiltInPresetGroupName,
+        description: 'Test'
+    },
+    params: () => ({
+        ...CommonParams,
+        selectionExpressions: PD.Value<SelectionExpression[]>([])
+    }),
+    async apply(ref, params, plugin) {
+
+        const structureCell = StateObjectRef.resolveAndCheck(plugin.state.data, ref);
+        if (!structureCell) return {};
+
+        const structure = structureCell.obj!.data;
+        const cartoonProps = {sizeFactor: structure.isCoarseGrained ? 0.8 : 0.2};
+
+        let components = {};
+        let representations = {};
+        for (const expr of params.selectionExpressions) {
+
+            const comp = await plugin.builders.structure.tryCreateComponentFromExpression(structureCell, expr.expression, expr.label, { label: expr.label });
+
+            const c = {
+                [expr.label]: comp
+            };
+            Object.assign(components, c);
+
+            const { update, builder, typeParams, color } = reprBuilder(plugin, params);
+
+            const r = {
+                [expr.label]: builder.buildRepresentation(update, comp, {type: expr.type,
+                    typeParams: { ...typeParams, ...cartoonProps }, color: color as any}, { tag: expr.tag }),
+            };
+            Object.assign(representations, r);
+
+            await update.commit({ revertOnError: false });
+
+        }
+        await updateFocusRepr(plugin, structure, params.theme?.focus?.name, params.theme?.focus?.params);
+
+        return representations;
+    }
+})
+
 export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     id: 'preset-trajectory-rcsb',
     display: { name: 'RCSB' },
@@ -179,42 +234,39 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 .apply(CustomStructureProperties);
             structureProperties = await _structureProperties.commit();
 
-            // At this we have a structure that contains only the transformed substructres
-            const entryId = model.data?.entryId;
-            const selections: StructureObject[] = [];
-            if (p.selection) {
-                for (const s of p.selection) {
-                    const sele = plugin.state.data.build().to(structureProperties!)
-                        .apply(StructureSelectionFromExpression, createSelection(entryId, s));
-                    selections.push(await sele.commit());
-                }
-            } else {
-                const sele = plugin.state.data.build().to(structureProperties!)
-                    .apply(StructureSelectionFromExpression, createSelection(entryId));
-                selections.push(await sele.commit());
+            // adding coloring lookup scheme
+            structure.data!.inheritedPropertyData.colors = {};
+            for (const reprProp of p.representation) {
+                let colorLookup = structure.data!.inheritedPropertyData.colors[reprProp.asymId] || new Map();
+                reprProp.propset.forEach(prop => {
+                    if (prop.args.name === 'color') {
+                        for (let i = 0; i < prop.positions.length; i++) {
+                            colorLookup.set(prop.positions[i], prop.args.value);
+                        }
+                    }
+                });
+                structure.data!.inheritedPropertyData.colors[reprProp.asymId] = colorLookup;
             }
 
-            const representations = new Array();
-            for (const r of p.representation) {
-                for (const sele of selections) {
-                    if(!sele.data!.inheritedPropertyData.colors) {
-                        sele.data!.inheritedPropertyData.colors = {};
-                    }
-                    let colorLookup = sele.data!.inheritedPropertyData.colors[r.asymId] || new Map();
-                    r.propset.forEach(prop => {
-                        if (prop.args.name === 'color') {
-                            for (let i = 0; i < prop.positions.length; i++) {
-                                colorLookup.set(prop.positions[i], prop.args.value);
-                            }
-                        }
-                    });
-                    sele.data!.inheritedPropertyData.colors[r.asymId] = colorLookup;
-                    const repr = await plugin.builders.structure.representation.applyPreset(sele, 'polymer-cartoon', {
-                        theme: { globalName: 'superpose', focus: { name: 'superpose' } }
-                    });
-                    representations.push(repr);
+            // At this we have a structure that contains only the transformed substructres,
+            // creating structure selections to have multiple components per each flexible part
+            const entryId = model.data!.entryId;
+            let selectionExpressions: SelectionExpression[] = [];
+            if (p.selection) {
+                for (const sele of p.selection) {
+                    selectionExpressions = selectionExpressions.concat(createSelectionExpression(entryId, sele));
                 }
+            } else {
+                selectionExpressions = selectionExpressions.concat(createSelectionExpression(entryId));
             }
+
+            const params = {
+                ignoreHydrogens: CommonParams.ignoreHydrogens.defaultValue,
+                quality: CommonParams.quality.defaultValue,
+                theme: { globalName: 'superpose' as any, focus: { name: 'superpose' } },
+                selectionExpressions: selectionExpressions
+            };
+            representation = await RcsbSuperpositionRepresentationPreset.apply(structure, params, plugin);
 
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
@@ -263,49 +315,80 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     }
 });
 
-export function createSelection(entryId: string | undefined, range?: Range) {
+type SelectionExpression = {
+    tag: string
+    type: StructureRepresentationRegistry.BuiltIn
+    label: string
+    expression: Expression
+};
 
-    if (!entryId) return {};
-
+export function createSelectionExpression(entryId: string, range?: Range): SelectionExpression[] {
     if (range) {
-        const residues: number[] = (range.beg && range.end) ? createRange(range.beg, range.end) : [];
-        const test = createTest(range.asymId, residues);
-        const label = createLabel(entryId, range);
-        return {
+        const residues: number[] = (range.beg && range.end) ? toRange(range.beg, range.end) : [];
+        const test = selectionTest(range.asymId, residues);
+        const label = labelFromProps(entryId, range);
+        return [{
             expression: MS.struct.generator.atomGroups(test),
-            label: `${label}`
-        }
+            label: `${label}`,
+            type: 'cartoon',
+            tag: 'polymer'
+        }]
     } else {
-        return {
-            expression: MS.struct.generator.all(),
-            label: `${entryId}`
-        }
+        return [
+            {
+                expression: Q.polymer.expression,
+                label: `${entryId} - Polymers`,
+                type: 'cartoon',
+                tag: 'polymer'
+            },
+            {
+                expression: Q.ligand.expression,
+                label: `${entryId} - Ligands`,
+                type: 'ball-and-stick',
+                tag: 'ligand'
+            },
+            {
+                expression: Q.ion.expression,
+                label: `${entryId} - Ions`,
+                type: 'ball-and-stick',
+                tag: 'ion'
+            },
+            {
+                expression: Q.branched.expression,
+                label: `${entryId} - Carbohydrates`,
+                type: 'carbohydrate',
+                tag: 'branched-snfg-3d'
+            },
+            {
+                expression: Q.lipid.expression,
+                label: `${entryId} - Lipids`,
+                type: 'ball-and-stick',
+                tag: 'lipid'
+            },
+            {
+                expression: Q.water.expression,
+                label: `${entryId} - Waters`,
+                type: 'ball-and-stick',
+                tag: 'water'
+            }
+        ]
     }
 }
 
-export const createTest = (asymId: string, residues: number[]) => {
+export const selectionTest = (asymId: string, residues: number[]) => {
     if (residues.length > 0) {
         return {
-            'chain-test': testChain(asymId),
-            'residue-test': testResidues(residues)
+            'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), asymId]),
+            'residue-test': MS.core.set.has([MS.set(...residues), MS.ammp('label_seq_id')])
         };
     } else {
-        return {'chain-test': testChain(asymId)};
+        return { 'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), asymId]) };
     }
 }
 
-const testChain = (asymId: string) => {
-    return MS.core.rel.eq([MS.ammp('label_asym_id'), asymId]);
-}
+export const toRange = (start: number, end: number) => [...Array(end - start + 1)].map((_, i) => start + i);
 
-const testResidues = (residueSet: number[]) => {
-    return MS.core.set.has([MS.set(...residueSet), MS.ammp('label_seq_id')]);
-}
-
-export const createRange = (start: number, end: number) => [...Array(end - start + 1)].map((_, i) => start + i);
-
-const createLabel = (entryId: string, range: Range) => {
-    let label = ''.concat(entryId, '.', range.asymId);
-    if ( ! (range.beg && range.end) ) return label;
-    return ''.concat(label, ':', ''.concat(range.beg.toString(),'-',range.end.toString()))
+const labelFromProps = (entryId: string, range: Range) => {
+    return entryId +(range.asymId ? `.${range.asymId}` : '') +
+        (range.beg && range.end ? `:${range.beg.toString()}-${range.end.toString()}` : '');
 }

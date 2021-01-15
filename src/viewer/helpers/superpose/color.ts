@@ -30,7 +30,7 @@ export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorThem
                 if (colorLookup[asymId]?.get(seqId) !== undefined) {
                     colorCode = colorLookup[asymId]?.get(seqId);
                 }
-                return colorCode;
+                return Array.isArray(colorCode) ? colorCode[0] : colorCode;
             }
         }
         return DefaultColor;

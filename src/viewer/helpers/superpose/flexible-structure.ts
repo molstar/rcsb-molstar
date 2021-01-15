@@ -3,7 +3,7 @@ import { RootStructureDefinition } from 'molstar/lib/mol-plugin-state/helpers/ro
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { Task } from 'molstar/lib/mol-task';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
-import { PropsetProps, createTest, createRange } from '../preset';
+import { PropsetProps, selectionTest, toRange } from '../preset';
 import { StructureQueryHelper } from 'molstar/lib/mol-plugin-state/helpers/structure-query';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { StructureSelection, Structure } from 'molstar/lib/mol-model/structure';
@@ -15,6 +15,7 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
     display: { name: 'Flexible Structure', description: 'Create a molecular structure from independently transformed substructures.' },
     from: SO.Molecule.Model,
     to: SO.Molecule.Structure,
+    isDecorator: true,
     params(a) {
         return {
             selection: PD.Value<PropsetProps['selection']>([])
@@ -29,8 +30,8 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
 
             const blocks: Structure[] = []
             for (const p of selection) {
-                const residues: number[] = (p.beg && p.end) ? createRange(p.beg, p.end) : [];
-                const test = createTest(p.asymId, residues);
+                const residues: number[] = (p.beg && p.end) ? toRange(p.beg, p.end) : [];
+                const test = selectionTest(p.asymId, residues);
                 const expression = MS.struct.generator.atomGroups(test);
                 const { selection: sele } = StructureQueryHelper.createAndRun(base.data, expression);
                 const s = StructureSelection.unionStructure(sele);
