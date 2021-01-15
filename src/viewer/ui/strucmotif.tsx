@@ -149,7 +149,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                     data: pdbId.values().next().value as string,
                     residue_ids: residueIds
                 },
-                score_cutoff: 5,
+                score_cutoff: 0,
                 exchanges: exchanges
             }
         };
