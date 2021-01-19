@@ -18,7 +18,7 @@ import { ColorNames } from 'molstar/lib/mol-util/color/names';
 import ReactDOM = require('react-dom');
 import React = require('react');
 import { ModelLoader } from './helpers/model';
-import { PresetProps } from './helpers/preset';
+import { PresetProps, RcsbSuperpositionRepresentationPreset } from './helpers/preset';
 import { ControlsWrapper } from './ui/controls';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
 import { RCSBAssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
@@ -163,6 +163,7 @@ export class Viewer {
         PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
 
         this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
+        // this.plugin.builders.structure.representation.registerPreset(RcsbSuperpositionRepresentationPreset);
 
         if (o.showWelcomeToast) {
             PluginCommands.Toast.Show(this.plugin, {
