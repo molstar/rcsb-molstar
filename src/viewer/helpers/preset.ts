@@ -171,9 +171,15 @@ export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPres
 
             const { update, builder, typeParams, color } = reprBuilder(plugin, params);
 
+            let typeProps = {};
+            if (expr.type === 'cartoon') {
+                typeProps = {...typeParams, ...cartoonProps}
+            } else {
+                typeProps = {...typeParams}
+            }
             Object.assign(representations, {
                 [expr.label]: builder.buildRepresentation(update, comp, {type: expr.type,
-                    typeParams: { ...typeParams, ...cartoonProps }, color: color as any}, { tag: expr.tag }),
+                    typeParams: typeProps, color: color as any}, { tag: expr.tag }),
             });
 
             await update.commit({ revertOnError: false });
