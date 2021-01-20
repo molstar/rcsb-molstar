@@ -18,7 +18,7 @@ import { ColorNames } from 'molstar/lib/mol-util/color/names';
 import ReactDOM = require('react-dom');
 import React = require('react');
 import { ModelLoader } from './helpers/model';
-import { PresetProps, RcsbSuperpositionRepresentationPreset } from './helpers/preset';
+import { PresetProps } from './helpers/preset';
 import { ControlsWrapper } from './ui/controls';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
 import { RCSBAssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
