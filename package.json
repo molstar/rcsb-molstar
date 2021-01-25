@@ -31,7 +31,8 @@
     },
     "main": "build/src/index.js",
     "files": [
-        "build/dist/"
+        "build/dist/",
+        "build/src/viewer/"
     ],
     "author": "RCSB PDB and Mol* Contributors",
     "license": "MIT",

@@ -60,5 +60,11 @@ module.exports = [
             path: path.resolve(__dirname, `build/dist/viewer`)
         },
         ...sharedConfig
-    },
+    },{
+        entry: path.resolve(__dirname, `build/src/viewer/assets.js`),
+        output: {
+            path: path.resolve(__dirname, `build/dist/viewer`)
+        },
+        ...sharedConfig
+    }
 ]
