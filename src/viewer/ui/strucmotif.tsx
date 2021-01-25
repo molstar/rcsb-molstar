@@ -147,7 +147,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             parameters: {
                 value: {
                     data: pdbId.values().next().value as string,
-                    residue_ids: residueIds
+                    residue_ids: residueIds.sort((a, b) => this.sortResidueIds(a, b))
                 },
                 score_cutoff: 0,
                 exchanges: exchanges
@@ -155,6 +155,16 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         };
         console.log(query);
         window.open(ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE, '_blank');
+    }
+
+    sortResidueIds(a: ResidueSelection, b: ResidueSelection): number {
+        if (a.label_asym_id !== b.label_asym_id) {
+            return a.label_asym_id.localeCompare(b.label_asym_id);
+        } else if (a.struct_oper_id !== b.struct_oper_id) {
+            return a.struct_oper_id.localeCompare(b.struct_oper_id);
+        } else {
+            return a.label_seq_id < b.label_seq_id ? -1 : a.label_seq_id > b.label_seq_id ? 1 : 0;
+        }
     }
 
     get actions(): ActionMenu.Items {
