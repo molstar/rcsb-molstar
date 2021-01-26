@@ -230,21 +230,21 @@ export class Viewer {
     }
 
     public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover'): void;
-    public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover'): void;
-    public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover'): void;
+    public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
+    public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(...args: any[]){
         if(args.length === 2){
             this.clearSelection('select');
             (args[0] as Array<{modelId: string; asymId: string; position: number;}>).forEach(r=>{
                 this.selectSegment(r.modelId, r.asymId, r.position, r.position, args[1], 'add');
             });
-        }else if(args.length === 4){
-            this.selectSegment(args[0], args[1], args[2], args[2], args[3]);
         }else if(args.length === 5){
-            this.selectSegment(args[0], args[1], args[2], args[3], args[4]);
+            this.selectSegment(args[0], args[1], args[2], args[2], args[3], args[4]);
+        }else if(args.length === 6){
+            this.selectSegment(args[0], args[1], args[2], args[3], args[4], args[5]);
         }
     }
-    private selectSegment(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set' = 'set'): void {
+    private selectSegment(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void {
         const data: Structure | undefined = getStructureWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
         if (data == null) return;
         const seq_id: Array<number> = new Array<number>();
