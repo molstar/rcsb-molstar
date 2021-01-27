@@ -245,7 +245,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             // adding coloring lookup scheme
             structure.data!.inheritedPropertyData.colors = {};
             for (const reprProp of p.representation) {
-                let colorLookup = structure.data!.inheritedPropertyData.colors[reprProp.asymId] || new Map();
+                const colorLookup = structure.data!.inheritedPropertyData.colors[reprProp.asymId] || new Map();
                 reprProp.propset.forEach(prop => {
                     if (prop.args.name === 'color') {
                         for (let i = 0; i < prop.positions.length; i++) {
