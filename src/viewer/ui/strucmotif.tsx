@@ -154,7 +154,9 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             }
         };
         console.log(query);
-        window.open(ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE, '_blank');
+        const url = ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
+        console.log(url);
+        window.open(url, '_blank');
     }
 
     sortResidueIds(a: ResidueSelection, b: ResidueSelection): number {
