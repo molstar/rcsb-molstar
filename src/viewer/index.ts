@@ -229,12 +229,13 @@ export class Viewer {
         return this.plugin;
     }
 
-    public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover'): void;
+    public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(...args: any[]){
-        if(args.length === 2){
-            this.clearSelection('select');
+        if(args.length === 3){
+            if(args[2] === 'set')
+                this.clearSelection('select');
             (args[0] as Array<{modelId: string; asymId: string; position: number;}>).forEach(r=>{
                 this.selectSegment(r.modelId, r.asymId, r.position, r.position, args[1], 'add');
             });
