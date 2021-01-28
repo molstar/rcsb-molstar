@@ -262,11 +262,22 @@ export class Viewer {
         else if(mode === 'hover')
             this.plugin.managers.interactivity.lociHighlights.highlight({ loci });
     }
-    public clearSelection(mode: 'select'|'hover'): void {
-        if(mode == null || mode === 'select')
-            this.plugin.managers.interactivity.lociSelects.deselectAll();
-        else if(mode === 'hover')
+    public clearSelection(mode: 'select'|'hover', options?: {modelId: string; labelAsymId: string;}): void {
+        if(mode == null || mode === 'select') {
+            if(options == null){
+                this.plugin.managers.interactivity.lociSelects.deselectAll();
+            }else{
+                const data: Structure | undefined = getStructureWithModelId(this.plugin.managers.structure.hierarchy.current.structures, options.modelId);
+                if (data == null) return;
+                const sel: StructureSelection = Script.getStructureSelection(Q => Q.struct.generator.atomGroups({
+                    'chain-test': Q.core.rel.eq([options.labelAsymId, MolScriptBuilder.ammp('label_asym_id')])
+                }), data);
+                const loci: Loci = StructureSelection.toLociWithSourceUnits(sel);
+                this.plugin.managers.interactivity.lociSelects.deselect({loci});
+            }
+        }else if(mode === 'hover') {
             this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+        }
     }
 
     public async createComponentFromSet(componentId: string, modelId: string, residues: Array<{asymId: string, position: number}>, representationType: 'ball-and-stick'|'spacefill'|'gaussian-surface'|'cartoon'){
