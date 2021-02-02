@@ -47,13 +47,14 @@ function getDecorator(plugin: PluginContext, root: string): string {
 function extractStructureDataFromState(plugin: PluginContext): { [k: string]: Structure } {
     const content: { [k: string]: Structure } = {};
     const cells = plugin.state.data.select(StateSelection.Generators.rootsOfType(PluginStateObject.Molecule.Structure));
-    for (const c of cells) {
+    for (let i=0; i<cells.length; i++) {
+        const c = cells[i];
         const nodeRef = getDecorator(plugin, c.transform.ref);
         const children = plugin.state.data.select(StateSelection.Generators.byRef(nodeRef))
             .map(child => child.obj!.data);
         const sele = StructureSelection.Sequence(c.obj!.data, children);
         const structure = StructureSelection.unionStructure(sele);
-        const name = structure.model.entryId;
+        const name = `${i+1}-${structure.model.entryId}`;
         content[name] = structure;
     }
     return content;
