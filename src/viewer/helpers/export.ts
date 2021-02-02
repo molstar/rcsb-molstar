@@ -17,7 +17,7 @@ type encode_mmCIF_categories_Params = {
     customProperties?: CustomPropertyDescriptor[]
 }
 
-function export_Params(): encode_mmCIF_categories_Params {
+function exportParams(): encode_mmCIF_categories_Params {
     const skipCategories: Set<string> = new Set();
     skipCategories.add('pdbx_struct_assembly').add('pdbx_struct_assembly_gen').add('pdbx_struct_oper_list');
     const params: encode_mmCIF_categories_Params = {
@@ -29,16 +29,27 @@ function export_Params(): encode_mmCIF_categories_Params {
 function to_mmCIF(name: string, structure: Structure, asBinary = false) {
     const enc = CifWriter.createEncoder({ binary: asBinary });
     enc.startDataBlock(name);
-    encode_mmCIF_categories(enc, structure, export_Params());
+    encode_mmCIF_categories(enc, structure, exportParams());
     return enc.getData();
 }
 
-function extract_structure_data_from_state(plugin: PluginContext): { [k: string]: Structure } {
+function getDecorator(plugin: PluginContext, root: string): string {
+    const tree = plugin.state.data.tree;
+    const children = tree.children.get(root);
+    if (children.size !== 1) return root;
+    const child = children.first();
+    if (tree.transforms.get(child).transformer.definition.isDecorator) {
+        return getDecorator(plugin, child);
+    }
+    return root;
+}
+
+function extractStructureDataFromState(plugin: PluginContext): { [k: string]: Structure } {
     const content: { [k: string]: Structure } = {};
     const cells = plugin.state.data.select(StateSelection.Generators.rootsOfType(PluginStateObject.Molecule.Structure));
     for (const c of cells) {
-        const children = plugin.state.data.select(StateSelection.Generators.ofType(PluginStateObject.Molecule.Structure, c.transform.ref))
-            .filter(child => (child !== c && !child.transform.transformer.definition.isDecorator))
+        const nodeRef = getDecorator(plugin, c.transform.ref);
+        const children = plugin.state.data.select(StateSelection.Generators.byRef(nodeRef))
             .map(child => child.obj!.data);
         const sele = StructureSelection.Sequence(c.obj!.data, children);
         const structure = StructureSelection.unionStructure(sele);
@@ -50,7 +61,7 @@ function extract_structure_data_from_state(plugin: PluginContext): { [k: string]
 
 export function encodeStructureData(plugin: PluginContext): { [k: string]: Uint8Array } {
     const content: { [k: string]: Uint8Array } = {};
-    const structures = extract_structure_data_from_state(plugin);
+    const structures = extractStructureDataFromState(plugin);
     for (const [key, structure] of Object.entries(structures)) {
         const filename = `${key}.cif`;
         const str = to_mmCIF(filename, structure, false) as string;
