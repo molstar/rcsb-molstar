@@ -19,7 +19,19 @@ type encode_mmCIF_categories_Params = {
 
 function exportParams(): encode_mmCIF_categories_Params {
     const skipCategories: Set<string> = new Set();
-    skipCategories.add('pdbx_struct_assembly').add('pdbx_struct_assembly_gen').add('pdbx_struct_oper_list');
+    skipCategories
+        // Basics
+        .add('entry')
+        // Symmetry
+        .add('cell')
+        .add('symmetry')
+        // Secondary structure
+        .add('struct_conf')
+        .add('struct_sheet_range')
+        // Assemblies
+        .add('pdbx_struct_assembly')
+        .add('pdbx_struct_assembly_gen')
+        .add('pdbx_struct_oper_list');
     const params: encode_mmCIF_categories_Params = {
         skipCategoryNames: skipCategories
     };
