@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.1.0] - 2021-02-07
+### General
+- structural motif search wizard
+
 ## [1.0.33] - 2021-02-02
 ### General
 - let's call this the initial release

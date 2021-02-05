@@ -22,8 +22,7 @@ import {ToggleSelectionModeButton} from 'molstar/lib/mol-plugin-ui/structure/sel
 import {OrderedSet} from 'molstar/lib/mol-data/int';
 import {ExchangesControl} from './exchanges';
 
-// TODO use prod
-const ADVANCED_SEARCH_URL = 'https://strucmotif-dev.rcsb.org/search?query=';
+const ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
 const RETURN_TYPE = '&return_type=assembly';
 const MIN_MOTIF_SIZE = 3;
 const MAX_MOTIF_SIZE = 10;
@@ -54,14 +53,6 @@ const _SearchIcon = <svg width='24px' height='24px' viewBox='0 0 12 12'>
     </g>
 </svg>;
 export function SearchIconSvg() { return _SearchIcon; }
-
-// const _ExchangeIcon = <svg width='24px' height='24px' viewBox='0 0 24 24'>
-//     <g>
-//         <path d="m 15.684325,4 -1.41,1.41 5.58,5.59 H 7.6843275 v 2 H 19.854325 l -5.59,5.58 1.42,1.42 8,-8 z" />
-//         <path d="m 8.3156725,20 1.41,-1.41 -5.58,-5.59 H 16.315675 v -2 H 4.1456725 l 5.59,-5.58 -1.42,-1.42 -8,8 z" />
-//     </g>
-// </svg>;
-// export function ExchangeIconSvg() { return _ExchangeIcon; }
 
 const location = StructureElement.Location.create(void 0);
 
@@ -153,9 +144,9 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                 exchanges: exchanges
             }
         };
-        console.log(query);
+        // console.log(query);
         const url = ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
-        console.log(url);
+        // console.log(url);
         window.open(url, '_blank');
     }
 
