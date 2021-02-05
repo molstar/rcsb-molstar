@@ -154,7 +154,7 @@ export class Viewer {
         // TODO Check why this.plugin.canvas3d can be null
         // this.plugin.canvas3d can be null. The value is not assigned until React Plugin component is mounted
         // Next wait Promise guarantees that its value is defined
-        const wait: Promise<null> = new Promise<null>((resolve, reject)=>{
+        const wait: Promise<void> = new Promise<void>((resolve, reject)=>{
             const recursive: () => void = () => {
                 if(this.plugin.canvas3d != null){
                     resolve();
