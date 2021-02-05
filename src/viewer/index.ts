@@ -35,6 +35,7 @@ import {Loci} from 'molstar/lib/mol-model/loci';
 import {StructureSelection} from 'molstar/lib/mol-model/structure/query';
 import {StructureRef} from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
 import {StructureSelectionQuery} from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
+import {StructureRepresentationRegistry} from 'molstar/lib/mol-repr/structure/registry';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -230,22 +231,23 @@ export class Viewer {
         return this.plugin;
     }
 
-    public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover'): void;
-    public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover'): void;
-    public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover'): void;
+    public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
+    public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
+    public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(...args: any[]){
-        if(args.length === 2){
-            this.clearSelection('select');
+        if(args.length === 3){
+            if(args[2] === 'set')
+                this.clearSelection('select');
             (args[0] as Array<{modelId: string; asymId: string; position: number;}>).forEach(r=>{
                 this.selectSegment(r.modelId, r.asymId, r.position, r.position, args[1], 'add');
             });
-        }else if(args.length === 4){
-            this.selectSegment(args[0], args[1], args[2], args[2], args[3]);
         }else if(args.length === 5){
-            this.selectSegment(args[0], args[1], args[2], args[3], args[4]);
+            this.selectSegment(args[0], args[1], args[2], args[2], args[3], args[4]);
+        }else if(args.length === 6){
+            this.selectSegment(args[0], args[1], args[2], args[3], args[4], args[5]);
         }
     }
-    private selectSegment(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set' = 'set'): void {
+    private selectSegment(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void {
         const data: Structure | undefined = getStructureWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
         if (data == null) return;
         const seq_id: Array<number> = new Array<number>();
@@ -262,21 +264,59 @@ export class Viewer {
         else if(mode === 'hover')
             this.plugin.managers.interactivity.lociHighlights.highlight({ loci });
     }
-    public clearSelection(mode: 'select'|'hover'): void {
-        if(mode == null || mode === 'select')
-            this.plugin.managers.interactivity.lociSelects.deselectAll();
-        else if(mode === 'hover')
+    public clearSelection(mode: 'select'|'hover', options?: {modelId: string; labelAsymId: string;}): void {
+        if(mode == null || mode === 'select') {
+            if(options == null){
+                this.plugin.managers.interactivity.lociSelects.deselectAll();
+            }else{
+                const data: Structure | undefined = getStructureWithModelId(this.plugin.managers.structure.hierarchy.current.structures, options.modelId);
+                if (data == null) return;
+                const sel: StructureSelection = Script.getStructureSelection(Q => Q.struct.generator.atomGroups({
+                    'chain-test': Q.core.rel.eq([options.labelAsymId, MolScriptBuilder.ammp('label_asym_id')])
+                }), data);
+                const loci: Loci = StructureSelection.toLociWithSourceUnits(sel);
+                this.plugin.managers.interactivity.lociSelects.deselect({loci});
+            }
+        }else if(mode === 'hover') {
             this.plugin.managers.interactivity.lociHighlights.clearHighlights();
+        }
     }
 
-    public async createComponentFromSet(componentId: string, modelId: string, residues: Array<{asymId: string, position: number}>, representationType: 'ball-and-stick'|'spacefill'|'gaussian-surface'|'cartoon'){
+    public createComponent(componentId: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    public createComponent(componentId: string, modelId: string, residues: Array<{asymId: string, position: number}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    public createComponent(componentId: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    public createComponent(...args: any[]): Promise<void>{
+        if(args.length === 4 && typeof args[2] === 'string'){
+            return this.createComponentFromChain(args[0], args[1], args[2], args[3]);
+        }else if(args.length === 4 && args[2] instanceof Array){
+            return this.createComponentFromSet(args[0], args[1], args[2], args[3]);
+        }else if(args.length === 6 ){
+            return this.createComponentFromRange(args[0], args[1], args[2], args[3], args[4], args[5]);
+        }
+        throw 'createComponent error: wrong arguments';
+    }
+    private async createComponentFromChain(componentId: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
         const structureRef: StructureRef | undefined = getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
         if(structureRef == null)
             return;
-
         await this.plugin.managers.structure.component.add({
             selection: StructureSelectionQuery(
-                'innerLabel',
+                'innerQuery_' + Math.random().toString(36).substr(2),
+                MolScriptBuilder.struct.generator.atomGroups({
+                    'chain-test': MolScriptBuilder.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')])
+                })
+            ),
+            options: { checkExisting: false, label: componentId },
+            representation: representationType,
+        }, [structureRef]);
+    }
+    private async createComponentFromSet(componentId: string, modelId: string, residues: Array<{asymId: string, position: number}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
+        const structureRef: StructureRef | undefined = getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
+        if(structureRef == null)
+            return;
+        await this.plugin.managers.structure.component.add({
+            selection: StructureSelectionQuery(
+                'innerQuery_' + Math.random().toString(36).substr(2),
                 MolScriptBuilder.struct.combinator.merge(
                     residues.map(r=>MolScriptBuilder.struct.generator.atomGroups({
                         'chain-test': MolScriptBuilder.core.rel.eq([r.asymId, MolScriptBuilder.ammp('label_asym_id')]),
@@ -284,12 +324,11 @@ export class Viewer {
                     }))
                 )
             ),
-            options: { checkExisting: true, label: componentId },
+            options: { checkExisting: false, label: componentId },
             representation: representationType,
         }, [structureRef]);
     }
-
-    public async createComponentFromRange(componentId: string, modelId: string, asymId: string, begin: number, end: number, representationType: 'ball-and-stick'|'spacefill'|'gaussian-surface'|'cartoon'){
+    private async createComponentFromRange(componentId: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
         const structureRef: StructureRef | undefined = getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
         if(structureRef == null)
             return;
@@ -299,13 +338,13 @@ export class Viewer {
         }
         await this.plugin.managers.structure.component.add({
             selection: StructureSelectionQuery(
-                'innerLabel',
+                'innerQuery_' + Math.random().toString(36).substr(2),
                 MolScriptBuilder.struct.generator.atomGroups({
                     'chain-test': MolScriptBuilder.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')]),
                     'residue-test': MolScriptBuilder.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seq_id))), MolScriptBuilder.ammp('label_seq_id')])
                 })
             ),
-            options: { checkExisting: true, label: componentId },
+            options: { checkExisting: false, label: componentId },
             representation: representationType,
         }, [structureRef]);
     }
