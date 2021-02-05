@@ -1,3 +1,5 @@
+[![npm version](https://badge.fury.io/js/%40rcsb%2Frcsb-molstar.svg)](https://www.npmjs.com/package/@rcsb/rcsb-molstar)
+[![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/rcsb/rcsb-molstar/blob/master/CHANGELOG.md)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](./LICENSE)
 
 RCSB PDB implementation of [Mol* (/'mol-star/)](https://github.com/molstar/molstar).
