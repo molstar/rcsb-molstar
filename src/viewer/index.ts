@@ -281,38 +281,34 @@ export class Viewer {
         }
     }
 
-    public createComponent(componentId: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    public createComponent(componentId: string, modelId: string, residues: Array<{asymId: string, position: number}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    public createComponent(componentId: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    public createComponent(...args: any[]): Promise<void>{
-        if(args.length === 4 && typeof args[2] === 'string'){
-            return this.createComponentFromChain(args[0], args[1], args[2], args[3]);
-        }else if(args.length === 4 && args[2] instanceof Array){
-            return this.createComponentFromSet(args[0], args[1], args[2], args[3]);
-        }else if(args.length === 6 ){
-            return this.createComponentFromRange(args[0], args[1], args[2], args[3], args[4], args[5]);
-        }
-        throw 'createComponent error: wrong arguments';
-    }
-    private async createComponentFromChain(componentId: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
-        const structureRef: StructureRef | undefined = getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
+    public async createComponent(componentLabel: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string, position: number}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    public async createComponent(componentLabel: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    public async createComponent(...args: any[]): Promise<void>{
+        const structureRef: StructureRef | undefined = getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, args[1]);
         if(structureRef == null)
-            return;
+            throw 'createComponent error: model not found';
+        if (args.length === 4 && typeof args[2] === 'string') {
+            await this.createComponentFromChain(args[0], structureRef, args[2], args[3]);
+        } else if (args.length === 4 && args[2] instanceof Array) {
+            await this.createComponentFromSet(args[0], structureRef, args[2], args[3]);
+        } else if (args.length === 6) {
+            await this.createComponentFromRange(args[0], structureRef, args[2], args[3], args[4], args[5]);
+        }
+    }
+    private async createComponentFromChain(componentLabel: string, structureRef: StructureRef, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
+        const selection: StructureSelectionQuery = StructureSelectionQuery(
+            'innerQuery_' + Math.random().toString(36).substr(2),
+            MolScriptBuilder.struct.generator.atomGroups({
+                'chain-test': MolScriptBuilder.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')])
+            }));
         await this.plugin.managers.structure.component.add({
-            selection: StructureSelectionQuery(
-                'innerQuery_' + Math.random().toString(36).substr(2),
-                MolScriptBuilder.struct.generator.atomGroups({
-                    'chain-test': MolScriptBuilder.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')])
-                })
-            ),
-            options: { checkExisting: false, label: componentId },
+            selection: selection,
+            options: {checkExisting: false, label: componentLabel},
             representation: representationType,
         }, [structureRef]);
     }
-    private async createComponentFromSet(componentId: string, modelId: string, residues: Array<{asymId: string, position: number}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
-        const structureRef: StructureRef | undefined = getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
-        if(structureRef == null)
-            return;
+    private async createComponentFromSet(componentLabel: string, structureRef: StructureRef, residues: Array<{asymId: string, position: number}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
         await this.plugin.managers.structure.component.add({
             selection: StructureSelectionQuery(
                 'innerQuery_' + Math.random().toString(36).substr(2),
@@ -323,14 +319,11 @@ export class Viewer {
                     }))
                 )
             ),
-            options: { checkExisting: false, label: componentId },
+            options: { checkExisting: false, label: componentLabel },
             representation: representationType,
         }, [structureRef]);
     }
-    private async createComponentFromRange(componentId: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
-        const structureRef: StructureRef | undefined = getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
-        if(structureRef == null)
-            return;
+    private async createComponentFromRange(componentLabel: string, structureRef: StructureRef, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
         const seq_id: Array<number> = new Array<number>();
         for(let n = begin; n <= end; n++){
             seq_id.push(n);
@@ -343,15 +336,15 @@ export class Viewer {
                     'residue-test': MolScriptBuilder.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seq_id))), MolScriptBuilder.ammp('label_seq_id')])
                 })
             ),
-            options: { checkExisting: false, label: componentId },
+            options: { checkExisting: false, label: componentLabel },
             representation: representationType,
         }, [structureRef]);
     }
 
-    public removeComponent(componentId: string): void{
+    public removeComponent(componentLabel: string): void{
         this.plugin.managers.structure.hierarchy.currentComponentGroups.forEach(c=>{
             for(const comp of c){
-                if(comp.cell.obj?.label === componentId) {
+                if(comp.cell.obj?.label === componentLabel) {
                     this.plugin.managers.structure.hierarchy.remove(c);
                     break;
                 }
