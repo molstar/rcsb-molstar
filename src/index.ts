@@ -4,8 +4,8 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import * as path from 'path'
+import * as path from 'path';
 
 export const getRcsbMolstarViewerAbsoluteFSPath = function () {
-    return path.resolve(path.join(__dirname, '..', 'dist', 'viewer'))
-}
+    return path.resolve(path.join(__dirname, '..', 'dist', 'viewer'));
+};

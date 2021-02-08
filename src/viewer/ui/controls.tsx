@@ -15,6 +15,7 @@ import { StructureSuperpositionControls } from 'molstar/lib/mol-plugin-ui/struct
 import { StructureComponentControls } from 'molstar/lib/mol-plugin-ui/structure/components';
 import { VolumeStreamingControls } from 'molstar/lib/mol-plugin-ui/structure/volume';
 import { SessionControls } from './session';
+import {StrucmotifSubmitControls} from './strucmotif';
 
 export class StructureTools extends PluginUIComponent {
     get customState() {
@@ -31,6 +32,7 @@ export class StructureTools extends PluginUIComponent {
             <StructureSourceControls />
             <StructureMeasurementsControls initiallyCollapsed={collapsed.measurements} />
             <StructureSuperpositionControls initiallyCollapsed={collapsed.superposition} />
+            <StrucmotifSubmitControls initiallyCollapsed={collapsed.strucmotifSubmit} />
             <StructureComponentControls initiallyCollapsed={collapsed.component} />
             <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />
 

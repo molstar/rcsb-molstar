@@ -141,6 +141,7 @@ export class Viewer {
             modelLoader: new ModelLoader(this.plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
+                strucmotifSubmit: true,
                 measurements: true,
                 superposition: true,
                 component: false,

@@ -34,6 +34,7 @@ export interface ParseParams extends SharedParams {
 
 export type CollapsedState = {
     selection: boolean
+    strucmotifSubmit: boolean
     measurements: boolean
     superposition: boolean
     component: boolean
