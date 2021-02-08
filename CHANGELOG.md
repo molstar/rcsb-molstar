@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.0.35] - 2021-02-08
+### General
+- Mol* 1.3.0
+
 ## [1.0.34] - 2021-02-05
 ### General
 - bumps dependencies
