@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [1.1.0] - 2021-02-07
+## [1.1.0] - 2021-02-08
 ### General
 - structural motif search wizard
 
