@@ -80,12 +80,8 @@ type BaseProps = {
 
 type ColorProp = {
     name: 'color',
-    value: number
-};
-
-type PropSet = {
-    args: ColorProp,
-    positions: number[]
+    value: number,
+    positions: Range[]
 };
 
 export type PropsetProps = {
@@ -93,10 +89,7 @@ export type PropsetProps = {
     selection?: (Range & {
         matrix?: Mat4
     })[],
-    representation: {
-        asymId: string,
-        propset: PropSet[]
-    }[]
+    representation: ColorProp[]
 } & BaseProps
 
 type ValidationProps = {
@@ -244,16 +237,20 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
             // adding coloring lookup scheme
             structure.data!.inheritedPropertyData.colors = {};
-            for (const reprProp of p.representation) {
-                const colorLookup = structure.data!.inheritedPropertyData.colors[reprProp.asymId] || new Map();
-                reprProp.propset.forEach(prop => {
-                    if (prop.args.name === 'color') {
-                        for (let i = 0; i < prop.positions.length; i++) {
-                            colorLookup.set(prop.positions[i], prop.args.value);
+            for (const repr of p.representation) {
+                if (repr.name === 'color') {
+                    const colorValue = repr.value;
+                    const positions = repr.positions;
+                    for (const range of positions) {
+                        if (!structure.data!.inheritedPropertyData.colors[range.asymId])
+                            structure.data!.inheritedPropertyData.colors[range.asymId] = new Map()
+                        const residues: number[] = (range.beg && range.end) ? toRange(range.beg, range.end) : [];
+                        if (range.beg && !range.end) residues.push(range.beg)
+                        for (const num of residues) {
+                            structure.data!.inheritedPropertyData.colors[range.asymId].set(num, colorValue);
                         }
                     }
-                });
-                structure.data!.inheritedPropertyData.colors[reprProp.asymId] = colorLookup;
+                }
             }
 
             // At this we have a structure that contains only the transformed substructres,
@@ -387,7 +384,11 @@ export const selectionTest = (asymId: string, residues: number[]) => {
     }
 }
 
-export const toRange = (start: number, end: number) => [...Array(end - start + 1)].map((_, i) => start + i);
+export const toRange = (start: number, end: number) => {
+    const b = start < end ? start : end
+    const e = start < end ? end : start
+    return [...Array(e - b + 1)].map((_, i) => b + i);
+}
 
 const labelFromProps = (entryId: string, range: Range) => {
     return entryId +(range.asymId ? `.${range.asymId}` : '') +

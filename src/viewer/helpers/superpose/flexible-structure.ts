@@ -35,6 +35,7 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
                 const expression = MS.struct.generator.atomGroups(test);
                 const { selection: sele } = StructureQueryHelper.createAndRun(base.data, expression);
                 const s = StructureSelection.unionStructure(sele);
+
                 if (!p.matrix) {
                     blocks.push(s);
                 } else {
@@ -42,7 +43,6 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
                     blocks.push(ts);
                 }
             }
-
             const builder = Structure.Builder()
             for (const b of blocks) {
                 for (const u of b.units) {
