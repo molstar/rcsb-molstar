@@ -8,14 +8,14 @@ import { ThemeDataContext } from 'molstar/lib/mol-theme/theme';
 import { ColorTheme } from 'molstar/lib/mol-theme/color';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { Color } from 'molstar/lib/mol-util/color';
-import { StructureElement, StructureProperties } from 'molstar/lib/mol-model/structure';
+import { StructureElement, StructureProperties, Bond } from 'molstar/lib/mol-model/structure';
 import { Location } from 'molstar/lib/mol-model/location';
 
 export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorTheme<{}> {
     const colorLookup = ctx.structure?.inheritedPropertyData.colors;
 
     const defaultColorLookup: Map<string, Color> = new Map();
-    for (let [asymId, seqIds] of Object.entries(colorLookup)) {
+    for (const [asymId, seqIds] of Object.entries(colorLookup)) {
         const colorValue = Array.from((seqIds as Map<number, Color>).values())[0];
         const defaultColor = Color.desaturate(Color.lighten(colorValue, 1.7), 1.2);
         defaultColorLookup.set(asymId, defaultColor);
@@ -27,17 +27,28 @@ export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorThem
         DefaultColor = colorValues[0];
     }
 
+    const l = StructureElement.Location.create();
+
+    const _color = (location: StructureElement.Location) => {
+        const asymId = StructureProperties.chain.label_asym_id(location);
+        const seqId = StructureProperties.residue.label_seq_id(location);
+        if (colorLookup?.[asymId]?.has(seqId)) {
+            if (colorLookup[asymId]?.get(seqId) !== undefined) {
+                return colorLookup[asymId]?.get(seqId);
+            }
+        } else if (colorLookup?.[asymId]) {
+            return defaultColorLookup.get(asymId)!;
+        }
+    }
+
     const color = (location: Location): Color => {
         if (StructureElement.Location.is(location)) {
-            const asymId = StructureProperties.chain.label_asym_id(location);
-            const seqId = StructureProperties.residue.label_seq_id(location);
-            if (colorLookup?.[asymId]?.has(seqId)) {
-                if (colorLookup[asymId]?.get(seqId) !== undefined) {
-                    return colorLookup[asymId]?.get(seqId);
-                }
-            } else if (colorLookup?.[asymId]) {
-                return defaultColorLookup.get(asymId)!;
-            }
+            return _color(location);
+        } else if (Bond.isLocation(location)) {
+            l.structure = location.aStructure;
+            l.unit = location.aUnit;
+            l.element = location.aUnit.elements[location.aIndex];
+            return _color(l);
         }
         return DefaultColor;
     };
