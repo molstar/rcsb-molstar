@@ -43,7 +43,7 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
                     blocks.push(ts);
                 }
             }
-            const builder = Structure.Builder()
+            const builder = Structure.Builder({ parent: base.data });
             for (const b of blocks) {
                 for (const u of b.units) {
                     builder.addUnit(u.kind, u.model, u.conformation.operator, u.elements, u.traits, u.invariantId);
@@ -51,7 +51,7 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
             }
 
             const blockStructure = builder.getStructure();
-            return new SO.Molecule.Structure(blockStructure)
+            return new SO.Molecule.Structure(blockStructure, { label: base.data.label })
         });
     },
     dispose({ b }) {
