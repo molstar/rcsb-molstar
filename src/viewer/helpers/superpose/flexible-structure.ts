@@ -28,25 +28,38 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
             const { selection } = params;
             if (!selection?.length) return base;
 
-            const blocks: Structure[] = []
+            const selectChains: string[] = []
+            const selectBlocks: Structure[][] = []
             for (const p of selection) {
+                if (!selectChains.includes(p.asymId)) {
+                    selectChains.push(p.asymId);
+                    selectBlocks.push([]);
+                }
                 const residues: number[] = (p.beg && p.end) ? toRange(p.beg, p.end) : [];
                 const test = selectionTest(p.asymId, residues);
                 const expression = MS.struct.generator.atomGroups(test);
                 const { selection: sele } = StructureQueryHelper.createAndRun(base.data, expression);
                 const s = StructureSelection.unionStructure(sele);
-
                 if (!p.matrix) {
-                    blocks.push(s);
+                    selectBlocks[selectChains.indexOf(p.asymId)].push(s);
                 } else {
                     const ts = Structure.transform(s, p.matrix);
-                    blocks.push(ts);
+                    selectBlocks[selectChains.indexOf(p.asymId)].push(ts);
                 }
             }
-            const builder = Structure.Builder({ parent: base.data });
-            for (const b of blocks) {
-                for (const u of b.units) {
+
+            const builder = Structure.Builder({ label: base.data.label });
+            for (const blocks of selectBlocks) {
+                if (blocks.length === 1) {
+                    const u = blocks[0].units[0]
                     builder.addUnit(u.kind, u.model, u.conformation.operator, u.elements, u.traits, u.invariantId);
+                } else {
+                    builder.beginChainGroup();
+                    for (const b of blocks) {
+                        const u = b.units[0]
+                        builder.addUnit(u.kind, u.model, u.conformation.operator, u.elements, u.traits, u.invariantId);
+                    }
+                    builder.endChainGroup();
                 }
             }
 
