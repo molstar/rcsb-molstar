@@ -27,10 +27,8 @@ export class ExportControls extends CollapsableControls {
     }
 }
 
-class CoordinatesExportControls extends PluginUIComponent<{ onAction?: () => void }> {
-
+class CoordinatesExportControls extends PluginUIComponent {
     download = () => {
-        this.props.onAction?.();
         const content = encodeStructureData(this.plugin);
         downloadAsZipFile(content);
     }
