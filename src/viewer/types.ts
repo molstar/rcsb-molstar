@@ -46,6 +46,8 @@ export interface ViewerState {
     showImportControls: boolean
     showExportControls: boolean
     showSessionControls: boolean
+    showStructureSourceControls: boolean
+    showSuperpositionControls: boolean
     modelLoader: ModelLoader
     collapsed: BehaviorSubject<CollapsedState>
 }
