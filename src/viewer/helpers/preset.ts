@@ -166,9 +166,9 @@ export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPres
 
             const { update, builder, typeParams, color } = reprBuilder(plugin, params);
 
-            let typeProps = {...typeParams}
+            let typeProps = {...typeParams};
             if (expr.type === 'cartoon') {
-                Object.assign(typeProps, {...cartoonProps})
+                Object.assign(typeProps, {...cartoonProps});
             }
 
             Object.assign(representations, {
@@ -184,7 +184,7 @@ export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPres
 
         return representations;
     }
-})
+});
 
 export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     id: 'preset-trajectory-rcsb',
@@ -235,7 +235,6 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const _structureProperties = plugin.state.data.build().to(structure)
                 .apply(CustomStructureProperties);
             structureProperties = await _structureProperties.commit();
-        let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
             // adding coloring lookup scheme
             structure.data!.inheritedPropertyData.colors = {};
@@ -245,9 +244,9 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     const positions = repr.positions;
                     for (const range of positions) {
                         if (!structure.data!.inheritedPropertyData.colors[range.asymId])
-                            structure.data!.inheritedPropertyData.colors[range.asymId] = new Map()
+                            structure.data!.inheritedPropertyData.colors[range.asymId] = new Map();
                         const residues: number[] = (range.beg && range.end) ? toRange(range.beg, range.end) : [];
-                        if (range.beg && !range.end) residues.push(range.beg)
+                        if (range.beg && !range.end) residues.push(range.beg);
                         for (const num of residues) {
                             structure.data!.inheritedPropertyData.colors[range.asymId].set(num, colorValue);
                         }
@@ -290,8 +289,6 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         }
 
         if (p.kind === 'feature' && structure?.obj) {
-            const loci = targetToLoci(p.target, structure.obj.data)
-        if (p.kind === 'feature' && structure.obj) {
             const loci = targetToLoci(p.target, structure.obj.data);
             // if target is only defined by chain: then don't force first residue
             const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
@@ -347,7 +344,7 @@ export function createSelectionExpression(entryId: string, range?: Range): Selec
             label: `${label}`,
             type: 'cartoon',
             tag: 'polymer'
-        }]
+        }];
     } else {
         return [
             {
@@ -386,7 +383,7 @@ export function createSelectionExpression(entryId: string, range?: Range): Selec
                 type: 'ball-and-stick',
                 tag: 'water'
             }
-        ]
+        ];
     }
 }
 
@@ -399,15 +396,15 @@ export const selectionTest = (asymId: string, residues: number[]) => {
     } else {
         return { 'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), asymId]) };
     }
-}
+};
 
 export const toRange = (start: number, end: number) => {
-    const b = start < end ? start : end
-    const e = start < end ? end : start
+    const b = start < end ? start : end;
+    const e = start < end ? end : start;
     return [...Array(e - b + 1)].map((_, i) => b + i);
-}
+};
 
 const labelFromProps = (entryId: string, range: Range) => {
-    return entryId +(range.asymId ? `.${range.asymId}` : '') +
+    return entryId + (range.asymId ? `.${range.asymId}` : '') +
         (range.beg && range.end ? `:${range.beg.toString()}-${range.end.toString()}` : '');
-}
+};

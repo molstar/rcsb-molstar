@@ -40,7 +40,7 @@ export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorThem
             return defaultColorLookup.get(asymId)!;
         }
         return DefaultColor;
-    }
+    };
 
     const color = (location: Location): Color => {
         if (StructureElement.Location.is(location)) {

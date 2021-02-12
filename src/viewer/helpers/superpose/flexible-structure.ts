@@ -28,8 +28,8 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
             const { selection } = params;
             if (!selection?.length) return base;
 
-            const selectChains: string[] = []
-            const selectBlocks: Structure[][] = []
+            const selectChains: string[] = [];
+            const selectBlocks: Structure[][] = [];
             for (const p of selection) {
                 if (!selectChains.includes(p.asymId)) {
                     selectChains.push(p.asymId);
@@ -51,12 +51,12 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
             const builder = Structure.Builder({ label: base.data.label });
             for (const blocks of selectBlocks) {
                 if (blocks.length === 1) {
-                    const u = blocks[0].units[0]
+                    const u = blocks[0].units[0];
                     builder.addUnit(u.kind, u.model, u.conformation.operator, u.elements, u.traits, u.invariantId);
                 } else {
                     builder.beginChainGroup();
                     for (const b of blocks) {
-                        const u = b.units[0]
+                        const u = b.units[0];
                         builder.addUnit(u.kind, u.model, u.conformation.operator, u.elements, u.traits, u.invariantId);
                     }
                     builder.endChainGroup();
@@ -64,7 +64,7 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
             }
 
             const blockStructure = builder.getStructure();
-            return new SO.Molecule.Structure(blockStructure, { label: base.data.label })
+            return new SO.Molecule.Structure(blockStructure, { label: base.data.label });
         });
     },
     dispose({ b }) {

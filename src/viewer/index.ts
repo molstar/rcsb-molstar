@@ -82,18 +82,10 @@ const DefaultViewerProps = {
     volumeStreamingServer: '//maps.rcsb.org/',
 
     backgroundColor: ColorNames.white,
-    showWelcomeToast: true,
-
-    panelVisibility: {
-        selection: false,
-        measurements: true,
-        superposition: false,
-        component: true,
-        volume: false,
-        custom: false
-    }
+    showWelcomeToast: true
 };
 export type ViewerProps = typeof DefaultViewerProps
+
 
 export class Viewer {
     private readonly plugin: PluginContext;
@@ -160,12 +152,11 @@ export class Viewer {
                 component: false,
                 volume: true,
                 custom: true,
-            }),
-            visibility: new BehaviorSubject<CollapsedState>({ ...o.panelVisibility })
-        }
+            })
+        };
 
         this.plugin.init();
-        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target)
+        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target);
 
         const renderer = this.plugin.canvas3d!.props.renderer;
         PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
