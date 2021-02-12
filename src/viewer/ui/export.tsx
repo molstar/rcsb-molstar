@@ -13,6 +13,13 @@ export class ExportControls extends CollapsableControls {
             brand: { accent:  'gray' as const, svg: ExportOutlinedSvg }
         };
     }
+
+    componentDidMount() {
+        this.subscribe(this.plugin.managers.structure.hierarchy.behaviors.selection, sel => {
+            this.setState({ isHidden: sel.structures.length === 0 });
+        });
+    }
+
     protected renderControls(): JSX.Element | null {
         return <div className={'msp-control-offset'} style={{ paddingTop: '1px' }}>
             <CoordinatesExportControls />
