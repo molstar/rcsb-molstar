@@ -11,12 +11,12 @@ export class ExportControls extends CollapsableControls {
             header: 'Export',
             isCollapsed: true,
             brand: { accent:  'gray' as const, svg: ExportOutlinedSvg }
-        }
+        };
     }
     protected renderControls(): JSX.Element | null {
         return <div className={'msp-control-offset'} style={{ paddingTop: '1px' }}>
             <CoordinatesExportControls />
-        </div>
+        </div>;
     }
 }
 
