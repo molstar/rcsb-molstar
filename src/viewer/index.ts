@@ -120,7 +120,7 @@ export class Viewer {
                     ...DefaultPluginSpec.layout && DefaultPluginSpec.layout.controls,
                     top: o.layoutShowSequence ? undefined : 'none',
                     bottom: o.layoutShowLog ? undefined : 'none',
-                    left: 'none',
+                    // left: 'none',
                     right: ControlsWrapper,
                 }
             },
@@ -160,6 +160,7 @@ export class Viewer {
         };
 
         this.plugin.init();
+        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target);
 
         const renderer = this.plugin.canvas3d!.props.renderer;
         PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
@@ -167,7 +168,6 @@ export class Viewer {
         this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
         // this.plugin.builders.structure.representation.registerPreset(RcsbSuperpositionRepresentationPreset);
 
-        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target);
         // TODO Check why this.plugin.canvas3d can be null
         // this.plugin.canvas3d can be null. The value is not assigned until React Plugin component is mounted
         // Next wait Promise guarantees that its value is defined
