@@ -160,7 +160,6 @@ export class Viewer {
         };
 
         this.plugin.init();
-        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target);
 
         const renderer = this.plugin.canvas3d!.props.renderer;
         PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
