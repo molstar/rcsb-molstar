@@ -25,6 +25,8 @@ import { CustomStructureProperties } from 'molstar/lib/mol-plugin-state/transfor
 import { FlexibleStructureFromModel as FlexibleStructureFromModel } from './superpose/flexible-structure';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
+import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
+import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -34,41 +36,41 @@ type Target = {
 }
 
 function targetToExpression(target: Target): Expression {
-    const residueTests: Expression[] = []
-    const tests = Object.create(null)
+    const residueTests: Expression[] = [];
+    const tests = Object.create(null);
 
     if (target.auth_seq_id) {
-        residueTests.push(MS.core.rel.eq([target.auth_seq_id, MS.ammp('auth_seq_id')]))
+        residueTests.push(MS.core.rel.eq([target.auth_seq_id, MS.ammp('auth_seq_id')]));
     } else if (target.label_seq_id) {
-        residueTests.push(MS.core.rel.eq([target.label_seq_id, MS.ammp('label_seq_id')]))
+        residueTests.push(MS.core.rel.eq([target.label_seq_id, MS.ammp('label_seq_id')]));
     }
     if (target.label_comp_id) {
-        residueTests.push(MS.core.rel.eq([target.label_comp_id, MS.ammp('label_comp_id')]))
+        residueTests.push(MS.core.rel.eq([target.label_comp_id, MS.ammp('label_comp_id')]));
     }
     if (residueTests.length === 1) {
-        tests['residue-test'] = residueTests[0]
+        tests['residue-test'] = residueTests[0];
     } else if (residueTests.length > 1) {
-        tests['residue-test'] = MS.core.logic.and(residueTests)
+        tests['residue-test'] = MS.core.logic.and(residueTests);
     }
 
     if (target.label_asym_id) {
-        tests['chain-test'] = MS.core.rel.eq([target.label_asym_id, MS.ammp('label_asym_id')])
+        tests['chain-test'] = MS.core.rel.eq([target.label_asym_id, MS.ammp('label_asym_id')]);
     }
 
     if (Object.keys(tests).length > 0) {
         return MS.struct.modifier.union([
             MS.struct.generator.atomGroups(tests)
-        ])
+        ]);
     } else {
-        return MS.struct.generator.empty
+        return MS.struct.generator.empty;
     }
 }
 
 function targetToLoci(target: Target, structure: Structure): StructureElement.Loci {
-    const expression = targetToExpression(target)
-    const query = compile<StructureSelection>(expression)
+    const expression = targetToExpression(target);
+    const query = compile<StructureSelection>(expression);
     const selection = query(new QueryContext(structure));
-    return StructureSelection.toLociWithSourceUnits(selection)
+    return StructureSelection.toLociWithSourceUnits(selection);
 }
 
 type Range = { asymId: string, beg?: number, end?: number }
@@ -188,21 +190,21 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     id: 'preset-trajectory-rcsb',
     display: { name: 'RCSB' },
     isApplicable: o => {
-        return true
+        return true;
     },
     params: RcsbParams,
     async apply(trajectory, params, plugin) {
         const builder = plugin.builders.structure;
-        const p = params.preset
+        const p = params.preset;
 
-        const modelParams = { modelIndex: p.modelIndex || 0 }
+        const modelParams = { modelIndex: p.modelIndex || 0 };
 
-        const structureParams: RootStructureDefinition.Params = { name: 'model', params: {} }
+        const structureParams: RootStructureDefinition.Params = { name: 'model', params: {} };
         if (p.assemblyId && p.assemblyId !== '' && p.assemblyId !== '0') {
             Object.assign(structureParams, {
                 name: 'assembly',
                 params: { id: p.assemblyId }
-            } as RootStructureDefinition.Params)
+            } as RootStructureDefinition.Params);
         }
 
         const model = await builder.createModel(trajectory, modelParams);
@@ -233,6 +235,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const _structureProperties = plugin.state.data.build().to(structure)
                 .apply(CustomStructureProperties);
             structureProperties = await _structureProperties.commit();
+        let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
             // adding coloring lookup scheme
             structure.data!.inheritedPropertyData.colors = {};
@@ -281,31 +284,46 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
                 custom: false
-            })
+            });
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
 
         if (p.kind === 'feature' && structure?.obj) {
             const loci = targetToLoci(p.target, structure.obj.data)
+        if (p.kind === 'feature' && structure.obj) {
+            const loci = targetToLoci(p.target, structure.obj.data);
             // if target is only defined by chain: then don't force first residue
             const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
-            const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci)
-            plugin.managers.structure.focus.setFromLoci(target)
-            plugin.managers.camera.focusLoci(target)
+            const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci);
+            plugin.managers.structure.focus.setFromLoci(target);
+            plugin.managers.camera.focusLoci(target);
         }
 
         if (p.kind === 'density' && structure?.cell?.parent) {
             const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
             if (!volumeRoot) {
-                const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin))
-                await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref))
+                const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin));
+                await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref));
             }
+
+            await PluginCommands.Toast.Show(plugin, {
+                title: 'Electron Density',
+                message: 'Click on a residue to display electron density, click background to reset.',
+                key: 'toast-density',
+                timeoutMs: 60000
+            });
+
+            plugin.behaviors.interaction.click.subscribe(async (e: InteractivityManager.ClickEvent) => {
+                if (e.current && e.current.loci && e.current.loci.kind !== 'empty-loci') {
+                    await PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
+                }
+            });
 
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
                 volume: false
-            })
+            });
         }
 
         return {

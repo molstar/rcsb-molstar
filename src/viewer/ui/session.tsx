@@ -14,14 +14,14 @@ class LocalStateControls extends CollapsableControls {
         return {
             header: 'Views',
             isCollapsed: true,
-        }
+        };
     }
 
     renderControls() {
         return <div>
             <LocalStateSnapshots />
             <LocalStateSnapshotList />
-        </div>
+        </div>;
     }
 }
 
@@ -30,13 +30,13 @@ class StateControls extends CollapsableControls {
         return {
             header: 'Download / Open',
             isCollapsed: true,
-        }
+        };
     }
 
     renderControls() {
         return <div>
             <StateExportImportControls />
-        </div>
+        </div>;
     }
 }
 
@@ -46,13 +46,13 @@ export class SessionControls extends CollapsableControls {
             header: 'Session',
             isCollapsed: true,
             brand: { accent:  'gray' as const, svg: SaveOutlinedSvg }
-        }
+        };
     }
 
     renderControls() {
         return <div className={'msp-control-offset'} style={{ paddingTop: '1px' }}>
             <LocalStateControls />
             <StateControls />
-        </div>
+        </div>;
     }
 }

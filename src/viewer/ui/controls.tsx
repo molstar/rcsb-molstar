@@ -16,10 +16,11 @@ import { StructureSuperpositionControls } from 'molstar/lib/mol-plugin-ui/struct
 import { StructureComponentControls } from 'molstar/lib/mol-plugin-ui/structure/components';
 import { VolumeStreamingControls } from 'molstar/lib/mol-plugin-ui/structure/volume';
 import { SessionControls } from './session';
+import {StrucmotifSubmitControls} from './strucmotif';
 
 export class StructureTools extends PluginUIComponent {
     get customState() {
-        return ViewerState(this.plugin)
+        return ViewerState(this.plugin);
     }
 
     componentDidMount() {
@@ -36,8 +37,8 @@ export class StructureTools extends PluginUIComponent {
             {visibility.superposition && <StructureSuperpositionControls initiallyCollapsed={collapsed.superposition} />}
             {visibility.component && <StructureComponentControls initiallyCollapsed={collapsed.component} />}
             {visibility.volume && <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />}
-
             {visibility.custom && <CustomStructureControls initiallyCollapsed={collapsed.custom} />}
+            <StrucmotifSubmitControls initiallyCollapsed={collapsed.strucmotifSubmit} />
         </>;
     }
 }

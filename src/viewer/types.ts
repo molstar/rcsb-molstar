@@ -34,6 +34,7 @@ export interface ParseParams extends SharedParams {
 
 export type CollapsedState = {
     selection: boolean
+    strucmotifSubmit: boolean
     measurements: boolean
     superposition: boolean
     component: boolean
@@ -57,5 +58,5 @@ export interface ViewerState {
     visibility: BehaviorSubject<VisibilityState>
 }
 export function ViewerState(plugin: PluginContext) {
-    return plugin.customState as ViewerState
+    return plugin.customState as ViewerState;
 }

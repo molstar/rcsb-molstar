@@ -1,4 +1,12 @@
+[![npm version](https://badge.fury.io/js/%40rcsb%2Frcsb-molstar.svg)](https://www.npmjs.com/package/@rcsb/rcsb-molstar)
+[![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/rcsb/rcsb-molstar/blob/master/CHANGELOG.md)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](./LICENSE)
+
+RCSB PDB implementation of [Mol* (/'mol-star/)](https://github.com/molstar/molstar).
+Try it [here](https://rcsb.org/3d-view/).
+
+## Install
+    npm install @rcsb/rcsb-molstar
 
 ## Building & Running
 
@@ -27,16 +35,12 @@ From the root of the project:
 
     http-server -p PORT-NUMBER
 
-and navigate to `build/dist/structure-viewer/`
-
-## Publish
-
-The publish will send the package to our own registry at http://nexus3.rcsb.org/repository/npm-rcsb/ (not to NPM as this is currently a private project).
+and navigate to `build/dist/viewer/`
 
 ## Prerelease
-    npm version prerelease # asumes the current version ends with '-dev.X'
+    npm version prerelease # assumes the current version ends with '-dev.X'
     npm publish --tag next
 
 ## Release
-    npm version 0.X.0 # provide valid semver string
+    npm version 1.X.0 # provide valid semver string
     npm publish
