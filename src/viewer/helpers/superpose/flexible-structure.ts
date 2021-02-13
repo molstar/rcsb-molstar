@@ -31,20 +31,20 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
             const selectChains: string[] = [];
             const selectBlocks: Structure[][] = [];
             for (const p of selection) {
-                if (!selectChains.includes(p.asymId)) {
-                    selectChains.push(p.asymId);
+                if (!selectChains.includes(p.label_asym_id)) {
+                    selectChains.push(p.label_asym_id);
                     selectBlocks.push([]);
                 }
-                const residues: number[] = (p.beg && p.end) ? toRange(p.beg, p.end) : [];
-                const test = selectionTest(p.asymId, residues);
+                const residues: number[] = (p.label_seq_id) ? toRange(p.label_seq_id.beg, p.label_seq_id.end) : [];
+                const test = selectionTest(p.label_asym_id, residues);
                 const expression = MS.struct.generator.atomGroups(test);
                 const { selection: sele } = StructureQueryHelper.createAndRun(base.data, expression);
                 const s = StructureSelection.unionStructure(sele);
                 if (!p.matrix) {
-                    selectBlocks[selectChains.indexOf(p.asymId)].push(s);
+                    selectBlocks[selectChains.indexOf(p.label_asym_id)].push(s);
                 } else {
                     const ts = Structure.transform(s, p.matrix);
-                    selectBlocks[selectChains.indexOf(p.asymId)].push(ts);
+                    selectBlocks[selectChains.indexOf(p.label_asym_id)].push(ts);
                 }
             }
 

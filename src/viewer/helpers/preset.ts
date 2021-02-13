@@ -73,7 +73,10 @@ function targetToLoci(target: Target, structure: Structure): StructureElement.Lo
     return StructureSelection.toLociWithSourceUnits(selection);
 }
 
-type Range = { asymId: string, beg?: number, end?: number }
+type Range = {
+    label_asym_id: string
+    label_seq_id?: { beg: number, end?: number }
+}
 
 type BaseProps = {
     assemblyId?: string
@@ -243,12 +246,11 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     const colorValue = repr.value;
                     const positions = repr.positions;
                     for (const range of positions) {
-                        if (!structure.data!.inheritedPropertyData.colors[range.asymId])
-                            structure.data!.inheritedPropertyData.colors[range.asymId] = new Map();
-                        const residues: number[] = (range.beg && range.end) ? toRange(range.beg, range.end) : [];
-                        if (range.beg && !range.end) residues.push(range.beg);
+                        if (!structure.data!.inheritedPropertyData.colors[range.label_asym_id])
+                            structure.data!.inheritedPropertyData.colors[range.label_asym_id] = new Map();
+                        const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
                         for (const num of residues) {
-                            structure.data!.inheritedPropertyData.colors[range.asymId].set(num, colorValue);
+                            structure.data!.inheritedPropertyData.colors[range.label_asym_id].set(num, colorValue);
                         }
                     }
                 }
@@ -336,8 +338,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
 export function createSelectionExpression(entryId: string, range?: Range): SelectionExpression[] {
     if (range) {
-        const residues: number[] = (range.beg && range.end) ? toRange(range.beg, range.end) : [];
-        const test = selectionTest(range.asymId, residues);
+        const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
+        const test = selectionTest(range.label_asym_id, residues);
         const label = labelFromProps(entryId, range);
         return [{
             expression: MS.struct.generator.atomGroups(test),
@@ -398,13 +400,17 @@ export const selectionTest = (asymId: string, residues: number[]) => {
     }
 };
 
-export const toRange = (start: number, end: number) => {
+export const toRange = (start: number, end?: number) => {
+    if (!end) return [start];
     const b = start < end ? start : end;
     const e = start < end ? end : start;
     return [...Array(e - b + 1)].map((_, i) => b + i);
 };
 
 const labelFromProps = (entryId: string, range: Range) => {
-    return entryId + (range.asymId ? `.${range.asymId}` : '') +
-        (range.beg && range.end ? `:${range.beg.toString()}-${range.end.toString()}` : '');
+
+    const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
+    return entryId + (range.label_asym_id ? `.${range.label_asym_id}` : '') +
+        (residues ? `:${residues[0].toString()}` : '') +
+        (residues && residues.length > 1 ? `-${residues[residues.length - 1].toString()}` : '');
 };
