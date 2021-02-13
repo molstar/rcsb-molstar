@@ -257,7 +257,7 @@ export class Viewer {
         this.plugin.layout.events.updated.next();
     }
 
-    async exportLoadedStructures() {
+    exportLoadedStructures() {
         const content = encodeStructureData(this.plugin);
         downloadAsZipFile(content);
     }
