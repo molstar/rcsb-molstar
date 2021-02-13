@@ -152,13 +152,13 @@ export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPres
     async apply(ref, params, plugin) {
 
         const structureCell = StateObjectRef.resolveAndCheck(plugin.state.data, ref);
-        if (!structureCell) return {};
+        if (!structureCell) return Object.create(null);
 
         const structure = structureCell.obj!.data;
         const cartoonProps = {sizeFactor: structure.isCoarseGrained ? 0.8 : 0.2};
 
-        let components = {};
-        let representations = {};
+        let components = Object.create(null);
+        let representations = Object.create(null);
         for (const expr of params.selectionExpressions) {
 
             const comp = await plugin.builders.structure.tryCreateComponentFromExpression(structureCell, expr.expression, expr.label, { label: expr.label });
@@ -237,7 +237,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             structureProperties = await _structureProperties.commit();
 
             // adding coloring lookup scheme
-            structure.data!.inheritedPropertyData.colors = {};
+            structure.data!.inheritedPropertyData.colors = Object.create(null);
             for (const repr of p.representation) {
                 if (repr.name === 'color') {
                     const colorValue = repr.value;

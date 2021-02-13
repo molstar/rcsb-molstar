@@ -57,7 +57,7 @@ function getDecorator(plugin: PluginContext, root: string): string {
 }
 
 function extractStructureDataFromState(plugin: PluginContext): { [k: string]: Structure } {
-    const content: { [k: string]: Structure } = {};
+    const content: { [k: string]: Structure } = Object.create(null);
     const cells = plugin.state.data.select(StateSelection.Generators.rootsOfType(PluginStateObject.Molecule.Structure));
     for (let i = 0; i < cells.length; i++) {
         const c = cells[i];
@@ -73,7 +73,7 @@ function extractStructureDataFromState(plugin: PluginContext): { [k: string]: St
 }
 
 export function encodeStructureData(plugin: PluginContext): { [k: string]: Uint8Array } {
-    const content: { [k: string]: Uint8Array } = {};
+    const content: { [k: string]: Uint8Array } = Object.create(null);
     const structures = extractStructureDataFromState(plugin);
     for (const [key, structure] of Object.entries(structures)) {
         const filename = `${key}.cif`;
