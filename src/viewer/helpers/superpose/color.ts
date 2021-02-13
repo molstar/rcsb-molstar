@@ -13,10 +13,9 @@ import { Location } from 'molstar/lib/mol-model/location';
 
 export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorTheme<{}> {
     const colorLookup = ctx.structure?.inheritedPropertyData.colors;
-
     const defaultColorLookup: Map<string, Color> = new Map();
     for (const [asymId, seqIds] of Object.entries(colorLookup)) {
-        const colorValue = Array.from((seqIds as Map<number, Color>).values())[0];
+        const colorValue = (seqIds as Map<number, Color>).values().next().value;
         const defaultColor = Color.desaturate(Color.lighten(colorValue, 1.7), 1.2);
         defaultColorLookup.set(asymId, defaultColor);
     }
