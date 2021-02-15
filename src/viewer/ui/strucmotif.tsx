@@ -26,6 +26,7 @@ const ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
 const RETURN_TYPE = '&return_type=assembly';
 const MIN_MOTIF_SIZE = 3;
 const MAX_MOTIF_SIZE = 10;
+const MAX_EXCHANGES = 3;
 
 /**
  * The top-level component that exposes the strucmotif search.
@@ -115,6 +116,10 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             // handle potential exchanges - can be empty if deselected by users
             const residueMapEntry = this.state.residueMap.get(l)!;
             if (residueMapEntry.exchanges?.size > 0) {
+                if (residueMapEntry.exchanges.size > MAX_EXCHANGES) {
+                    this.plugin.log.error(`Maximum number of exchanges per position is ${MAX_EXCHANGES} - please remove some exchanges from residue ${residueId.label_asym_id}_${residueId.struct_oper_id}-${residueId.label_seq_id}`);
+                    return;
+                }
                 exchanges.push({ residue_id: residueId, allowed: Array.from(residueMapEntry.exchanges.values()) });
             }
         }
@@ -272,7 +277,11 @@ export class Residue {
         if (this.hasExchange(val)) {
             this.exchanges.delete(val);
         } else {
-            this.exchanges.add(val);
+            if (this.exchanges.size < MAX_EXCHANGES) {
+                this.exchanges.add(val);
+            } else {
+                this.parent.plugin.log.error(`Maximum number of exchanges per position is ${MAX_EXCHANGES}`);
+            }
         }
         // this will update state of parent component
         this.parent.forceUpdate();
