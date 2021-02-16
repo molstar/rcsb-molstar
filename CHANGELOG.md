@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.2.0] - 
+### General
+-  structure alignment data visualization
+
 ## [1.1.0] - 2021-02-08
 ### General
 - structural motif search wizard

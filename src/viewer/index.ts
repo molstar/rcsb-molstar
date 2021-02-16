@@ -27,6 +27,8 @@ import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
+import { SuperposeColorThemeProvider } from './helpers/superpose/color';
+import { encodeStructureData, downloadAsZipFile } from './helpers/export';
 import {Structure} from 'molstar/lib/mol-model/structure/structure';
 import {Script} from 'molstar/lib/mol-script/script';
 import {MolScriptBuilder} from 'molstar/lib/mol-script/language/builder';
@@ -53,7 +55,10 @@ const Extensions = {
 
 const DefaultViewerProps = {
     showImportControls: false,
+    showExportControls: false,
     showSessionControls: false,
+    showStructureSourceControls: true,
+    showSuperpositionControls: true,
     modelUrlProviders: [
         (pdbId: string) => ({
             url: `//models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
@@ -82,6 +87,7 @@ const DefaultViewerProps = {
     showWelcomeToast: true
 };
 export type ViewerProps = typeof DefaultViewerProps
+
 
 export class Viewer {
     private readonly plugin: PluginContext;
@@ -114,7 +120,7 @@ export class Viewer {
                     ...DefaultPluginSpec.layout && DefaultPluginSpec.layout.controls,
                     top: o.layoutShowSequence ? undefined : 'none',
                     bottom: o.layoutShowLog ? undefined : 'none',
-                    left: 'none',
+                    // left: 'none',
                     right: ControlsWrapper,
                 }
             },
@@ -137,7 +143,10 @@ export class Viewer {
 
         (this.plugin.customState as ViewerState) = {
             showImportControls: o.showImportControls,
+            showExportControls: o.showExportControls,
             showSessionControls: o.showSessionControls,
+            showStructureSourceControls: o.showStructureSourceControls,
+            showSuperpositionControls: o.showSuperpositionControls,
             modelLoader: new ModelLoader(this.plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
@@ -147,11 +156,12 @@ export class Viewer {
                 component: false,
                 volume: true,
                 custom: true,
-            }),
+            })
         };
 
         this.plugin.init();
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target);
+
         // TODO Check why this.plugin.canvas3d can be null
         // this.plugin.canvas3d can be null. The value is not assigned until React Plugin component is mounted
         // Next wait Promise guarantees that its value is defined
@@ -170,6 +180,8 @@ export class Viewer {
         wait.then(result=>{
             const renderer = this.plugin.canvas3d!.props.renderer;
             PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
+            this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
+        // this.plugin.builders.structure.representation.registerPreset(RcsbSuperpositionRepresentationPreset);
         });
         if (o.showWelcomeToast) {
             PluginCommands.Toast.Show(this.plugin, {
@@ -179,6 +191,24 @@ export class Viewer {
                 timeoutMs: 5000
             });
         }
+        this.prevExpanded = this.plugin.layout.state.isExpanded;
+        this.plugin.layout.events.updated.subscribe(() => this.toggleControls());
+    }
+
+    private prevExpanded: boolean;
+
+    private toggleControls(): void {
+
+        const currExpanded = this.plugin.layout.state.isExpanded;
+        const expanedChanged = (this.prevExpanded !== currExpanded);
+        if (!expanedChanged) return;
+
+        if (currExpanded && !this.plugin.layout.state.showControls) {
+            this.plugin.layout.setProps({showControls: true});
+        } else if (!currExpanded && this.plugin.layout.state.showControls) {
+            this.plugin.layout.setProps({showControls: false});
+        }
+        this.prevExpanded = this.plugin.layout.state.isExpanded;
     }
 
     //
@@ -221,6 +251,15 @@ export class Viewer {
 
     async loadStructureFromData(data: string | number[], format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4) {
         return this.customState.modelLoader.parse({ data, format, isBinary }, props, matrix);
+    }
+
+    handleResize() {
+        this.plugin.layout.events.updated.next();
+    }
+
+    exportLoadedStructures() {
+        const content = encodeStructureData(this.plugin);
+        downloadAsZipFile(content);
     }
 
     pluginCall(f: (plugin: PluginContext) => void){
