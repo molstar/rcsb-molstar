@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [1.2.0] - 
+## [1.2.0] - 2021-02-16
 ### General
 -  structure alignment data visualization
 
