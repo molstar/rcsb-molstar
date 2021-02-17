@@ -141,6 +141,7 @@ export class Viewer {
             modelLoader: new ModelLoader(this.plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
+                strucmotifSubmit: true,
                 measurements: true,
                 superposition: true,
                 component: false,
@@ -154,7 +155,7 @@ export class Viewer {
         // TODO Check why this.plugin.canvas3d can be null
         // this.plugin.canvas3d can be null. The value is not assigned until React Plugin component is mounted
         // Next wait Promise guarantees that its value is defined
-        const wait: Promise<null> = new Promise<null>((resolve, reject)=>{
+        const wait: Promise<void> = new Promise<void>((resolve, reject)=>{
             const recursive: () => void = () => {
                 if(this.plugin.canvas3d != null){
                     resolve();
@@ -230,6 +231,21 @@ export class Viewer {
         return this.plugin;
     }
 
+    public setFocus(modelId: string, asymId: string, begin: number, end: number): void;
+    public setFocus(...args: any[]): void{
+        if(args.length === 4)
+            this.setFocusFromRange(args[0], args[1], args[2], args[3]);
+    }
+    private setFocusFromRange(modelId: string, asymId: string, begin: number, end: number): void{
+        const loci: Loci | undefined = getLociFromRange(this.plugin, modelId, asymId, begin, end);
+        if(loci == null)
+            return;
+        this.plugin.managers.structure.focus.setFromLoci(loci);
+    }
+    public clearFocus(): void {
+        this.plugin.managers.structure.focus.clear();
+    }
+
     public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
@@ -247,21 +263,14 @@ export class Viewer {
         }
     }
     private selectSegment(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void {
-        const data: Structure | undefined = getStructureWithModelId(this.plugin.managers.structure.hierarchy.current.structures, modelId);
-        if (data == null) return;
-        const seq_id: Array<number> = new Array<number>();
-        for(let n = begin; n <= end; n++){
-            seq_id.push(n);
-        }
-        const sel: StructureSelection = Script.getStructureSelection(Q => Q.struct.generator.atomGroups({
-            'chain-test': Q.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')]),
-            'residue-test': Q.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seq_id))), MolScriptBuilder.ammp('label_seq_id')])
-        }), data);
-        const loci: Loci = StructureSelection.toLociWithSourceUnits(sel);
-        if(mode == null || mode === 'select')
+        const loci: Loci | undefined = getLociFromRange(this.plugin, modelId, asymId, begin, end);
+        if(loci == null)
+            return;
+        if(mode == null || mode === 'select') {
             this.plugin.managers.structure.selection.fromLoci(modifier, loci);
-        else if(mode === 'hover')
-            this.plugin.managers.interactivity.lociHighlights.highlight({ loci });
+        }else if(mode === 'hover') {
+            this.plugin.managers.interactivity.lociHighlights.highlight({loci});
+        }
     }
     public clearSelection(mode: 'select'|'hover', options?: {modelId: string; labelAsymId: string;}): void {
         if(mode == null || mode === 'select') {
@@ -368,4 +377,18 @@ function getStructureWithModelId(structures: StructureRef[], modelId: string): S
     const structureRef: StructureRef | undefined = getStructureRefWithModelId(structures, modelId);
     if(structureRef != null)
         return structureRef.cell?.obj?.data;
+}
+
+function getLociFromRange(plugin: PluginContext, modelId: string, asymId: string, begin: number, end: number): Loci | undefined {
+    const data: Structure | undefined = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, modelId);
+    if (data == null) return;
+    const seq_id: Array<number> = new Array<number>();
+    for (let n = begin; n <= end; n++) {
+        seq_id.push(n);
+    }
+    const sel: StructureSelection = Script.getStructureSelection(Q => Q.struct.generator.atomGroups({
+        'chain-test': Q.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')]),
+        'residue-test': Q.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seq_id))), MolScriptBuilder.ammp('label_seq_id')])
+    }), data);
+    return StructureSelection.toLociWithSourceUnits(sel);
 }
