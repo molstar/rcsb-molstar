@@ -6,6 +6,10 @@
 ### Bug fixes
 - limit number of exchanges per position
 
+## [1.2.0] - 2021-02-16
+### General
+-  structure alignment data visualization
+
 ## [1.1.0] - 2021-02-08
 ### General
 - structural motif search wizard

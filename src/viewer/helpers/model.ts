@@ -35,7 +35,7 @@ export class ModelLoader {
             preset: props || { kind: 'standard', assemblyId: '' }
         });
 
-        if (matrix && selector) {
+        if (matrix && selector?.structureProperties) {
             const params = {
                 transform: {
                     name: 'matrix' as const,

@@ -47,7 +47,7 @@ const sharedConfig = {
         aggregateTimeout: 750
     },
     devtool: ''
-}
+};
 
 module.exports = [
     {
@@ -67,4 +67,4 @@ module.exports = [
         },
         ...sharedConfig
     }
-]
+];
