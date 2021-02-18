@@ -5,6 +5,7 @@
 ## [1.2.1]
 ### Bug fixes
 - limit number of exchanges per position
+- hide State Tree panel
 
 ## [1.2.0] - 2021-02-16
 ### General

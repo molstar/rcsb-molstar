@@ -120,7 +120,7 @@ export class Viewer {
                     ...DefaultPluginSpec.layout && DefaultPluginSpec.layout.controls,
                     top: o.layoutShowSequence ? undefined : 'none',
                     bottom: o.layoutShowLog ? undefined : 'none',
-                    // left: 'none',
+                    left: 'none',
                     right: ControlsWrapper,
                 }
             },
