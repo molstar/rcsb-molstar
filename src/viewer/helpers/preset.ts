@@ -102,8 +102,8 @@ export type PropsetProps = {
     representation: ColorProp[]
 } & BaseProps
 
-export type SaguaroProps = {
-    kind: 'saguaro'
+export type EmptyProps = {
+    kind: 'empty'
 } & BaseProps
 
 type ValidationProps = {
@@ -130,7 +130,7 @@ type DensityProps = {
     kind: 'density'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | SaguaroProps;
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | EmptyProps;
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -237,60 +237,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
-        if(p.kind === 'saguaro'){
-            if(structure == null)
-                return;
-
-            let selectionExpressions: SelectionExpression[] = [];
-            /* for(const u of structure.obj?.data.units ?? []){
-                const entityId:  string | undefined = structure!.obj?.data.model.atomicHierarchy.chains.label_entity_id.value(u.chainGroupId);
-                if(entityId == null)
-                    return;
-                const entityIdx: EntityIndex | undefined = structure!.obj?.data.model.entities.getEntityIndex(entityId);
-                if(entityIdx == null)
-                    return;
-                if(structure!.obj?.data.model.entities.data.type.value(entityIdx) === 'polymer'){
-                    const labelAsymId: string = structure!.obj?.data.model.atomicHierarchy.chains.label_asym_id.value(u.chainGroupId);
-                    const authAsymId: string = structure!.obj?.data.model.atomicHierarchy.chains.auth_asym_id.value(u.chainGroupId);
-                    selectionExpressions.push({
-                        expression: MS.struct.generator.atomGroups({
-                            'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), labelAsymId]),
-                        }),
-                        label: `chain ${authAsymId}`,
-                        type: 'cartoon',
-                        tag: 'polymer'
-                    });
-                }
-            } */
-            selectionExpressions = selectionExpressions.concat([{
-                expression: Q.ligand.expression,
-                label: 'Ligands',
-                type: 'ball-and-stick',
-                tag: 'ligand'
-            }, {
-                expression: Q.ion.expression,
-                label: 'Ions',
-                type: 'ball-and-stick',
-                tag: 'ion'
-            }, {
-                expression: Q.branched.expression,
-                label: 'Carbohydrates',
-                type: 'carbohydrate',
-                tag: 'branched-snfg-3d'
-            }, {
-                expression: Q.lipid.expression,
-                label: 'Lipids',
-                type: 'ball-and-stick',
-                tag: 'lipid'
-            }]);
-            const params = {
-                ignoreHydrogens: CommonParams.ignoreHydrogens.defaultValue,
-                quality: CommonParams.quality.defaultValue,
-                theme: CommonParams.theme.defaultValue,
-                selectionExpressions: selectionExpressions
-            };
-            representation = await RcsbSuperpositionRepresentationPreset.apply(structure, params, plugin);
-        }else if (p.kind === 'prop-set') {
+        if (p.kind === 'prop-set') {
 
             // This creates a single structure from selections/transformations as specified
             const _structure = plugin.state.data.build().to(modelProperties)
@@ -348,6 +295,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 ...ViewerState(plugin).collapsed.value,
                 custom: false
             });
+        } else if (p.kind === 'empty') {
+            console.warn('Using empty representation');
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
