@@ -26,7 +26,7 @@ const ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
 const RETURN_TYPE = '&return_type=assembly';
 const MIN_MOTIF_SIZE = 3;
 const MAX_MOTIF_SIZE = 10;
-const MAX_EXCHANGES = 3;
+export const MAX_EXCHANGES = 4;
 
 /**
  * The top-level component that exposes the strucmotif search.
@@ -117,7 +117,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             const residueMapEntry = this.state.residueMap.get(l)!;
             if (residueMapEntry.exchanges?.size > 0) {
                 if (residueMapEntry.exchanges.size > MAX_EXCHANGES) {
-                    this.plugin.log.error(`Maximum number of exchanges per position is ${MAX_EXCHANGES} - please remove some exchanges from residue ${residueId.label_asym_id}_${residueId.struct_oper_id}-${residueId.label_seq_id}`);
+                    alert(`Maximum number of exchanges per position is ${MAX_EXCHANGES} - please remove some exchanges from residue ${residueId.label_asym_id}_${residueId.struct_oper_id}-${residueId.label_seq_id}`);
                     return;
                 }
                 exchanges.push({ residue_id: residueId, allowed: Array.from(residueMapEntry.exchanges.values()) });
@@ -125,17 +125,18 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         }
 
         if (pdbId.size > 1) {
-            this.plugin.log.warn('Motifs can only be extracted from a single model!');
+            alert('Motifs can only be extracted from a single model!');
             return;
         }
         if (residueIds.length > MAX_MOTIF_SIZE) {
-            this.plugin.log.warn(`Maximum motif size is ${MAX_MOTIF_SIZE} residues!`);
+            alert(`Maximum motif size is ${MAX_MOTIF_SIZE} residues!`);
             return;
         }
         if (residueIds.filter(v => v.label_seq_id === 0).length > 0) {
-            this.plugin.log.warn('Selections may only contain polymeric entities!');
+            alert('Selections may only contain polymeric entities!');
             return;
         }
+        // TODO warn if >15 A for better UX
 
         const query = {
             type: 'terminal',
@@ -280,7 +281,7 @@ export class Residue {
             if (this.exchanges.size < MAX_EXCHANGES) {
                 this.exchanges.add(val);
             } else {
-                this.parent.plugin.log.error(`Maximum number of exchanges per position is ${MAX_EXCHANGES}`);
+                alert(`Maximum number of exchanges per position is ${MAX_EXCHANGES}`);
             }
         }
         // this will update state of parent component
