@@ -14,12 +14,22 @@ import { AssemblySymmetryPreset } from 'molstar/lib/extensions/rcsb/assembly-sym
 import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
 import { RootStructureDefinition } from 'molstar/lib/mol-plugin-state/helpers/root-structure';
 import { StructureRepresentationPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
-import { Structure, StructureSelection, QueryContext, StructureElement } from 'molstar/lib/mol-model/structure';
+import {
+    Structure,
+    StructureSelection,
+    QueryContext,
+    StructureElement
+} from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 import { ViewerState } from '../types';
-import { StateSelection } from 'molstar/lib/mol-state';
+import { StateSelection, StateObjectSelector, StateObject, StateTransformer, StateObjectRef } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
+import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
+import { CustomStructureProperties } from 'molstar/lib/mol-plugin-state/transforms/model';
+import { FlexibleStructureFromModel as FlexibleStructureFromModel } from './superpose/flexible-structure';
+import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
+import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
 
@@ -68,10 +78,33 @@ function targetToLoci(target: Target, structure: Structure): StructureElement.Lo
     return StructureSelection.toLociWithSourceUnits(selection);
 }
 
+type Range = {
+    label_asym_id: string
+    label_seq_id?: { beg: number, end?: number }
+}
+
 type BaseProps = {
     assemblyId?: string
     modelIndex?: number
 }
+
+type ColorProp = {
+    name: 'color',
+    value: number,
+    positions: Range[]
+};
+
+export type PropsetProps = {
+    kind: 'prop-set',
+    selection?: (Range & {
+        matrix?: Mat4
+    })[],
+    representation: ColorProp[]
+} & BaseProps
+
+export type SaguaroProps = {
+    kind: 'saguaro'
+} & BaseProps
 
 type ValidationProps = {
     kind: 'validation'
@@ -97,10 +130,72 @@ type DensityProps = {
     kind: 'density'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | SaguaroProps;
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
+});
+
+type StructureObject = StateObjectSelector<PluginStateObject.Molecule.Structure, StateTransformer<StateObject<any, StateObject.Type<any>>, StateObject<any, StateObject.Type<any>>, any>>
+
+const CommonParams = StructureRepresentationPresetProvider.CommonParams;
+
+const reprBuilder = StructureRepresentationPresetProvider.reprBuilder;
+const updateFocusRepr = StructureRepresentationPresetProvider.updateFocusRepr;
+
+type SelectionExpression = {
+    tag: string
+    type: StructureRepresentationRegistry.BuiltIn
+    label: string
+    expression: Expression
+};
+
+export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPresetProvider({
+    id: 'preset-superposition-representation-rcsb',
+    display: {
+        group: 'Superposition',
+        name: 'Alignment',
+        description: 'Show representations based on the structural alignment data.'
+    },
+    params: () => ({
+        ...CommonParams,
+        selectionExpressions: PD.Value<SelectionExpression[]>([])
+    }),
+    async apply(ref, params, plugin) {
+
+        const structureCell = StateObjectRef.resolveAndCheck(plugin.state.data, ref);
+        if (!structureCell) return Object.create(null);
+
+        const structure = structureCell.obj!.data;
+        const cartoonProps = {sizeFactor: structure.isCoarseGrained ? 0.8 : 0.2};
+
+        let components = Object.create(null);
+        let representations = Object.create(null);
+        for (const expr of params.selectionExpressions) {
+
+            const comp = await plugin.builders.structure.tryCreateComponentFromExpression(structureCell, expr.expression, expr.label, { label: expr.label });
+            Object.assign(components, {[expr.label]: comp});
+
+            const { update, builder, typeParams, color } = reprBuilder(plugin, params);
+
+            let typeProps = {...typeParams};
+            if (expr.type === 'cartoon') {
+                Object.assign(typeProps, {...cartoonProps});
+            }
+
+            Object.assign(representations, {
+                [expr.label]: builder.buildRepresentation(update, comp, {type: expr.type,
+                    typeParams: typeProps, color: color as any}, { tag: expr.tag }),
+            });
+
+            await update.commit({ revertOnError: false });
+
+        }
+        // needed to apply same coloring scheme to focus representation
+        await updateFocusRepr(plugin, structure, params.theme?.focus?.name, params.theme?.focus?.params);
+
+        return representations;
+    }
 });
 
 export const RcsbPreset = TrajectoryHierarchyPresetProvider({
@@ -127,27 +222,137 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         const model = await builder.createModel(trajectory, modelParams);
         const modelProperties = await builder.insertModelProperties(model);
 
-        const structure = await builder.createStructure(modelProperties || model, structureParams);
-        const structureProperties = await builder.insertStructureProperties(structure);
+        let structure: StructureObject | undefined = undefined;
+        let structureProperties: StructureObject | undefined = undefined;
+
+        // If flexible transformation is allowed, we may need to create a single structure component
+        // from transformed substructures
+        const allowsFlexTransform = p.kind === 'prop-set';
+        if (!allowsFlexTransform) {
+            structure = await builder.createStructure(modelProperties || model, structureParams);
+            structureProperties = await builder.insertStructureProperties(structure);
+        }
 
         const unitcell = await builder.tryCreateUnitcell(modelProperties, undefined, { isHidden: true });
 
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
-        if (p.kind === 'validation') {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties, ValidationReportGeometryQualityPreset);
+        if(p.kind === 'saguaro'){
+            if(structure == null)
+                return;
+
+            let selectionExpressions: SelectionExpression[] = [];
+            /* for(const u of structure.obj?.data.units ?? []){
+                const entityId:  string | undefined = structure!.obj?.data.model.atomicHierarchy.chains.label_entity_id.value(u.chainGroupId);
+                if(entityId == null)
+                    return;
+                const entityIdx: EntityIndex | undefined = structure!.obj?.data.model.entities.getEntityIndex(entityId);
+                if(entityIdx == null)
+                    return;
+                if(structure!.obj?.data.model.entities.data.type.value(entityIdx) === 'polymer'){
+                    const labelAsymId: string = structure!.obj?.data.model.atomicHierarchy.chains.label_asym_id.value(u.chainGroupId);
+                    const authAsymId: string = structure!.obj?.data.model.atomicHierarchy.chains.auth_asym_id.value(u.chainGroupId);
+                    selectionExpressions.push({
+                        expression: MS.struct.generator.atomGroups({
+                            'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), labelAsymId]),
+                        }),
+                        label: `chain ${authAsymId}`,
+                        type: 'cartoon',
+                        tag: 'polymer'
+                    });
+                }
+            } */
+            selectionExpressions = selectionExpressions.concat([{
+                expression: Q.ligand.expression,
+                label: 'Ligands',
+                type: 'ball-and-stick',
+                tag: 'ligand'
+            }, {
+                expression: Q.ion.expression,
+                label: 'Ions',
+                type: 'ball-and-stick',
+                tag: 'ion'
+            }, {
+                expression: Q.branched.expression,
+                label: 'Carbohydrates',
+                type: 'carbohydrate',
+                tag: 'branched-snfg-3d'
+            }, {
+                expression: Q.lipid.expression,
+                label: 'Lipids',
+                type: 'ball-and-stick',
+                tag: 'lipid'
+            }]);
+            const params = {
+                ignoreHydrogens: CommonParams.ignoreHydrogens.defaultValue,
+                quality: CommonParams.quality.defaultValue,
+                theme: CommonParams.theme.defaultValue,
+                selectionExpressions: selectionExpressions
+            };
+            representation = await RcsbSuperpositionRepresentationPreset.apply(structure, params, plugin);
+        }else if (p.kind === 'prop-set') {
+
+            // This creates a single structure from selections/transformations as specified
+            const _structure = plugin.state.data.build().to(modelProperties)
+                .apply(FlexibleStructureFromModel, { selection: p.selection });
+            structure = await _structure.commit();
+
+            const _structureProperties = plugin.state.data.build().to(structure)
+                .apply(CustomStructureProperties);
+            structureProperties = await _structureProperties.commit();
+
+            // adding coloring lookup scheme
+            structure.data!.inheritedPropertyData.colors = Object.create(null);
+            for (const repr of p.representation) {
+                if (repr.name === 'color') {
+                    const colorValue = repr.value;
+                    const positions = repr.positions;
+                    for (const range of positions) {
+                        if (!structure.data!.inheritedPropertyData.colors[range.label_asym_id])
+                            structure.data!.inheritedPropertyData.colors[range.label_asym_id] = new Map();
+                        const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
+                        for (const num of residues) {
+                            structure.data!.inheritedPropertyData.colors[range.label_asym_id].set(num, colorValue);
+                        }
+                    }
+                }
+            }
+
+            // At this we have a structure that contains only the transformed substructres,
+            // creating structure selections to have multiple components per each flexible part
+            const entryId = model.data!.entryId;
+            let selectionExpressions: SelectionExpression[] = [];
+            if (p.selection) {
+                for (const range of p.selection) {
+                    selectionExpressions = selectionExpressions.concat(createSelectionExpression(entryId, range));
+                }
+            } else {
+                selectionExpressions = selectionExpressions.concat(createSelectionExpression(entryId));
+            }
+
+            const params = {
+                ignoreHydrogens: CommonParams.ignoreHydrogens.defaultValue,
+                quality: CommonParams.quality.defaultValue,
+                theme: { globalName: 'superpose' as any, focus: { name: 'superpose' } },
+                selectionExpressions: selectionExpressions
+            };
+            representation = await RcsbSuperpositionRepresentationPreset.apply(structure, params, plugin);
+
+        } else if (p.kind === 'validation') {
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
+
         } else if (p.kind === 'symmetry') {
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
 
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
                 custom: false
             });
         } else {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties, 'auto');
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
 
-        if (p.kind === 'feature' && structure.obj) {
+        if (p.kind === 'feature' && structure?.obj) {
             const loci = targetToLoci(p.target, structure.obj.data);
             // if target is only defined by chain: then don't force first residue
             const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
@@ -156,7 +361,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             plugin.managers.camera.focusLoci(target);
         }
 
-        if (p.kind === 'density' && structure.cell?.parent) {
+        if (p.kind === 'density' && structure?.cell?.parent) {
             const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
             if (!volumeRoot) {
                 const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin));
@@ -192,3 +397,82 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         };
     }
 });
+
+export function createSelectionExpression(entryId: string, range?: Range): SelectionExpression[] {
+    if (range) {
+        const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
+        const test = selectionTest(range.label_asym_id, residues);
+        const label = labelFromProps(entryId, range);
+        return [{
+            expression: MS.struct.generator.atomGroups(test),
+            label: `${label}`,
+            type: 'cartoon',
+            tag: 'polymer'
+        }];
+    } else {
+        return [
+            {
+                expression: Q.polymer.expression,
+                label: `${entryId} - Polymers`,
+                type: 'cartoon',
+                tag: 'polymer'
+            },
+            {
+                expression: Q.ligand.expression,
+                label: `${entryId} - Ligands`,
+                type: 'ball-and-stick',
+                tag: 'ligand'
+            },
+            {
+                expression: Q.ion.expression,
+                label: `${entryId} - Ions`,
+                type: 'ball-and-stick',
+                tag: 'ion'
+            },
+            {
+                expression: Q.branched.expression,
+                label: `${entryId} - Carbohydrates`,
+                type: 'carbohydrate',
+                tag: 'branched-snfg-3d'
+            },
+            {
+                expression: Q.lipid.expression,
+                label: `${entryId} - Lipids`,
+                type: 'ball-and-stick',
+                tag: 'lipid'
+            },
+            {
+                expression: Q.water.expression,
+                label: `${entryId} - Waters`,
+                type: 'ball-and-stick',
+                tag: 'water'
+            }
+        ];
+    }
+}
+
+export const selectionTest = (asymId: string, residues: number[]) => {
+    if (residues.length > 0) {
+        return {
+            'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), asymId]),
+            'residue-test': MS.core.set.has([MS.set(...residues), MS.ammp('label_seq_id')])
+        };
+    } else {
+        return { 'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), asymId]) };
+    }
+};
+
+export const toRange = (start: number, end?: number) => {
+    if (!end) return [start];
+    const b = start < end ? start : end;
+    const e = start < end ? end : start;
+    return [...Array(e - b + 1)].map((_, i) => b + i);
+};
+
+const labelFromProps = (entryId: string, range: Range) => {
+
+    const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
+    return entryId + (range.label_asym_id ? `.${range.label_asym_id}` : '') +
+        (residues ? `:${residues[0].toString()}` : '') +
+        (residues && residues.length > 1 ? `-${residues[residues.length - 1].toString()}` : '');
+};

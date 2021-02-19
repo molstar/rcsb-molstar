@@ -9,6 +9,7 @@ import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { ViewerState } from '../types';
 import { CustomStructureControls } from 'molstar/lib/mol-plugin-ui/controls';
 import { ImportControls } from './import';
+import { ExportControls } from './export';
 import { StructureSourceControls } from 'molstar/lib/mol-plugin-ui/structure/source';
 import { StructureMeasurementsControls } from 'molstar/lib/mol-plugin-ui/structure/measurements';
 import { StructureSuperpositionControls } from 'molstar/lib/mol-plugin-ui/structure/superposition';
@@ -29,13 +30,12 @@ export class StructureTools extends PluginUIComponent {
     render() {
         const collapsed = this.customState.collapsed.value;
         return <>
-            <StructureSourceControls />
+            {this.customState.showStructureSourceControls && <StructureSourceControls />}
             <StructureMeasurementsControls initiallyCollapsed={collapsed.measurements} />
-            <StructureSuperpositionControls initiallyCollapsed={collapsed.superposition} />
             <StrucmotifSubmitControls initiallyCollapsed={collapsed.strucmotifSubmit} />
+            {this.customState.showSuperpositionControls && <StructureSuperpositionControls initiallyCollapsed={collapsed.superposition} />}
             <StructureComponentControls initiallyCollapsed={collapsed.component} />
             <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />
-
             <CustomStructureControls initiallyCollapsed={collapsed.custom} />
         </>;
     }
@@ -45,6 +45,7 @@ export class ControlsWrapper extends PluginUIComponent {
     render() {
         return <div className='msp-scrollable-container'>
             {ViewerState(this.plugin).showImportControls && <ImportControls />}
+            {ViewerState(this.plugin).showExportControls && <ExportControls />}
             {ViewerState(this.plugin).showSessionControls && <SessionControls />}
             <StructureTools />
         </div>;
