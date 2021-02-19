@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.2.1] - 2021-02-18
+### Bug fixes
+- limit number of exchanges per position
+- hide State Tree panel
+
 ## [1.2.0] - 2021-02-16
 ### General
 -  structure alignment data visualization
