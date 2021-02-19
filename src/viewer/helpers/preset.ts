@@ -411,7 +411,7 @@ const labelFromProps = (entryId: string, range: Range) => {
 
     const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
     const label = entryId + (range.label_asym_id ? `.${range.label_asym_id}` : '') +
-        (residues && residues.length > 0 ? `:${residues[0].toString()}` : '') +
-        (residues && residues.length > 1 ? `-${residues[residues.length - 1].toString()}` : '');
+        (residues && residues.length > 0 ? `:${residues[0]}` : '') +
+        (residues && residues.length > 1 ? `-${residues[residues.length - 1]}` : '');
     return label;
 };
