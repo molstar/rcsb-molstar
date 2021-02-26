@@ -53,7 +53,7 @@
             var props = _props && JSON.parse(_props)
             var _loadPdbIds = getQueryParam('loadPdbIds')
             var loadPdbIds = _loadPdbIds && JSON.parse(_loadPdbIds)
-            
+
             // create an instance of the plugin
             var viewer = new rcsbMolstar.Viewer('viewer', {
                 showImportControls: !pdbId,
@@ -85,6 +85,10 @@
             Superposed
             <button style="padding: 3px;" onclick="superposed()">3PQR | 1U19</button>
 
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+            Ligand Focus on wrong assembly
+            <button style="padding: 3px" onclick="ligandAssembly()">5RLA</button>
         </div>
         <script>
 
@@ -309,6 +313,14 @@
                     })
                     .then(function() {
                         viewer.resetCamera(0)
+                    });
+            }
+
+            function ligandAssembly() {
+                viewer.clear()
+                    .then(function() {
+                        // UR7 is not present in assembly 1
+                        return viewer.loadPdbId('5RL9', { kind: 'feature', assemblyId: '1', target: { label_comp_id: 'UR7' } });
                     });
             }
         </script>
