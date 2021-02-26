@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.2.2] - 2021-02-26
+### Bug fixes
+- switch to 'model' when ligand preset is requested but ligand is not present in assembly '1' - HELP-16678
+
 ## [1.2.1] - 2021-02-18
 ### Bug fixes
 - limit number of exchanges per position

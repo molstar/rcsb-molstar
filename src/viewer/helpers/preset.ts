@@ -291,9 +291,18 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         }
 
         if (p.kind === 'feature' && structure?.obj) {
-            const loci = targetToLoci(p.target, structure.obj.data);
+            let loci = targetToLoci(p.target, structure.obj.data);
             // if target is only defined by chain: then don't force first residue
             const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
+            // HELP-16678: check for rare case where ligand is not present in requested assembly
+            if (loci.elements.length === 0 && !!p.assemblyId) {
+                // switch to Model (a.k.a. show coordinate independent of assembly )
+                const { selection } = plugin.managers.structure.hierarchy;
+                const s = selection.structures[0];
+                await plugin.managers.structure.hierarchy.updateStructure(s, { ...params, preset: { ...params.preset, assemblyId: void 0 } });
+                // update loci
+                loci = targetToLoci(p.target, structure.obj.data);
+            }
             const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci);
             plugin.managers.structure.focus.setFromLoci(target);
             plugin.managers.camera.focusLoci(target);
