@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.2.3] - 2021-03-03
+### Bug fixes
+- warn when residues are more than 15 A apart (RO-2597)
+
 ## [1.2.2] - 2021-02-26
 ### Bug fixes
 - switch to 'model' when ligand preset is requested but ligand is not present in assembly '1' - HELP-16678

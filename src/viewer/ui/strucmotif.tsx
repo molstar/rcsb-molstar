@@ -21,12 +21,18 @@ import {StructureElement, StructureProperties} from 'molstar/lib/mol-model/struc
 import {ToggleSelectionModeButton} from 'molstar/lib/mol-plugin-ui/structure/selection';
 import {OrderedSet} from 'molstar/lib/mol-data/int';
 import {ExchangesControl} from './exchanges';
+import Vec3 from 'molstar/lib/mol-math/linear-algebra/3d/vec3';
+import Structure from 'molstar/lib/mol-model/structure/structure/structure';
+import Unit from 'molstar/lib/mol-model/structure/structure/unit';
+import {UnitIndex} from 'molstar/lib/mol-model/structure/structure/element/element';
 
 const ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
 const RETURN_TYPE = '&return_type=assembly';
 const MIN_MOTIF_SIZE = 3;
 const MAX_MOTIF_SIZE = 10;
 export const MAX_EXCHANGES = 4;
+const MAX_MOTIF_EXTENT = 15;
+const MAX_MOTIF_EXTENT_SQUARED = MAX_MOTIF_EXTENT * MAX_MOTIF_EXTENT;
 
 /**
  * The top-level component that exposes the strucmotif search.
@@ -89,19 +95,41 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
     }
 
     submitSearch = () => {
+        const { label_atom_id, x, y, z } = StructureProperties.atom;
         const pdbId: Set<string> = new Set();
         const residueIds: ResidueSelection[] = [];
         const exchanges: Exchange[] = [];
+        const coordinates: { coords: Vec3, residueId: ResidueSelection }[] = [];
+
+        /**
+         * This sets the 'location' to the backbone atom (CA or C4').
+         * @param structure context
+         * @param element wraps atom indices of this residue
+         */
+        const determineBackboneAtom = (structure: Structure, element: { unit: Unit; indices: OrderedSet<UnitIndex> }) => {
+            const { indices } = element;
+            for (let i = 0, il = OrderedSet.size(indices); i < il; i++) {
+                StructureElement.Location.set(location, structure, element.unit, element.unit.elements[OrderedSet.getAt(indices, i)]);
+                const atomLabelId = label_atom_id(location);
+                if ('CA' === atomLabelId || `C4'` === atomLabelId) {
+                    return true;
+                }
+            }
+            return false;
+        };
 
         const loci = this.plugin.managers.structure.selection.additionsHistory;
-        let structure;
         for (let i = 0; i < Math.min(MAX_MOTIF_SIZE, loci.length); i++) {
             const l = loci[i];
-            structure = l.loci.structure;
+            const { structure, elements } = l.loci;
             pdbId.add(structure.model.entry);
             // only first element and only first index will be considered (ignoring multiple residues)
-            const e = l.loci.elements[0];
-            StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
+            if (!determineBackboneAtom(structure, elements[0])) {
+                const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
+                const struct_oper_id = struct_oper_list_ids?.length ? struct_oper_list_ids.join('x') : '1';
+                alert(`No CA or C4' atom for ${StructureProperties.residue.label_seq_id(location)} | ${StructureProperties.chain.label_asym_id(location)} | ${struct_oper_id}`);
+                return;
+            }
 
             // handle pure residue-info
             const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
@@ -113,11 +141,15 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             };
             residueIds.push(residueId);
 
+            // retrieve CA/C4', used to compute residue distance
+            const coords = [x(location), y(location), z(location)] as Vec3;
+            coordinates.push({coords, residueId});
+
             // handle potential exchanges - can be empty if deselected by users
             const residueMapEntry = this.state.residueMap.get(l)!;
             if (residueMapEntry.exchanges?.size > 0) {
                 if (residueMapEntry.exchanges.size > MAX_EXCHANGES) {
-                    alert(`Maximum number of exchanges per position is ${MAX_EXCHANGES} - please remove some exchanges from residue ${residueId.label_asym_id}_${residueId.struct_oper_id}-${residueId.label_seq_id}`);
+                    alert(`Maximum number of exchanges per position is ${MAX_EXCHANGES} - Please remove some exchanges from residue ${residueId.label_seq_id} | ${residueId.label_asym_id} | ${residueId.struct_oper_id}.`);
                     return;
                 }
                 exchanges.push({ residue_id: residueId, allowed: Array.from(residueMapEntry.exchanges.values()) });
@@ -136,7 +168,28 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             alert('Selections may only contain polymeric entities!');
             return;
         }
-        // TODO warn if >15 A for better UX
+        // warn if >15 A
+        const a = Vec3();
+        const b = Vec3();
+        // this is not efficient but is good enough for up to 10 residues
+        for (let i = 0, il = coordinates.length; i < il; i++) {
+            Vec3.set(a, coordinates[i].coords[0], coordinates[i].coords[1], coordinates[i].coords[2]);
+            let contact = false;
+            for (let j = 0, jl = coordinates.length; j < jl; j++) {
+                if (i === j) continue;
+                Vec3.set(b, coordinates[j].coords[0], coordinates[j].coords[1], coordinates[j].coords[2]);
+                const d = Vec3.squaredDistance(a, b);
+                if (d < MAX_MOTIF_EXTENT_SQUARED) {
+                    contact = true;
+                }
+            }
+
+            if (!contact) {
+                const { residueId } = coordinates[i];
+                alert(`Residue ${residueId.label_seq_id} | ${residueId.label_asym_id} | ${residueId.struct_oper_id} needs to be less than 15 \u212B from another residue - Consider adding more residues to connect far-apart residues.`);
+                return;
+            }
+        }
 
         const query = {
             type: 'terminal',
