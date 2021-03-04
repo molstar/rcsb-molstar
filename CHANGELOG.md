@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [1.2.2] - 2021-03-03
+## [1.2.3] - 2021-03-03
 ### Bug fixes
 - warn when residues are more than 15 A apart (RO-2597)
 
