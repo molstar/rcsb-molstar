@@ -4,7 +4,7 @@
 
 ## [1.2.2] - 2021-03-03
 ### Bug fixes
-- warn when residues are more than 15 A apart
+- warn when residues are more than 15 A apart (RO-2597)
 
 ## [1.2.1] - 2021-02-18
 ### Bug fixes
