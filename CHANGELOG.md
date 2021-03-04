@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.2.2] - 2021-03-03
+### Bug fixes
+- warn when residues are more than 15 A apart
+
 ## [1.2.1] - 2021-02-18
 ### Bug fixes
 - limit number of exchanges per position
