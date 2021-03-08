@@ -133,6 +133,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
             // handle pure residue-info
             const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
+            // TODO honor NCS operators: StructureProperties.unit.struct_ncs_oper_id(location);
             const residueId = {
                 label_asym_id: StructureProperties.chain.label_asym_id(location),
                 // can be empty array if model is selected
