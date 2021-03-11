@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.3.1] - 2021-03-11
+### Bug fixes
+- this is a dummy release
+
 ## [1.3.0] - 2021-03-10
 ### Added
 - expose video export option
