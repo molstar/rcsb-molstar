@@ -38,6 +38,7 @@ import {StructureSelection} from 'molstar/lib/mol-model/structure/query';
 import {StructureRef} from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
 import {StructureSelectionQuery} from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import {StructureRepresentationRegistry} from 'molstar/lib/mol-repr/structure/registry';
+import {Mp4Export} from 'molstar/lib/extensions/mp4-export';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -50,7 +51,8 @@ export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 
 const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
-    'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport)
+    'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
+    'mp4-export': PluginSpec.Behavior(Mp4Export)
 };
 
 const DefaultViewerProps = {
