@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "declaration": true,
         "target": "es5",
         "alwaysStrict": true,
         "noImplicitAny": true,
@@ -9,13 +10,15 @@
         "strictNullChecks": true,
         "strictFunctionTypes": true,
         // "downlevelIteration": true,
+        "module": "esnext",
+        "esModuleInterop": true,
+        "moduleResolution": "node",
         "importHelpers": true,
         "noEmitHelpers": true,
-        "jsx": "react",
+        "jsx": "react-jsx",
         "lib": [ "es6", "dom", "esnext.asynciterable", "es2016" ],
         "outDir": "build/src",
         "rootDir": "src",
-        "declaration": true
     },
     "include": [ "src/**/*" ]
 }

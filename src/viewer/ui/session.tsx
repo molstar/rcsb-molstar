@@ -4,7 +4,6 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import * as React from 'react';
 import { CollapsableControls } from 'molstar/lib/mol-plugin-ui/base';
 import { LocalStateSnapshots, LocalStateSnapshotList, StateExportImportControls } from 'molstar/lib/mol-plugin-ui/state/snapshots';
 import { SaveOutlinedSvg } from 'molstar/lib/mol-plugin-ui/controls/icons';

@@ -4,7 +4,6 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import * as React from 'react';
 import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { ViewerState } from '../types';
 import { CustomStructureControls } from 'molstar/lib/mol-plugin-ui/controls';

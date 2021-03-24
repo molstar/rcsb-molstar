@@ -4,7 +4,6 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import * as React from 'react';
 import { StateTransform } from 'molstar/lib/mol-state';
 import { OpenFiles } from 'molstar/lib/mol-plugin-state/actions/file';
 import { DownloadStructure } from 'molstar/lib/mol-plugin-state/actions/structure';

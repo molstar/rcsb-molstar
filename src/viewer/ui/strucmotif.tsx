@@ -4,7 +4,6 @@
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
 
-import * as React from 'react';
 import { CollapsableControls, PurePluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { Button, IconButton, ToggleButton } from 'molstar/lib/mol-plugin-ui/controls/common';
 import {

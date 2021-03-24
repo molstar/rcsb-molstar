@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { CollapsableControls, CollapsableState, PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { Button } from 'molstar/lib/mol-plugin-ui/controls/common';
 import { GetAppSvg } from 'molstar/lib/mol-plugin-ui/controls/icons';
