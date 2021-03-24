@@ -6,7 +6,7 @@
 
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
-import Expression from 'molstar/lib/mol-script/language/expression';
+import { Expression } from 'molstar/lib/mol-script/language/expression';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
 import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rcsb/validation-report/behavior';

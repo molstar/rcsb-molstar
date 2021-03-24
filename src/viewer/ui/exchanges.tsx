@@ -4,8 +4,8 @@
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
 import * as React from 'react';
-import {Button} from 'molstar/lib/mol-plugin-ui/controls/common';
-import {MAX_EXCHANGES, Residue} from './strucmotif';
+import { Button } from 'molstar/lib/mol-plugin-ui/controls/common';
+import { MAX_EXCHANGES, Residue } from './strucmotif';
 
 export const DefaultExchanges = [
     ['ALA', 'Alanine'],

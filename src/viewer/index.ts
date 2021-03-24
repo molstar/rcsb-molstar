@@ -5,7 +5,6 @@
  */
 
 import { BehaviorSubject } from 'rxjs';
-import { DefaultPluginSpec } from 'molstar/lib/mol-plugin';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
@@ -29,16 +28,18 @@ import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { encodeStructureData, downloadAsZipFile } from './helpers/export';
-import {Structure} from 'molstar/lib/mol-model/structure/structure';
-import {Script} from 'molstar/lib/mol-script/script';
-import {MolScriptBuilder} from 'molstar/lib/mol-script/language/builder';
-import {SetUtils} from 'molstar/lib/mol-util/set';
-import {Loci} from 'molstar/lib/mol-model/loci';
-import {StructureSelection} from 'molstar/lib/mol-model/structure/query';
-import {StructureRef} from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
-import {StructureSelectionQuery} from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
-import {StructureRepresentationRegistry} from 'molstar/lib/mol-repr/structure/registry';
-import {Mp4Export} from 'molstar/lib/extensions/mp4-export';
+import { Structure } from 'molstar/lib/mol-model/structure/structure';
+import { Script } from 'molstar/lib/mol-script/script';
+import { MolScriptBuilder } from 'molstar/lib/mol-script/language/builder';
+import { SetUtils } from 'molstar/lib/mol-util/set';
+import { Loci } from 'molstar/lib/mol-model/loci';
+import { StructureSelection } from 'molstar/lib/mol-model/structure/query';
+import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
+import { StructureSelectionQuery } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
+import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
+import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
+import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
+import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -92,42 +93,44 @@ export type ViewerProps = typeof DefaultViewerProps
 
 
 export class Viewer {
-    private readonly plugin: PluginContext;
+    private readonly plugin: PluginUIContext;
     private readonly modelUrlProviders: ModelUrlProvider[];
 
     private get customState() {
         return this.plugin.customState as ViewerState;
     }
 
-    constructor(target: string | HTMLElement, props: Partial<ViewerProps> = {}) {
-        target = typeof target === 'string' ? document.getElementById(target)! : target;
+    constructor(elementOrId: string | HTMLElement, props: Partial<ViewerProps> = {}) {
+        const element = typeof elementOrId === 'string' ? document.getElementById(elementOrId)! : elementOrId;
+        if (!element) throw new Error(`Could not get element with id '${elementOrId}'`);
 
         const o = { ...DefaultViewerProps, ...props };
 
-        const spec: PluginSpec = {
-            actions: [...DefaultPluginSpec.actions],
+        const defaultSpec = DefaultPluginUISpec();
+        const spec: PluginUISpec = {
+            ...defaultSpec,
+            actions: defaultSpec.actions,
             behaviors: [
-                ...DefaultPluginSpec.behaviors,
+                ...defaultSpec.behaviors,
                 ...o.extensions.map(e => Extensions[e]),
             ],
-            animations: [...DefaultPluginSpec.animations || []],
-            customParamEditors: DefaultPluginSpec.customParamEditors,
+            animations: [...defaultSpec.animations || []],
             layout: {
                 initial: {
                     isExpanded: o.layoutIsExpanded,
                     showControls: o.layoutShowControls,
                     controlsDisplay: o.layoutControlsDisplay,
                 },
+            },
+            components: {
+                ...defaultSpec.components,
                 controls: {
-                    ...DefaultPluginSpec.layout && DefaultPluginSpec.layout.controls,
+                    ...defaultSpec.components?.controls,
                     top: o.layoutShowSequence ? undefined : 'none',
                     bottom: o.layoutShowLog ? undefined : 'none',
                     left: 'none',
                     right: ControlsWrapper,
-                }
-            },
-            components: {
-                ...DefaultPluginSpec.components,
+                },
                 remoteState: 'none',
             },
             config: [
@@ -140,7 +143,7 @@ export class Viewer {
             ]
         };
 
-        this.plugin = new PluginContext(spec);
+        this.plugin = new PluginUIContext(spec);
         this.modelUrlProviders = o.modelUrlProviders;
 
         (this.plugin.customState as ViewerState) = {
@@ -162,7 +165,7 @@ export class Viewer {
         };
 
         this.plugin.init();
-        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target);
+        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), element);
 
         // TODO Check why this.plugin.canvas3d can be null
         // this.plugin.canvas3d can be null. The value is not assigned until React Plugin component is mounted

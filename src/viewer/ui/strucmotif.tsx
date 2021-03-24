@@ -5,8 +5,8 @@
  */
 
 import * as React from 'react';
-import {CollapsableControls, PurePluginUIComponent} from 'molstar/lib/mol-plugin-ui/base';
-import {Button, IconButton, ToggleButton} from 'molstar/lib/mol-plugin-ui/controls/common';
+import { CollapsableControls, PurePluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
+import { Button, IconButton, ToggleButton } from 'molstar/lib/mol-plugin-ui/controls/common';
 import {
     ArrowDownwardSvg,
     ArrowUpwardSvg,
@@ -15,16 +15,16 @@ import {
     Icon,
     TuneSvg
 } from 'molstar/lib/mol-plugin-ui/controls/icons';
-import {ActionMenu} from 'molstar/lib/mol-plugin-ui/controls/action-menu';
-import {StructureSelectionHistoryEntry} from 'molstar/lib/mol-plugin-state/manager/structure/selection';
-import {StructureElement, StructureProperties} from 'molstar/lib/mol-model/structure/structure';
-import {ToggleSelectionModeButton} from 'molstar/lib/mol-plugin-ui/structure/selection';
-import {OrderedSet} from 'molstar/lib/mol-data/int';
-import {ExchangesControl} from './exchanges';
-import Vec3 from 'molstar/lib/mol-math/linear-algebra/3d/vec3';
-import Structure from 'molstar/lib/mol-model/structure/structure/structure';
-import Unit from 'molstar/lib/mol-model/structure/structure/unit';
-import {UnitIndex} from 'molstar/lib/mol-model/structure/structure/element/element';
+import { ActionMenu } from 'molstar/lib/mol-plugin-ui/controls/action-menu';
+import { StructureSelectionHistoryEntry } from 'molstar/lib/mol-plugin-state/manager/structure/selection';
+import { StructureElement, StructureProperties } from 'molstar/lib/mol-model/structure/structure';
+import { ToggleSelectionModeButton } from 'molstar/lib/mol-plugin-ui/structure/selection';
+import { OrderedSet } from 'molstar/lib/mol-data/int';
+import { ExchangesControl } from './exchanges';
+import { Vec3 } from 'molstar/lib/mol-math/linear-algebra/3d/vec3';
+import { Structure } from 'molstar/lib/mol-model/structure/structure/structure';
+import { Unit } from 'molstar/lib/mol-model/structure/structure/unit';
+import { UnitIndex } from 'molstar/lib/mol-model/structure/structure/element/element';
 
 const ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
 const RETURN_TYPE = '&return_type=assembly';
