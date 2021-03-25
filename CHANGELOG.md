@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.3.3] - 2021-03-24
+### Bug fixes
+- build
+
 ## [1.3.2] - 2021-03-24
 ### General
 - major version update of Mol*

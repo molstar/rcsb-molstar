@@ -10,7 +10,7 @@
         "strictNullChecks": true,
         "strictFunctionTypes": true,
         // "downlevelIteration": true,
-        "module": "esnext",
+        "module": "CommonJS",
         "esModuleInterop": true,
         "moduleResolution": "node",
         "importHelpers": true,
