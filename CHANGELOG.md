@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.3.5] - 2021-03-25
+### Bug fixes
+- make sure only structure objects are filtered in for export
+- do not create unit cell object when alignments are loaded
+
 ## [1.3.4] - 2021-03-25
 ### Bug fixes
 - structure export: getting children for a referenced node correctly
