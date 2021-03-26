@@ -62,8 +62,8 @@ function extractStructureDataFromState(plugin: PluginContext): { [k: string]: St
     for (let i = 0; i < cells.length; i++) {
         const c = cells[i];
         const nodeRef = getDecorator(plugin, c.transform.ref);
-        const children = plugin.state.data.select(StateSelection.Generators.byRef(nodeRef))
-            .map(child => child.obj!.data);
+        const children = plugin.state.data.tree.children.get(nodeRef).toArray()
+            .map(x => plugin.state.data.select(StateSelection.Generators.byRef(x!))[0].obj!.data as Structure);
         const sele = StructureSelection.Sequence(c.obj!.data, children);
         const structure = StructureSelection.unionStructure(sele);
         const name = `${i + 1}-${structure.model.entryId}`;

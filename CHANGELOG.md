@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.3.4] - 2021-03-25
+### Bug fixes
+- structure export: getting children for a referenced node correctly
+
 ## [1.3.3] - 2021-03-24
 ### Bug fixes
 - build
