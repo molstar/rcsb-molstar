@@ -215,16 +215,15 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         let structure: StructureObject | undefined = undefined;
         let structureProperties: StructureObject | undefined = undefined;
-
+        let unitcell: StateObjectSelector | undefined = undefined;
         // If flexible transformation is allowed, we may need to create a single structure component
         // from transformed substructures
         const allowsFlexTransform = p.kind === 'prop-set';
         if (!allowsFlexTransform) {
             structure = await builder.createStructure(modelProperties || model, structureParams);
             structureProperties = await builder.insertStructureProperties(structure);
+            unitcell = await builder.tryCreateUnitcell(modelProperties, undefined, { isHidden: true });
         }
-
-        const unitcell = await builder.tryCreateUnitcell(modelProperties, undefined, { isHidden: true });
 
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
