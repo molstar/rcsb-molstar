@@ -162,7 +162,7 @@ export class MembraneOrientationControls extends CollapsableControls<{}, Membran
     }
 }
 
-const EnableMembraneOrientation = StateAction.build({
+export const EnableMembraneOrientation = StateAction.build({
     from: PluginStateObject.Molecule.Structure,
 })(({ a, ref, state }, plugin: PluginContext) => Task.create('Enable Membrane Orientation', async ctx => {
     await MembraneOrientationPreset.apply(ref, Object.create(null), plugin);
