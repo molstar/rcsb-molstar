@@ -27,6 +27,8 @@ import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
+import { EnableMembraneOrientation } from '../ui/membrane';
+import { MembraneOrientationProvider } from 'molstar/lib/extensions/anvil/prop';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -121,7 +123,11 @@ type DensityProps = {
     kind: 'density'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps
+type MembraneProps = {
+    kind: 'membrane',
+} & BaseProps
+
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | MembraneProps
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -331,6 +337,11 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 ...ViewerState(plugin).collapsed.value,
                 volume: false
             });
+        }
+
+        if (p.kind === 'membrane' && structure?.obj) {
+            const params = MembraneOrientationProvider.defaultParams;
+            await plugin.runTask(plugin.state.data.applyAction(EnableMembraneOrientation, params, structure.ref));
         }
 
         return {
