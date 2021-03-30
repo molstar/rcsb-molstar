@@ -85,7 +85,7 @@ export class MembraneOrientationControls extends CollapsableControls<{}, Membran
 
     renderError() {
         return <div className='msp-row-text'>
-
+            // TODO report errors
         </div>;
     }
 
@@ -172,18 +172,18 @@ const _MembraneIcon = <svg width='24px' height='24px' viewBox='0 0 12 12'>
     <rect x="6.71" y="2.45" width="1.96" height="7.1" ry=".979" fill="none" strokeLinejoin="round"/>
     <rect x="3.33" y="2.45" width="1.96" height="7.1" ry=".979" fill="none" strokeLinejoin="round"/>
     <g>
-        <ellipse cx="1.77" cy="4.64" rx=".433" ry=".456"/>
-        <ellipse cx=".685" cy="4.64" rx=".433" ry=".456"/>
-        <ellipse cx=".685" cy="7.36" rx=".433" ry=".456"/>
-        <ellipse cx="1.77" cy="7.36" rx=".433" ry=".456"/>
-        <ellipse cx="9.19" cy="7.36" rx=".433" ry=".456"/>
-        <ellipse cx="11.3" cy="7.36" rx=".433" ry=".456"/>
-        <ellipse cx="10.3" cy="4.64" rx=".433" ry=".456"/>
-        <ellipse cx="9.19" cy="4.64" rx=".433" ry=".456"/>
-        <ellipse cx="2.86" cy="4.64" rx=".433" ry=".456"/>
-        <ellipse cx="2.86" cy="7.36" rx=".433" ry=".456"/>
-        <ellipse cx="10.3" cy="7.36" rx=".433" ry=".456"/>
-        <ellipse cx="11.3" cy="4.64" rx=".433" ry=".456"/>
+        <ellipse cx="1.77" cy="4.64" rx=".456" ry=".456"/>
+        <ellipse cx=".685" cy="4.64" rx=".456" ry=".456"/>
+        <ellipse cx=".685" cy="7.36" rx=".456" ry=".456"/>
+        <ellipse cx="1.77" cy="7.36" rx=".456" ry=".456"/>
+        <ellipse cx="9.19" cy="7.36" rx=".456" ry=".456"/>
+        <ellipse cx="11.3" cy="7.36" rx=".456" ry=".456"/>
+        <ellipse cx="10.3" cy="4.64" rx=".456" ry=".456"/>
+        <ellipse cx="9.19" cy="4.64" rx=".456" ry=".456"/>
+        <ellipse cx="2.86" cy="4.64" rx=".456" ry=".456"/>
+        <ellipse cx="2.86" cy="7.36" rx=".456" ry=".456"/>
+        <ellipse cx="10.3" cy="7.36" rx=".456" ry=".456"/>
+        <ellipse cx="11.3" cy="4.64" rx=".456" ry=".456"/>
     </g>
 </svg>;
 export function MembraneIconSvg() { return _MembraneIcon; }
