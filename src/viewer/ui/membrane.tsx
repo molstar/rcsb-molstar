@@ -126,12 +126,6 @@ export class MembraneOrientationControls extends CollapsableControls<{}, Membran
         return !this.hasMembraneOrientation;
     }
 
-    get noMembraneProtein() {
-        const structure = this.pivot.cell.obj?.data;
-        const data = structure && MembraneOrientationProvider.get(structure).value;
-        return !!data;
-    }
-
     renderParams() {
         return <>
             <ParameterControls params={this.params} values={this.values} onChangeValues={this.paramsOnChange} />
