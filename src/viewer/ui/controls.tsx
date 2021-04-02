@@ -36,7 +36,7 @@ export class StructureTools extends PluginUIComponent {
             {this.customState.showSuperpositionControls && <StructureSuperpositionControls initiallyCollapsed={collapsed.superposition} />}
             <StructureComponentControls initiallyCollapsed={collapsed.component} />
             <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />
-            <MembraneOrientationControls initiallyCollapsed={collapsed.membrane} />
+            {this.customState.showMembraneOrientationControls && <MembraneOrientationControls initiallyCollapsed={collapsed.membrane} />}
             <CustomStructureControls initiallyCollapsed={collapsed.custom} />
         </>;
     }

@@ -64,7 +64,7 @@ const DefaultViewerProps = {
     showSessionControls: false,
     showStructureSourceControls: true,
     showSuperpositionControls: true,
-    showMembraneOrientationControls: true,
+    showMembraneOrientationControls: false,
     modelUrlProviders: [
         (pdbId: string) => ({
             url: `//models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
