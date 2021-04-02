@@ -40,7 +40,6 @@ export type CollapsedState = {
     component: boolean
     volume: boolean
     custom: boolean
-    membrane: boolean
 }
 
 export interface ViewerState {
@@ -49,7 +48,6 @@ export interface ViewerState {
     showSessionControls: boolean
     showStructureSourceControls: boolean
     showSuperpositionControls: boolean
-    showMembraneOrientationControls: boolean
     modelLoader: ModelLoader
     collapsed: BehaviorSubject<CollapsedState>
 }

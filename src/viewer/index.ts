@@ -64,7 +64,6 @@ const DefaultViewerProps = {
     showSessionControls: false,
     showStructureSourceControls: true,
     showSuperpositionControls: true,
-    showMembraneOrientationControls: false,
     modelUrlProviders: [
         (pdbId: string) => ({
             url: `//models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
@@ -155,7 +154,6 @@ export class Viewer {
             showSessionControls: o.showSessionControls,
             showStructureSourceControls: o.showStructureSourceControls,
             showSuperpositionControls: o.showSuperpositionControls,
-            showMembraneOrientationControls: o.showMembraneOrientationControls,
             modelLoader: new ModelLoader(this.plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
@@ -164,8 +162,7 @@ export class Viewer {
                 superposition: true,
                 component: false,
                 volume: true,
-                custom: true,
-                membrane: true
+                custom: true
             })
         };
 
