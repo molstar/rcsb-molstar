@@ -76,24 +76,9 @@ export class MembraneOrientationControls extends CollapsableControls<{}, Membran
         return <ApplyActionControl state={pivot.cell.parent} action={EnableMembraneOrientation} initiallyCollapsed={true} nodeRef={pivot.cell.transform.ref} simpleApply={{ header: 'Enable', icon: CheckSvg }} />;
     }
 
-    renderNoMembraneProtein() {
-        // TODO allow to 'force' calculation?
-        return <div className='msp-row-text'>
-            <div>Not registered as Membrane Protein</div>
-        </div>;
-    }
-
-    renderError() {
-        return <div className='msp-row-text'>
-            // TODO report errors
-        </div>;
-    }
-
     get params() {
         const structure = this.pivot.cell.obj?.data;
-        const params = PD.clone(structure ? MembraneOrientationProvider.getParams(structure) : MembraneOrientationProvider.defaultParams);
-        // TODO more?
-        return params;
+        return PD.clone(structure ? MembraneOrientationProvider.getParams(structure) : MembraneOrientationProvider.defaultParams);
     }
 
     get values() {
@@ -125,7 +110,7 @@ export class MembraneOrientationControls extends CollapsableControls<{}, Membran
 
         for (const components of this.plugin.managers.structure.hierarchy.currentComponentGroups) {
             tryCreateMembraneOrientation(this.plugin, s.cell);
-            await this.plugin.managers.structure.component.updateRepresentationsTheme(components, { color: 'default' });
+            await this.plugin.managers.structure.component.updateRepresentationsTheme(components, {});
         }
     }
 
@@ -155,8 +140,6 @@ export class MembraneOrientationControls extends CollapsableControls<{}, Membran
 
     renderControls() {
         if (!this.pivot) return null;
-        if (this.noMembraneProtein) return this.renderNoMembraneProtein();
-        if (!this.noMembraneProtein && this.state.error) return this.renderError();
         if (this.enable) return this.renderEnable();
         return this.renderParams();
     }
