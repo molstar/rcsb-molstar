@@ -18,7 +18,14 @@ import { Structure, StructureSelection, QueryContext, StructureElement } from 'm
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 import { ViewerState } from '../types';
-import { StateSelection, StateObjectSelector, StateObject, StateTransformer, StateObjectRef } from 'molstar/lib/mol-state';
+import {
+    StateSelection,
+    StateObjectSelector,
+    StateObject,
+    StateTransformer,
+    StateObjectRef,
+    StateAction
+} from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
 import { CustomStructureProperties } from 'molstar/lib/mol-plugin-state/transforms/model';
@@ -27,6 +34,9 @@ import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
+import { MembraneOrientationProvider } from 'molstar/lib/extensions/anvil/prop';
+import { Task } from 'molstar/lib/mol-task';
+import { MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -121,7 +131,11 @@ type DensityProps = {
     kind: 'density'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps
+type MembraneProps = {
+    kind: 'membrane',
+} & BaseProps
+
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | MembraneProps
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -333,6 +347,11 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             });
         }
 
+        if (p.kind === 'membrane' && structure?.obj) {
+            const params = MembraneOrientationProvider.defaultParams;
+            await plugin.runTask(plugin.state.data.applyAction(EnableMembraneOrientation, params, structure.ref));
+        }
+
         return {
             model,
             modelProperties,
@@ -343,6 +362,12 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         };
     }
 });
+
+const EnableMembraneOrientation = StateAction.build({
+    from: PluginStateObject.Molecule.Structure,
+})(({ a, ref, state }, plugin: PluginContext) => Task.create('Enable Membrane Orientation', async ctx => {
+    await MembraneOrientationPreset.apply(ref, Object.create(null), plugin);
+}));
 
 export function createSelectionExpression(entryId: string, range?: Range): SelectionExpression[] {
     if (range) {

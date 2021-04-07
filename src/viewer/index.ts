@@ -40,6 +40,7 @@ import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
+import { ANVILMembraneOrientation } from 'molstar/lib/extensions/anvil/behavior';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -53,7 +54,8 @@ export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
-    'mp4-export': PluginSpec.Behavior(Mp4Export)
+    'mp4-export': PluginSpec.Behavior(Mp4Export),
+    'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation)
 };
 
 const DefaultViewerProps = {
@@ -160,7 +162,7 @@ export class Viewer {
                 superposition: true,
                 component: false,
                 volume: true,
-                custom: true,
+                custom: true
             })
         };
 
