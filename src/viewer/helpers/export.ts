@@ -1,5 +1,5 @@
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { StateSelection } from 'molstar/lib/mol-state';
+import { StateObjectRef, StateSelection } from 'molstar/lib/mol-state';
 import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
 import { StructureSelection, Structure } from 'molstar/lib/mol-model/structure';
 import { CifExportContext, encode_mmCIF_categories } from 'molstar/lib/mol-model/structure/export/mmcif';
@@ -61,12 +61,16 @@ function extractStructureDataFromState(plugin: PluginContext): { [k: string]: St
     const cells = plugin.state.data.select(StateSelection.Generators.rootsOfType(PluginStateObject.Molecule.Structure));
     for (let i = 0; i < cells.length; i++) {
         const c = cells[i];
-        const nodeRef = getDecorator(plugin, c.transform.ref);
-        const children = plugin.state.data.tree.children.get(nodeRef).toArray()
+        // get decorated root structure
+        const rootRef = getDecorator(plugin, c.transform.ref);
+        const rootCell = StateObjectRef.resolveAndCheck(plugin.state.data, rootRef);
+        // get all leaf children of root
+        const children = plugin.state.data.tree.children.get(rootRef).toArray()
             .map(x => plugin.state.data.select(StateSelection.Generators.byRef(x!))[0])
             .filter(c => c.obj?.type === PluginStateObject.Molecule.Structure.type)
             .map(x => x.obj!.data as Structure);
-        const sele = StructureSelection.Sequence(c.obj!.data, children);
+        // merge children
+        const sele = StructureSelection.Sequence(rootCell!.obj!.data, children);
         const structure = StructureSelection.unionStructure(sele);
         const name = `${i + 1}-${structure.model.entryId}`;
         content[name] = structure;
