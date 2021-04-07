@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.4.1] - 2021-04-06
+### Bug fixes
+- structure export: getting transformed data
+
 ## [1.4.0] - 2021-04-02
 ### Added
 - membrane orientation preset by ANVIL
