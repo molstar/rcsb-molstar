@@ -40,7 +40,7 @@ import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
-import { ANVILMembraneOrientation } from 'molstar/lib/extensions/anvil/behavior';
+import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -166,40 +166,29 @@ export class Viewer {
             })
         };
 
-        this.plugin.init();
-        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), element);
+        this.plugin.init()
+            .then(async () => {
+                // hide 'Membrane Orientation' preset from UI - has to happen 'before' react render, apparently
+                this.plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
+                ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), element);
 
-        // TODO Check why this.plugin.canvas3d can be null
-        // this.plugin.canvas3d can be null. The value is not assigned until React Plugin component is mounted
-        // Next wait Promise guarantees that its value is defined
-        const wait: Promise<void> = new Promise<void>((resolve, reject)=>{
-            const recursive: () => void = () => {
-                if(this.plugin.canvas3d != null){
-                    resolve();
-                }else{
-                    setTimeout(()=>{
-                        recursive();
-                    }, 100);
+                // TODO confirm if this.plugin.canvas3d is still null
+                const renderer = this.plugin.canvas3d!.props.renderer;
+                await PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
+                this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
+
+                if (o.showWelcomeToast) {
+                    await PluginCommands.Toast.Show(this.plugin, {
+                        title: 'Welcome',
+                        message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION} [${BUILD_DATE.toLocaleString()}]`,
+                        key: 'toast-welcome',
+                        timeoutMs: 5000
+                    });
                 }
-            };
-            recursive();
-        });
-        wait.then(result=>{
-            const renderer = this.plugin.canvas3d!.props.renderer;
-            PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
-            this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
-        // this.plugin.builders.structure.representation.registerPreset(RcsbSuperpositionRepresentationPreset);
-        });
-        if (o.showWelcomeToast) {
-            PluginCommands.Toast.Show(this.plugin, {
-                title: 'Welcome',
-                message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION} [${BUILD_DATE.toLocaleString()}]`,
-                key: 'toast-welcome',
-                timeoutMs: 5000
+
+                this.prevExpanded = this.plugin.layout.state.isExpanded;
+                this.plugin.layout.events.updated.subscribe(() => this.toggleControls());
             });
-        }
-        this.prevExpanded = this.plugin.layout.state.isExpanded;
-        this.plugin.layout.events.updated.subscribe(() => this.toggleControls());
     }
 
     private prevExpanded: boolean;
@@ -207,8 +196,8 @@ export class Viewer {
     private toggleControls(): void {
 
         const currExpanded = this.plugin.layout.state.isExpanded;
-        const expanedChanged = (this.prevExpanded !== currExpanded);
-        if (!expanedChanged) return;
+        const expandedChanged = (this.prevExpanded !== currExpanded);
+        if (!expandedChanged) return;
 
         if (currExpanded && !this.plugin.layout.state.showControls) {
             this.plugin.layout.setProps({showControls: true});
