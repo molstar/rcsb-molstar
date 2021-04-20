@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.4.2] - 2021-04-20
+### Bug fixes
+- fix measurement labels
+
 ## [1.4.1] - 2021-04-06
 ### Bug fixes
 - structure export: getting transformed data
