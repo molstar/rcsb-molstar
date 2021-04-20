@@ -4,7 +4,7 @@ import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
 import { StructureSelection, Structure } from 'molstar/lib/mol-model/structure';
 import { CifExportContext, encode_mmCIF_categories } from 'molstar/lib/mol-model/structure/export/mmcif';
 import { utf8ByteCount, utf8Write } from 'molstar/lib/mol-io/common/utf8';
-import { zip } from 'molstar/lib/mol-util/zip/zip';
+import { Zip } from 'molstar/lib/mol-util/zip/zip';
 import { getFormattedTime } from 'molstar/lib/mol-util/date';
 import { download } from 'molstar/lib/mol-util/download';
 import { CustomPropertyDescriptor } from 'molstar/lib/mol-model/custom-property';
@@ -91,8 +91,8 @@ export function encodeStructureData(plugin: PluginContext): { [k: string]: Uint8
     return content;
 }
 
-export function downloadAsZipFile(content: { [k: string]: Uint8Array }) {
+export async function downloadAsZipFile(plugin: PluginContext, content: { [k: string]: Uint8Array }) {
     const filename = `mol-star_download_${getFormattedTime()}.zip`;
-    const buf = zip(content);
-    download(new Blob([buf]), filename);
+    const buf = await plugin.runTask(Zip(content));
+    download(new Blob([buf], { type : 'application/zip' }), filename);
 }

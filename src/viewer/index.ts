@@ -266,7 +266,7 @@ export class Viewer {
 
     exportLoadedStructures() {
         const content = encodeStructureData(this.plugin);
-        downloadAsZipFile(content);
+        return downloadAsZipFile(this.plugin, content);
     }
 
     pluginCall(f: (plugin: PluginContext) => void){
