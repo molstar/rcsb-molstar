@@ -5,6 +5,7 @@
 ## [1.4.2] - 2021-04-20
 ### Bug fixes
 - fix measurement labels
+- hide 'Membrane Orientation' preset from UI
 
 ## [1.4.1] - 2021-04-06
 ### Bug fixes

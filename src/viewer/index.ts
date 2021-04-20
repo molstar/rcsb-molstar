@@ -40,7 +40,7 @@ import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
-import { ANVILMembraneOrientation } from 'molstar/lib/extensions/anvil/behavior';
+import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -166,7 +166,10 @@ export class Viewer {
             })
         };
 
-        this.plugin.init();
+        this.plugin.init().then(() => {
+            // hide 'Membrane Orientation' preset from UI
+            this.plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
+        });
         ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), element);
 
         // TODO Check why this.plugin.canvas3d can be null
