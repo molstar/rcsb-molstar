@@ -135,7 +135,12 @@ type MembraneProps = {
     kind: 'membrane',
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | MembraneProps
+type FeatureDensityProps = {
+    kind: 'feature-density',
+    target: Target
+} & BaseProps
+
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | MembraneProps | FeatureDensityProps
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -303,7 +308,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
 
-        if (p.kind === 'feature' && structure?.obj) {
+        if ((p.kind === 'feature' || p.kind === 'feature-density') && structure?.obj) {
             let loci = targetToLoci(p.target, structure.obj.data);
             // if target is only defined by chain: then don't force first residue
             const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
@@ -317,16 +322,17 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 loci = targetToLoci(p.target, structure.obj.data);
             }
             const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci);
+
+            if (p.kind === 'feature-density') {
+                await initVolumeStreaming(plugin, structure);
+            }
+
             plugin.managers.structure.focus.setFromLoci(target);
             plugin.managers.camera.focusLoci(target);
         }
 
-        if (p.kind === 'density' && structure?.cell?.parent) {
-            const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
-            if (!volumeRoot) {
-                const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin));
-                await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref));
-            }
+        if (p.kind === 'density' && structure) {
+            await initVolumeStreaming(plugin, structure);
 
             await PluginCommands.Toast.Show(plugin, {
                 title: 'Electron Density',
@@ -339,11 +345,6 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 if (e.current && e.current.loci && e.current.loci.kind !== 'empty-loci') {
                     await PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
                 }
-            });
-
-            ViewerState(plugin).collapsed.next({
-                ...ViewerState(plugin).collapsed.value,
-                volume: false
             });
         }
 
@@ -362,6 +363,21 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         };
     }
 });
+
+async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject) {
+    if (!structure?.cell?.parent) return;
+
+    const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
+    if (!volumeRoot) {
+        const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin));
+        await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref));
+    }
+
+    ViewerState(plugin).collapsed.next({
+        ...ViewerState(plugin).collapsed.value,
+        volume: false
+    });
+}
 
 const EnableMembraneOrientation = StateAction.build({
     from: PluginStateObject.Molecule.Structure,
