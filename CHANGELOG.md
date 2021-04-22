@@ -2,6 +2,13 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.5.0] - 2021-04-22
+### Added
+- feature density preset for ligand validation
+
+### Bug fixes
+- hide 'Membrane Orientation' representation from UI
+
 ## [1.4.2] - 2021-04-20
 ### Bug fixes
 - fix measurement labels
