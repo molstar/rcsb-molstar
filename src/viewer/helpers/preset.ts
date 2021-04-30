@@ -23,8 +23,7 @@ import {
     StateObjectSelector,
     StateObject,
     StateTransformer,
-    StateObjectRef,
-    StateAction
+    StateObjectRef
 } from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
@@ -34,8 +33,6 @@ import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
-import { MembraneOrientationProvider } from 'molstar/lib/extensions/anvil/prop';
-import { Task } from 'molstar/lib/mol-task';
 import { MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 
 type Target = {
@@ -304,6 +301,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 ...ViewerState(plugin).collapsed.value,
                 custom: false
             });
+        } else if (p.kind === 'membrane') {
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
@@ -348,11 +347,6 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             });
         }
 
-        if (p.kind === 'membrane' && structure?.obj) {
-            const params = MembraneOrientationProvider.defaultParams;
-            await plugin.runTask(plugin.state.data.applyAction(EnableMembraneOrientation, params, structure.ref));
-        }
-
         return {
             model,
             modelProperties,
@@ -378,12 +372,6 @@ async function initVolumeStreaming(plugin: PluginContext, structure: StructureOb
         volume: false
     });
 }
-
-const EnableMembraneOrientation = StateAction.build({
-    from: PluginStateObject.Molecule.Structure,
-})(({ a, ref, state }, plugin: PluginContext) => Task.create('Enable Membrane Orientation', async ctx => {
-    await MembraneOrientationPreset.apply(ref, Object.create(null), plugin);
-}));
 
 export function createSelectionExpression(entryId: string, range?: Range): SelectionExpression[] {
     if (range) {

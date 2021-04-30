@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.5.1] - 2021-04-30
+### Bug fixes
+- 'Membrane Orientation' preset now honors assembly-ids
+
 ## [1.5.0] - 2021-04-22
 ### Added
 - feature density preset for ligand validation
