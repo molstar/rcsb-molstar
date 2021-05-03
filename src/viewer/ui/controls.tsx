@@ -4,7 +4,6 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import * as React from 'react';
 import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { ViewerState } from '../types';
 import { CustomStructureControls } from 'molstar/lib/mol-plugin-ui/controls';
@@ -16,7 +15,7 @@ import { StructureSuperpositionControls } from 'molstar/lib/mol-plugin-ui/struct
 import { StructureComponentControls } from 'molstar/lib/mol-plugin-ui/structure/components';
 import { VolumeStreamingControls } from 'molstar/lib/mol-plugin-ui/structure/volume';
 import { SessionControls } from './session';
-import {StrucmotifSubmitControls} from './strucmotif';
+import { StrucmotifSubmitControls } from './strucmotif';
 
 export class StructureTools extends PluginUIComponent {
     get customState() {

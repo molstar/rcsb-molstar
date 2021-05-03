@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { CollapsableControls, CollapsableState, PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { Button } from 'molstar/lib/mol-plugin-ui/controls/common';
 import { GetAppSvg } from 'molstar/lib/mol-plugin-ui/controls/icons';
@@ -28,9 +27,9 @@ export class ExportControls extends CollapsableControls {
 }
 
 class CoordinatesExportControls extends PluginUIComponent {
-    download = () => {
+    download = async () => {
         const content = encodeStructureData(this.plugin);
-        downloadAsZipFile(content);
+        await downloadAsZipFile(this.plugin, content);
     }
 
     render() {

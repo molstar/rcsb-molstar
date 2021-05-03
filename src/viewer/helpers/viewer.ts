@@ -17,6 +17,17 @@ import {StructureSelectionQuery} from 'molstar/lib/mol-plugin-state/helpers/stru
 
 export namespace ViewerMethods {
 
+    export function selectMultipleSegments(plugin: PluginContext, selection: Array<{modelId: string; asymId: string; begin: number; end: number;}>, mode: 'select'|'hover', modifier: 'add'|'set' ): void {
+        if(mode === 'select'){
+            selection.forEach(sel=>{
+                clearSelection(plugin, mode, {modelId: sel.modelId, labelAsymId: sel.asymId});
+            });
+        }
+        selection.forEach(sel=>{
+            selectSegment(plugin, sel.modelId, sel.asymId, sel.begin, sel.end, mode, modifier);
+        });
+    }
+
     export function selectSegment(plugin: PluginContext, modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void {
         const loci: Loci | undefined = getLociFromRange(plugin, modelId, asymId, begin, end);
         if(loci == null)
@@ -88,6 +99,31 @@ export namespace ViewerMethods {
                     'chain-test': MolScriptBuilder.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')]),
                     'residue-test': MolScriptBuilder.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seq_id))), MolScriptBuilder.ammp('label_seq_id')])
                 })
+            ),
+            options: { checkExisting: false, label: componentLabel },
+            representation: representationType,
+        }, [structureRef]);
+    }
+
+    export async function createComponentFromMultipleRange(plugin: PluginContext, componentLabel: string, structureRef: StructureRef, residues: Array<{asymId: string; begin: number; end: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
+        const seqIdMap: Map<string, Array<number>> = new Map<string, Array<number>>();
+        residues.forEach(res=>{
+            if(!seqIdMap.has(res.asymId)){
+                seqIdMap.set(res.asymId, new Array<number>());
+            }
+            for(let n = res.begin; n <= res.end; n++){
+                seqIdMap.get(res.asymId)!.push(n);
+            }
+        });
+        await plugin.managers.structure.component.add({
+            selection: StructureSelectionQuery(
+                'innerQuery_' + Math.random().toString(36).substr(2),
+                MolScriptBuilder.struct.combinator.merge(
+                    Array.from(seqIdMap).map(([asymId, seqIds])=>MolScriptBuilder.struct.generator.atomGroups({
+                        'chain-test': MolScriptBuilder.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')]),
+                        'residue-test': MolScriptBuilder.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seqIds))), MolScriptBuilder.ammp('label_seq_id')])
+                    }))
+                )
             ),
             options: { checkExisting: false, label: componentLabel },
             representation: representationType,

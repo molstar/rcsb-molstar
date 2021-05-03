@@ -6,7 +6,7 @@
 
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
-import Expression from 'molstar/lib/mol-script/language/expression';
+import { Expression } from 'molstar/lib/mol-script/language/expression';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
 import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
@@ -23,7 +23,13 @@ import {
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 import { ViewerState } from '../types';
-import { StateSelection, StateObjectSelector, StateObject, StateTransformer, StateObjectRef } from 'molstar/lib/mol-state';
+import {
+    StateSelection,
+    StateObjectSelector,
+    StateObject,
+    StateTransformer,
+    StateObjectRef
+} from 'molstar/lib/mol-state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
 import { CustomStructureProperties } from 'molstar/lib/mol-plugin-state/transforms/model';
@@ -32,6 +38,7 @@ import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
+import { MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -130,7 +137,16 @@ type DensityProps = {
     kind: 'density'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | EmptyProps;
+type MembraneProps = {
+    kind: 'membrane',
+} & BaseProps
+
+type FeatureDensityProps = {
+    kind: 'feature-density',
+    target: Target
+} & BaseProps
+
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | MembraneProps | FeatureDensityProps | EmptyProps;
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -224,16 +240,15 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         let structure: StructureObject | undefined = undefined;
         let structureProperties: StructureObject | undefined = undefined;
-
+        let unitcell: StateObjectSelector | undefined = undefined;
         // If flexible transformation is allowed, we may need to create a single structure component
         // from transformed substructures
         const allowsFlexTransform = p.kind === 'prop-set';
         if (!allowsFlexTransform) {
             structure = await builder.createStructure(modelProperties || model, structureParams);
             structureProperties = await builder.insertStructureProperties(structure);
+            unitcell = await builder.tryCreateUnitcell(modelProperties, undefined, { isHidden: true });
         }
-
-        const unitcell = await builder.tryCreateUnitcell(modelProperties, undefined, { isHidden: true });
 
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
@@ -297,25 +312,37 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             });
         } else if (p.kind === 'empty') {
             console.warn('Using empty representation');
+        } else if (p.kind === 'membrane') {
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
 
-        if (p.kind === 'feature' && structure?.obj) {
-            const loci = targetToLoci(p.target, structure.obj.data);
+        if ((p.kind === 'feature' || p.kind === 'feature-density') && structure?.obj) {
+            let loci = targetToLoci(p.target, structure.obj.data);
             // if target is only defined by chain: then don't force first residue
             const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
+            // HELP-16678: check for rare case where ligand is not present in requested assembly
+            if (loci.elements.length === 0 && !!p.assemblyId) {
+                // switch to Model (a.k.a. show coordinate independent of assembly )
+                const { selection } = plugin.managers.structure.hierarchy;
+                const s = selection.structures[0];
+                await plugin.managers.structure.hierarchy.updateStructure(s, { ...params, preset: { ...params.preset, assemblyId: void 0 } });
+                // update loci
+                loci = targetToLoci(p.target, structure.obj.data);
+            }
             const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci);
+
+            if (p.kind === 'feature-density') {
+                await initVolumeStreaming(plugin, structure);
+            }
+
             plugin.managers.structure.focus.setFromLoci(target);
             plugin.managers.camera.focusLoci(target);
         }
 
-        if (p.kind === 'density' && structure?.cell?.parent) {
-            const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
-            if (!volumeRoot) {
-                const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin));
-                await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref));
-            }
+        if (p.kind === 'density' && structure) {
+            await initVolumeStreaming(plugin, structure);
 
             await PluginCommands.Toast.Show(plugin, {
                 title: 'Electron Density',
@@ -329,11 +356,6 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     await PluginCommands.Toast.Hide(plugin, { key: 'toast-density' });
                 }
             });
-
-            ViewerState(plugin).collapsed.next({
-                ...ViewerState(plugin).collapsed.value,
-                volume: false
-            });
         }
 
         return {
@@ -346,6 +368,21 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         };
     }
 });
+
+async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject) {
+    if (!structure?.cell?.parent) return;
+
+    const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
+    if (!volumeRoot) {
+        const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin));
+        await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref));
+    }
+
+    ViewerState(plugin).collapsed.next({
+        ...ViewerState(plugin).collapsed.value,
+        volume: false
+    });
+}
 
 export function createSelectionExpression(entryId: string, range?: Range): SelectionExpression[] {
     if (range) {

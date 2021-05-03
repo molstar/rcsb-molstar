@@ -1,10 +1,10 @@
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { StateSelection } from 'molstar/lib/mol-state';
+import { StateObjectRef, StateSelection } from 'molstar/lib/mol-state';
 import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
 import { StructureSelection, Structure } from 'molstar/lib/mol-model/structure';
 import { CifExportContext, encode_mmCIF_categories } from 'molstar/lib/mol-model/structure/export/mmcif';
 import { utf8ByteCount, utf8Write } from 'molstar/lib/mol-io/common/utf8';
-import { zip } from 'molstar/lib/mol-util/zip/zip';
+import { Zip } from 'molstar/lib/mol-util/zip/zip';
 import { getFormattedTime } from 'molstar/lib/mol-util/date';
 import { download } from 'molstar/lib/mol-util/download';
 import { CustomPropertyDescriptor } from 'molstar/lib/mol-model/custom-property';
@@ -61,10 +61,16 @@ function extractStructureDataFromState(plugin: PluginContext): { [k: string]: St
     const cells = plugin.state.data.select(StateSelection.Generators.rootsOfType(PluginStateObject.Molecule.Structure));
     for (let i = 0; i < cells.length; i++) {
         const c = cells[i];
-        const nodeRef = getDecorator(plugin, c.transform.ref);
-        const children = plugin.state.data.select(StateSelection.Generators.byRef(nodeRef))
-            .map(child => child.obj!.data);
-        const sele = StructureSelection.Sequence(c.obj!.data, children);
+        // get decorated root structure
+        const rootRef = getDecorator(plugin, c.transform.ref);
+        const rootCell = StateObjectRef.resolveAndCheck(plugin.state.data, rootRef);
+        // get all leaf children of root
+        const children = plugin.state.data.tree.children.get(rootRef).toArray()
+            .map(x => plugin.state.data.select(StateSelection.Generators.byRef(x!))[0])
+            .filter(c => c.obj?.type === PluginStateObject.Molecule.Structure.type)
+            .map(x => x.obj!.data as Structure);
+        // merge children
+        const sele = StructureSelection.Sequence(rootCell!.obj!.data, children);
         const structure = StructureSelection.unionStructure(sele);
         const name = `${i + 1}-${structure.model.entryId}`;
         content[name] = structure;
@@ -85,8 +91,8 @@ export function encodeStructureData(plugin: PluginContext): { [k: string]: Uint8
     return content;
 }
 
-export function downloadAsZipFile(content: { [k: string]: Uint8Array }) {
+export async function downloadAsZipFile(plugin: PluginContext, content: { [k: string]: Uint8Array }) {
     const filename = `mol-star_download_${getFormattedTime()}.zip`;
-    const buf = zip(content);
-    download(new Blob([buf]), filename);
+    const buf = await plugin.runTask(Zip(content));
+    download(new Blob([buf], { type : 'application/zip' }), filename);
 }

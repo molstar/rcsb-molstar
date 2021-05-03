@@ -6,7 +6,6 @@
  */
 
 import { BehaviorSubject } from 'rxjs';
-import { DefaultPluginSpec } from 'molstar/lib/mol-plugin';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
@@ -30,9 +29,14 @@ import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { encodeStructureData, downloadAsZipFile } from './helpers/export';
-import {StructureRef} from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
-import {StructureRepresentationRegistry} from 'molstar/lib/mol-repr/structure/registry';
 import {ViewerMethods} from './helpers/viewer';
+import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
+import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
+import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
+import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
+import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
+import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
+import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -45,7 +49,9 @@ export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 
 const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
-    'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport)
+    'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
+    'mp4-export': PluginSpec.Behavior(Mp4Export),
+    'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation)
 };
 
 const DefaultViewerProps = {
@@ -85,42 +91,44 @@ export type ViewerProps = typeof DefaultViewerProps
 
 
 export class Viewer {
-    private readonly plugin: PluginContext;
+    private readonly plugin: PluginUIContext;
     private readonly modelUrlProviders: ModelUrlProvider[];
 
     private get customState() {
         return this.plugin.customState as ViewerState;
     }
 
-    constructor(target: string | HTMLElement, props: Partial<ViewerProps> = {}) {
-        target = typeof target === 'string' ? document.getElementById(target)! : target;
+    constructor(elementOrId: string | HTMLElement, props: Partial<ViewerProps> = {}) {
+        const element = typeof elementOrId === 'string' ? document.getElementById(elementOrId)! : elementOrId;
+        if (!element) throw new Error(`Could not get element with id '${elementOrId}'`);
 
         const o = { ...DefaultViewerProps, ...props };
 
-        const spec: PluginSpec = {
-            actions: [...DefaultPluginSpec.actions],
+        const defaultSpec = DefaultPluginUISpec();
+        const spec: PluginUISpec = {
+            ...defaultSpec,
+            actions: defaultSpec.actions,
             behaviors: [
-                ...DefaultPluginSpec.behaviors,
+                ...defaultSpec.behaviors,
                 ...o.extensions.map(e => Extensions[e]),
             ],
-            animations: [...DefaultPluginSpec.animations || []],
-            customParamEditors: DefaultPluginSpec.customParamEditors,
+            animations: [...defaultSpec.animations || []],
             layout: {
                 initial: {
                     isExpanded: o.layoutIsExpanded,
                     showControls: o.layoutShowControls,
                     controlsDisplay: o.layoutControlsDisplay,
                 },
+            },
+            components: {
+                ...defaultSpec.components,
                 controls: {
-                    ...DefaultPluginSpec.layout && DefaultPluginSpec.layout.controls,
+                    ...defaultSpec.components?.controls,
                     top: o.layoutShowSequence ? undefined : 'none',
                     bottom: o.layoutShowLog ? undefined : 'none',
                     left: 'none',
                     right: ControlsWrapper,
-                }
-            },
-            components: {
-                ...DefaultPluginSpec.components,
+                },
                 remoteState: 'none',
             },
             config: [
@@ -133,7 +141,7 @@ export class Viewer {
             ]
         };
 
-        this.plugin = new PluginContext(spec);
+        this.plugin = new PluginUIContext(spec);
         this.modelUrlProviders = o.modelUrlProviders;
 
         (this.plugin.customState as ViewerState) = {
@@ -150,12 +158,16 @@ export class Viewer {
                 superposition: true,
                 component: false,
                 volume: true,
-                custom: true,
+                custom: true
             })
         };
 
-        this.plugin.init();
-        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), target);
+        this.plugin.init().then(() => {
+            // hide 'Membrane Orientation' preset from UI
+            this.plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
+            this.plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
+        });
+        ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), element);
 
         // TODO Check why this.plugin.canvas3d can be null
         // this.plugin.canvas3d can be null. The value is not assigned until React Plugin component is mounted
@@ -254,7 +266,7 @@ export class Viewer {
 
     exportLoadedStructures() {
         const content = encodeStructureData(this.plugin);
-        downloadAsZipFile(content);
+        return downloadAsZipFile(this.plugin, content);
     }
 
     pluginCall(f: (plugin: PluginContext) => void){
@@ -278,15 +290,18 @@ export class Viewer {
     }
 
     public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
+    public select(selection: Array<{modelId: string; asymId: string; begin: number; end: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(...args: any[]){
-        if(args.length === 3){
+        if(args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; position: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; position: number;}>)[0].position === 'number'){
             if(args[2] === 'set')
                 this.clearSelection('select');
             (args[0] as Array<{modelId: string; asymId: string; position: number;}>).forEach(r=>{
                 ViewerMethods.selectSegment(this.plugin, r.modelId, r.asymId, r.position, r.position, args[1], 'add');
             });
+        }else if(args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>)[0].begin === 'number'){
+            ViewerMethods.selectMultipleSegments(this.plugin, args[0], args[1], args[2]);
         }else if(args.length === 5){
             ViewerMethods.selectSegment(this.plugin, args[0], args[1], args[2], args[2], args[3], args[4]);
         }else if(args.length === 6){
@@ -299,7 +314,8 @@ export class Viewer {
     }
 
     public async createComponent(componentLabel: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string, position: number}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; position: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; begin: number; end: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
     public async createComponent(componentLabel: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
     public async createComponent(...args: any[]): Promise<void>{
         const structureRef: StructureRef | undefined = ViewerMethods.getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, args[1]);
@@ -307,9 +323,11 @@ export class Viewer {
             throw 'createComponent error: model not found';
         if (args.length === 4 && typeof args[2] === 'string') {
             await ViewerMethods.createComponentFromChain(this.plugin, args[0], structureRef, args[2], args[3]);
-        } else if (args.length === 4 && args[2] instanceof Array) {
+        } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].position === 'number') {
             await ViewerMethods.createComponentFromSet(this.plugin, args[0], structureRef, args[2], args[3]);
-        } else if (args.length === 6) {
+        } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].begin === 'number') {
+            await ViewerMethods.createComponentFromMultipleRange(this.plugin, args[0], structureRef, args[2], args[3]);
+        }else if (args.length === 6) {
             await ViewerMethods.createComponentFromRange(this.plugin, args[0], structureRef, args[2], args[3], args[4], args[5]);
         }
     }
