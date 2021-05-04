@@ -18,13 +18,13 @@ import {StructureSelectionQuery} from 'molstar/lib/mol-plugin-state/helpers/stru
 export namespace ViewerMethods {
 
     export function selectMultipleSegments(plugin: PluginContext, selection: Array<{modelId: string; asymId: string; begin: number; end: number;}>, mode: 'select'|'hover', modifier: 'add'|'set' ): void {
-        if(mode === 'select'){
+        if(modifier === 'set'){
             selection.forEach(sel=>{
                 clearSelection(plugin, mode, {modelId: sel.modelId, labelAsymId: sel.asymId});
             });
         }
         selection.forEach(sel=>{
-            selectSegment(plugin, sel.modelId, sel.asymId, sel.begin, sel.end, mode, modifier);
+            selectSegment(plugin, sel.modelId, sel.asymId, sel.begin, sel.end, mode, 'add');
         });
     }
 
