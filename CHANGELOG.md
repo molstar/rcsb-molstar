@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.6.0] - 2021-05-03
+### Viewer class new methods
+- Added new methods for selection, creating components and focus
+
 ## [1.5.1] - 2021-04-30
 ### Bug fixes
 - 'Membrane Orientation' preset now honors assembly-ids
