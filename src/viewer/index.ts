@@ -29,7 +29,7 @@ import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { encodeStructureData, downloadAsZipFile } from './helpers/export';
-import {ViewerMethods} from './helpers/viewer';
+import { ViewerMethods } from './helpers/viewer';
 import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
@@ -166,6 +166,8 @@ export class Viewer {
             .then(async () => {
                 // hide 'Membrane Orientation' preset from UI - has to happen 'before' react render, apparently
                 this.plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
+                this.plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
+
                 ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), element);
 
                 // TODO confirm if this.plugin.canvas3d is still null

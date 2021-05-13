@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.6.2] - 2021-05-12
+### Bug fixes
+- Clean up viewer init routine
+
 ## [1.6.1] - 2021-05-04
 ### Bug fixes
 - Multiple region selection (only last one was selected) bug fixed
