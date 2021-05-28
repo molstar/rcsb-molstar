@@ -149,7 +149,6 @@ type FeatureDensityProps = {
 type MotifProps = {
     kind: 'motif',
     targets: Target[],
-    matrix?: Mat4,
     color?: number
 } & BaseProps
 
@@ -321,6 +320,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             console.warn('Using empty representation');
         } else if (p.kind === 'membrane') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
+        } else if (p.kind === 'motif') {
+            // TODO impl
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
