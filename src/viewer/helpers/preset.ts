@@ -146,7 +146,14 @@ type FeatureDensityProps = {
     target: Target
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | MembraneProps | FeatureDensityProps | EmptyProps;
+type MotifProps = {
+    kind: 'motif',
+    targets: Target[],
+    matrix?: Mat4,
+    color?: number
+} & BaseProps
+
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | MembraneProps | FeatureDensityProps | MotifProps | EmptyProps;
 
 const RcsbParams = (a: PluginStateObject.Molecule.Trajectory | undefined, plugin: PluginContext) => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
