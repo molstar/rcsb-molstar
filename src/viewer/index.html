@@ -85,6 +85,9 @@
             Superposed
             <button style="padding: 3px;" onclick="superposed()">3PQR | 1U19</button>
 
+
+            Motifs
+            <button style="padding: 3px;" onclick="motifs()">4CHA | 6YIW</button>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
             Ligand Focus on wrong assembly
@@ -343,6 +346,28 @@
                             -0.7289399153866256, -0.08619120567473626, -0.6791305379047228, 0,
                             -7.602670654900173, -30.317901981509067, 24.605855585357773, 1
                         ])
+                    })
+                    .then(function() {
+                        viewer.resetCamera(0)
+                    });
+            }
+
+            function motifs() {
+                viewer.clear()
+                    .then(function() {
+                        return viewer.loadPdbId('4cha', { kind: 'motif', assemblyId: '1', targets: [
+                                { label_asym_id: 'B', label_seq_id: 42 }, { label_asym_id: 'B', label_seq_id: 87 }, { label_asym_id: 'C', label_seq_id: 47 }
+                            ] })
+                    })
+                    .then(function() {
+                        return viewer.loadPdbId('1u19', { kind: 'motif', assemblyId: '1', targets: [
+                                { label_asym_id: 'A', label_seq_id: 40 }, { label_asym_id: 'A', label_seq_id: 84 }, { label_asym_id: 'A', label_seq_id: 177 }
+                            ] }, [
+                                0.1651637134205112, 0.7020365618749254, 0.6927233311791812, 0,
+                                0.39076998819946046, 0.5983062863806071, -0.6995201240851049, 0,
+                                -0.9055494266420474, 0.3862308292566522, -0.17551633097799743, 0,
+                                2.4392572425563213, 13.865339409688449, 28.536458135725827, 1
+                            ])
                     })
                     .then(function() {
                         viewer.resetCamera(0)
