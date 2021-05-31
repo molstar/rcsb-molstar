@@ -356,19 +356,34 @@
             function motifs() {
                 viewer.clear()
                     .then(function() {
-                        return viewer.loadPdbId('4cha', { kind: 'motif', assemblyId: '1', targets: [
-                                { label_asym_id: 'B', label_seq_id: 42 }, { label_asym_id: 'B', label_seq_id: 87 }, { label_asym_id: 'C', label_seq_id: 47 }
-                            ] })
-                    })
-                    .then(function() {
-                        return viewer.loadPdbId('6yiw', { kind: 'motif', assemblyId: '1', targets: [
-                                { label_asym_id: 'A', label_seq_id: 40 }, { label_asym_id: 'A', label_seq_id: 84 }, { label_asym_id: 'A', label_seq_id: 177 }
-                            ] }, [
+                        return viewer.loadPdbIds([{
+                            pdbId: '4cha', props: {
+                                label: '4CHA',
+                                kind: 'motif',
+                                assemblyId: '1',
+                                targets: [
+                                    { label_asym_id: 'B', label_seq_id: 42 },
+                                    { label_asym_id: 'B', label_seq_id: 87 },
+                                    { label_asym_id: 'C', label_seq_id: 47 }
+                                ]
+                            }
+                        }, {
+                            pdbId: '6yiw', props: {
+                                label: '6YIW: 0.26 RMSD',
+                                kind: 'motif',
+                                assemblyId: '1',
+                                targets: [
+                                    { label_asym_id: 'A', label_seq_id: 40 },
+                                    { label_asym_id: 'A', label_seq_id: 84 },
+                                    { label_asym_id: 'A', label_seq_id: 177 }
+                                ]
+                            }, matrix: [
                                 0.1651637134205112, 0.7020365618749254, 0.6927233311791812, 0,
                                 0.39076998819946046, 0.5983062863806071, -0.6995201240851049, 0,
                                 -0.9055494266420474, 0.3862308292566522, -0.17551633097799743, 0,
                                 2.4392572425563213, 13.865339409688449, 28.536458135725827, 1
-                            ])
+                            ]
+                        }]);
                     })
                     .then(function() {
                         viewer.resetCamera(0)
