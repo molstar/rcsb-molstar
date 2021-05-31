@@ -47,9 +47,9 @@ type Target = {
     readonly label_asym_id?: string
 }
 
-function targetToExpression(target: Target): Expression {
+function targetToTest(target: Target) {
     const residueTests: Expression[] = [];
-    const tests = Object.create(null);
+    const tests: { 'residue-test': Expression, 'chain-test': Expression } = Object.create(null);
 
     if (target.auth_seq_id) {
         residueTests.push(MS.core.rel.eq([target.auth_seq_id, MS.ammp('auth_seq_id')]));
@@ -68,7 +68,11 @@ function targetToExpression(target: Target): Expression {
     if (target.label_asym_id) {
         tests['chain-test'] = MS.core.rel.eq([target.label_asym_id, MS.ammp('label_asym_id')]);
     }
+    return tests;
+}
 
+function targetToExpression(target: Target): Expression {
+    const tests = targetToTest(target);
     if (Object.keys(tests).length > 0) {
         return MS.struct.modifier.union([
             MS.struct.generator.atomGroups(tests)
@@ -321,7 +325,27 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         } else if (p.kind === 'membrane') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
         } else if (p.kind === 'motif') {
-            // TODO impl
+            await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', { isHidden: true });
+
+            // await selectMotif(plugin, { label: model.data!.entryId, targets: p.targets, color: 0x000000 });
+
+            // const test: Expression[] = [];
+            // for (const target of p.targets) {
+            //     test.push(targetToTest(target) as any);
+            // }
+            // const selectionExpressions: SelectionExpression[] = [{
+            //     expression: MS.struct.generator.atomGroups(test),
+            //     label: model.data!.entryId,
+            //     type: 'ball-and-stick',
+            //     tag: 'polymer'
+            // }];
+            // const params = {
+            //     ignoreHydrogens: true,
+            //     quality: CommonParams.quality.defaultValue,
+            //     theme: { globalName: 'superpose' as any, focus: { name: 'superpose' } },
+            //     selectionExpressions
+            // };
+            // representation = await RcsbSuperpositionRepresentationPreset.apply(structure!, params, plugin);
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
@@ -471,3 +495,45 @@ const labelFromProps = (entryId: string, range: Range) => {
         (residues && residues.length > 1 ? `-${residues[residues.length - 1]}` : '');
     return label;
 };
+
+// export async function selectMotif(plugin: PluginContext, params: { label: string, targets: Target[], color?: number, focus?: boolean }) {
+//     const loci = getLociForTargets(plugin, params.targets);
+//     if (Loci.isEmpty(loci)) return;
+//
+//     // apply selection
+//     plugin.managers.interactivity.lociSelects.selectOnly({ loci });
+//     // add new representation
+//     const defaultParams = StructureComponentManager.getAddParams(plugin, { allowNone: false, hideSelection: true, checkExisting: true });
+//     const defaultValues = PD.getDefaultValues(defaultParams);
+//     defaultValues.options = { label: params.label, checkExisting: true };
+//     const values = { ...defaultValues, representation: 'ball-and-stick' };
+//     const structures = plugin.managers.structure.hierarchy.getStructuresWithSelection();
+//     await plugin.managers.structure.component.add(values, structures);
+//
+//     if (params.focus) plugin.managers.camera.focusLoci(loci);
+//     plugin.managers.interactivity.lociSelects.deselect({ loci });
+// }
+//
+// export function getLociForTargets(plugin: PluginContext, targets: Target[]): Loci {
+//     if (!targets.length) return EmptyLoci;
+//     const pivotIndex = plugin.managers.structure.hierarchy.selection.structures.length - 1;
+//     const pivot = plugin.managers.structure.hierarchy.selection.structures[pivotIndex];
+//     const assemblyRef = (pivot && pivot.cell.parent) ? pivot.cell.transform.ref : '';
+//     const data = (plugin.state.data.select(assemblyRef)[0].obj as PluginStateObject.Molecule.Structure).data;
+//     if (!data) return EmptyLoci;
+//
+//     const expressions = [];
+//     for (let i = 0, l = targets.length; i < l; i++) {
+//         const target = targets[i];
+//         expressions.push(targetToExpression(target));
+//     }
+//     const composed = MS.struct.modifier.union([
+//         expressions.length === 1
+//             ? expressions[0]
+//             : MS.struct.combinator.merge(expressions.map(q => MS.struct.modifier.union([ q ])))
+//     ]);
+//
+//     const query = compile<StructureSelection>(composed);
+//     const sel = query(new QueryContext(data));
+//     return StructureSelection.toLociWithSourceUnits(sel);
+// }
