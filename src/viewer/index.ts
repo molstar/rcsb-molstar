@@ -62,12 +62,12 @@ const DefaultViewerProps = {
     showSuperpositionControls: true,
     modelUrlProviders: [
         (pdbId: string) => ({
-            url: `//models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
+            url: `https://models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
             format: 'mmcif',
             isBinary: true
         }),
         (pdbId: string) => ({
-            url: `//files.rcsb.org/download/${pdbId.toLowerCase()}.cif`,
+            url: `https://files.rcsb.org/download/${pdbId.toLowerCase()}.cif`,
             format: 'mmcif',
             isBinary: false
         })
