@@ -39,7 +39,8 @@ import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/hel
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
 import { MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
-import { SubstructureFromModel } from './superpose/substructure';
+import { EmptyLoci, Loci } from 'molstar/lib/mol-model/loci';
+import { StructureComponentManager } from 'molstar/lib/mol-plugin-state/manager/structure/component';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -255,7 +256,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         let unitcell: StateObjectSelector | undefined = undefined;
         // If flexible transformation is allowed, we may need to create a single structure component
         // from transformed substructures
-        const allowsFlexTransform = p.kind === 'prop-set' || p.kind === 'motif';
+        const allowsFlexTransform = p.kind === 'prop-set'/* || p.kind === 'motif' */;
         if (!allowsFlexTransform) {
             structure = await builder.createStructure(modelProperties || model, structureParams);
             structureProperties = await builder.insertStructureProperties(structure);
@@ -312,29 +313,30 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             };
             representation = await RcsbSuperpositionRepresentationPreset.apply(structure, params, plugin);
         } else if (p.kind === 'motif') {
-            // This creates a single structure from selections/transformations as specified
-            const _structure = plugin.state.data.build().to(modelProperties)
-                .apply(SubstructureFromModel, { targets: p.targets });
-            structure = await _structure.commit();
-
-            const _structureProperties = plugin.state.data.build().to(structure)
-                .apply(CustomStructureProperties);
-            structureProperties = await _structureProperties.commit();
-
-            // At this we have a structure that contains only the transformed substructres,
-            // creating structure selections to have multiple components per each flexible part
-            let selectionExpressions: SelectionExpression[] = [];
-            for (const target of p.targets) {
-                selectionExpressions = selectionExpressions.concat(createSelectionExpression2(p.label, target));
-            }
-
-            const params = {
-                ignoreHydrogens: true,
-                quality: CommonParams.quality.defaultValue,
-                theme: { globalName: 'superpose' as any, focus: { name: 'superpose' } },
-                selectionExpressions: selectionExpressions
-            };
-            representation = await RcsbSuperpositionRepresentationPreset.apply(structure, params, plugin);
+            // // This creates a single structure from selections/transformations as specified
+            // const _structure = plugin.state.data.build().to(modelProperties)
+            //     .apply(SubstructureFromModel, { targets: p.targets });
+            // structure = await _structure.commit();
+            //
+            // const _structureProperties = plugin.state.data.build().to(structure)
+            //     .apply(CustomStructureProperties);
+            // structureProperties = await _structureProperties.commit();
+            //
+            // // At this we have a structure that contains only the transformed substructres,
+            // // creating structure selections to have multiple components per each flexible part
+            // let selectionExpressions: SelectionExpression[] = [];
+            // for (const target of p.targets) {
+            //     selectionExpressions = selectionExpressions.concat(createSelectionExpression2(p.label, target));
+            // }
+            //
+            // const params = {
+            //     ignoreHydrogens: true,
+            //     quality: CommonParams.quality.defaultValue,
+            //     theme: { globalName: 'superpose' as any, focus: { name: 'superpose' } },
+            //     selectionExpressions: selectionExpressions
+            // };
+            // representation = await RcsbSuperpositionRepresentationPreset.apply(structure, params, plugin);
+            await select(plugin, { label: p.label, targets: p.targets, focus: false });
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
 
@@ -359,7 +361,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
             // HELP-16678: check for rare case where ligand is not present in requested assembly
             if (loci.elements.length === 0 && !!p.assemblyId) {
-                // switch to Model (a.k.a. show coordinate independent of assembly )
+                // switch to Model (a.k.a. show coordinates independent of assembly)
                 const { selection } = plugin.managers.structure.hierarchy;
                 const s = selection.structures[0];
                 await plugin.managers.structure.hierarchy.updateStructure(s, { ...params, preset: { ...params.preset, assemblyId: void 0 } });
@@ -472,15 +474,15 @@ export function createSelectionExpression(entryId: string, range?: Range): Selec
     }
 }
 
-function createSelectionExpression2(label: string, target: Target): SelectionExpression {
-    const test = targetToTest(target);
-    return {
-        expression: MS.struct.generator.atomGroups(test),
-        label: label,
-        type: 'ball-and-stick',
-        tag: 'polymer'
-    };
-}
+// function createSelectionExpression2(label: string, target: Target): SelectionExpression {
+//     const test = targetToTest(target);
+//     return {
+//         expression: MS.struct.generator.atomGroups(test),
+//         label: label,
+//         type: 'ball-and-stick',
+//         tag: 'polymer'
+//     };
+// }
 
 export const selectionTest = (asymId: string, residues: number[]) => {
     if (residues.length > 0) {
@@ -508,3 +510,42 @@ const labelFromProps = (entryId: string, range: Range) => {
         (residues && residues.length > 1 ? `-${residues[residues.length - 1]}` : '');
     return label;
 };
+
+async function select(plugin: PluginContext, params: { label: string, targets: Target[], focus?: boolean }) {
+    const loci = getLociForTargets(plugin, params.targets);
+    if (Loci.isEmpty(loci)) return;
+
+    plugin.managers.interactivity.lociSelects.selectOnly({ loci });
+    const defaultParams = StructureComponentManager.getAddParams(plugin, { allowNone: false, hideSelection: true, checkExisting: true });
+    const defaultValues = PD.getDefaultValues(defaultParams);
+    defaultValues.options = { label: params.label, checkExisting: true };
+    const values = { ...defaultValues, representation: 'ball-and-stick' };
+    const structures = plugin.managers.structure.hierarchy.getStructuresWithSelection();
+    await plugin.managers.structure.component.add(values, structures);
+    if (params.focus) plugin.managers.camera.focusLoci(loci);
+    plugin.managers.interactivity.lociSelects.deselect({ loci });
+}
+
+export function getLociForTargets(plugin: PluginContext, targets: Target[]): Loci {
+    if (!targets.length) return EmptyLoci;
+    const pivotIndex = plugin.managers.structure.hierarchy.selection.structures.length - 1;
+    const pivot = plugin.managers.structure.hierarchy.selection.structures[pivotIndex];
+    const assemblyRef = (pivot && pivot.cell.parent) ? pivot.cell.transform.ref : '';
+    const data = (plugin.state.data.select(assemblyRef)[0].obj as PluginStateObject.Molecule.Structure).data;
+    if (!data) return EmptyLoci;
+
+    const expressions = [];
+    for (let i = 0, l = targets.length; i < l; i++) {
+        const target = targets[i];
+        expressions.push(targetToExpression(target));
+    }
+    const composed = MS.struct.modifier.union([
+        expressions.length === 1
+            ? expressions[0]
+            : MS.struct.combinator.merge(expressions.map(q => MS.struct.modifier.union([ q ])))
+    ]);
+
+    const query = compile<StructureSelection>(composed);
+    const sel = query(new QueryContext(data));
+    return StructureSelection.toLociWithSourceUnits(sel);
+}
