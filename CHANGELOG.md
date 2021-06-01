@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.6.3] - 2021-06-01
+### Bug fixes
+- Improve quality of ANVIL prediction
+- Improve ANVIL & ASA calculation performance
+
 ## [1.6.2] - 2021-05-12
 ### Bug fixes
 - Clean up viewer init routine
