@@ -33,7 +33,7 @@ import {
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
 import { CustomStructureProperties } from 'molstar/lib/mol-plugin-state/transforms/model';
-import { FlexibleStructureFromModel as FlexibleStructureFromModel } from './superpose/flexible-structure';
+import { FlexibleStructureFromModel } from './superpose/flexible-structure';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
@@ -323,10 +323,9 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
             // At this we have a structure that contains only the transformed substructres,
             // creating structure selections to have multiple components per each flexible part
-            const entryId = model.data!.entryId;
             let selectionExpressions: SelectionExpression[] = [];
             for (const target of p.targets) {
-                selectionExpressions = selectionExpressions.concat(createSelectionExpression2(entryId, target));
+                selectionExpressions = selectionExpressions.concat(createSelectionExpression2(p.label, target));
             }
 
             const params = {
@@ -473,14 +472,14 @@ export function createSelectionExpression(entryId: string, range?: Range): Selec
     }
 }
 
-function createSelectionExpression2(label: string, target: Target): SelectionExpression[] {
-    const test = selectionTest(target.label_asym_id!, [target.label_seq_id!]);
-    return [{
+function createSelectionExpression2(label: string, target: Target): SelectionExpression {
+    const test = targetToTest(target);
+    return {
         expression: MS.struct.generator.atomGroups(test),
-        label: `${label}`,
+        label: label,
         type: 'ball-and-stick',
         tag: 'polymer'
-    }];
+    };
 }
 
 export const selectionTest = (asymId: string, residues: number[]) => {
