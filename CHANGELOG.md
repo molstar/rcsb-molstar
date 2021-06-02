@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.6.4] - 2021-06-02
+### Added
+- Option to show membrane orientation preset
+
 ## [1.6.3] - 2021-06-01
 ### Bug fixes
 - Improve quality of ANVIL prediction

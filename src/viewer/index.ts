@@ -60,6 +60,7 @@ const DefaultViewerProps = {
     showSessionControls: false,
     showStructureSourceControls: true,
     showSuperpositionControls: true,
+    showMembraneOrientationPreset: false,
     modelUrlProviders: [
         (pdbId: string) => ({
             url: `https://models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
@@ -165,12 +166,13 @@ export class Viewer {
         this.plugin.init()
             .then(async () => {
                 // hide 'Membrane Orientation' preset from UI - has to happen 'before' react render, apparently
-                this.plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
-                this.plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
+                if (!o.showMembraneOrientationPreset) {
+                    this.plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
+                    this.plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
+                }
 
                 ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), element);
 
-                // TODO confirm if this.plugin.canvas3d is still null
                 const renderer = this.plugin.canvas3d!.props.renderer;
                 await PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
                 this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
@@ -223,6 +225,7 @@ export class Viewer {
                 await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, props, matrix);
                 break;
             } catch (e) {
+
                 console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`);
             }
         }
