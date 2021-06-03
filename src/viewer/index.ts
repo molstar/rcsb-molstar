@@ -83,7 +83,7 @@ const DefaultViewerProps = {
 
     viewportShowExpand: true,
     viewportShowSelectionMode: true,
-    volumeStreamingServer: '//maps.rcsb.org/',
+    volumeStreamingServer: 'https://maps.rcsb.org/',
 
     backgroundColor: ColorNames.white,
     showWelcomeToast: true
