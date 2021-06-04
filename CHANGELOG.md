@@ -2,6 +2,14 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.6.5] - 2021-06-03
+### Bug fixes
+- Access to maps.rcsb.org via HTTPS
+
+## [1.6.4] - 2021-06-02
+### Added
+- Option to show membrane orientation preset
+
 ## [1.6.3] - 2021-06-01
 ### Bug fixes
 - Improve quality of ANVIL prediction
