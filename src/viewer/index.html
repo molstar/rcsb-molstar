@@ -88,12 +88,12 @@
 
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-            Motifs
+            Superpose Motifs
             <button style="padding: 3px;" onclick="motifs()">4CHA | 6YIW</button>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-            Ligand Focus on wrong assembly
-            <button style="padding: 3px" onclick="ligandAssembly()">5RLA</button>
+            Superpose Propset
+            <button style="padding: 3px" onclick="propset()">4HHB | 1OJ6</button>
         </div>
         <script>
 
@@ -323,6 +323,18 @@
                             auth_seq_id: 502
                         }
                     }
+                },
+                {
+                    id: '5RL9',
+                    info: 'ligand focus on wrong assembly: Crystal Structure of SARS-CoV-2 helicase in complex with Z1703168683',
+                    props: {
+                        kind: 'feature',
+                        assemblyId: '1',
+                        // UR7 is not present in assembly 1
+                        target: {
+                            label_comp_id: 'UR7'
+                        }
+                    }
                 }
             ];
 
@@ -358,7 +370,8 @@
                 viewer.clear()
                     .then(function() {
                         return viewer.loadPdbIds([{
-                            pdbId: '4cha', props: {
+                            pdbId: '4cha',
+                            props: {
                                 label: '4CHA',
                                 kind: 'motif',
                                 assemblyId: '1',
@@ -369,8 +382,9 @@
                                 ]
                             }
                         }, {
-                            pdbId: '6yiw', props: {
-                                label: '6YIW: 0.26 RMSD',
+                            pdbId: '6yiw',
+                            props: {
+                                label: '6YIW #1',
                                 kind: 'motif',
                                 assemblyId: '1',
                                 targets: [
@@ -378,7 +392,8 @@
                                     { label_asym_id: 'A', label_seq_id: 84 },
                                     { label_asym_id: 'A', label_seq_id: 177 }
                                 ]
-                            }, matrix: [
+                            },
+                            matrix: [
                                 0.1651637134205112, 0.7020365618749254, 0.6927233311791812, 0,
                                 0.39076998819946046, 0.5983062863806071, -0.6995201240851049, 0,
                                 -0.9055494266420474, 0.3862308292566522, -0.17551633097799743, 0,
@@ -391,11 +406,71 @@
                     });
             }
 
-            function ligandAssembly() {
+            function propset() {
                 viewer.clear()
-                    .then(function() {
-                        // UR7 is not present in assembly 1
-                        return viewer.loadPdbId('5RL9', { kind: 'feature', assemblyId: '1', target: { label_comp_id: 'UR7' } });
+                    .then(function () {
+                        return viewer.loadPdbIds([{
+                            pdbId: '4HHB',
+                            props: {
+                                kind: 'prop-set',
+                                representation: [{
+                                    name: 'color',
+                                    positions: [{
+                                        label_asym_id: 'A',
+                                        label_seq_id: { beg: 4, end: 141 }
+                                    }],
+                                    value: 13203230
+                                }],
+                                selection: [{
+                                    label_asym_id: 'A',
+                                    label_seq_id: { beg: 4, end: 141 }
+                                }]
+                            }
+                        }, {
+                            pdbId: '1OJ6',
+                            props: {
+                                kind: 'prop-set',
+                                representation: [{
+                                    name: 'color',
+                                    positions: [{
+                                        label_asym_id: 'A',
+                                        label_seq_id: { beg: 3, end: 44 }
+                                    }, {
+                                        label_asym_id: 'A',
+                                        label_seq_id: { beg: 48, end: 49 }
+                                    }, {
+                                        label_asym_id: 'A',
+                                        label_seq_id: { beg: 54, end: 95 }
+                                    }, {
+                                        label_asym_id: 'A',
+                                        label_seq_id: { beg: 98, end: 149 }
+                                    }],
+                                    value: 4947916
+                                }],
+                                selection: [{
+                                    label_asym_id: 'A',
+                                    label_seq_id: { beg: 3, end: 44 }
+                                }, {
+                                    label_asym_id: 'A',
+                                    label_seq_id: { beg: 48, end: 49 }
+                                }, {
+                                    label_asym_id: 'A',
+                                    label_seq_id: { beg: 54, end: 95 }
+                                }, {
+                                    label_asym_id: 'A',
+                                    label_seq_id: { beg: 98, end: 149 }
+                                }]
+                            },
+                            matrix: [
+                                -0.6263111483773867, -0.38259812283613237, -0.6792297268380318, 0.0,
+                                0.3014888059527303, 0.6846150421427817, -0.6636314820418288, 0.0,
+                                0.7189150473480135, -0.6204199549290021, -0.313432982027257, 0.0,
+                                -30.829713890311414, 24.04442469172666, 55.437150645037654, 1.0
+                            ]
+                        }]);
+                    })
+                    .then(function () {
+                        viewer.resetCamera(0)
                     });
             }
         </script>
