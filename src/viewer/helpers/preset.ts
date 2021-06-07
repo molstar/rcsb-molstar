@@ -108,9 +108,7 @@ const CommonParams = StructureRepresentationPresetProvider.CommonParams;
 export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     id: 'preset-trajectory-rcsb',
     display: { name: 'RCSB' },
-    isApplicable: () => {
-        return true;
-    },
+    isApplicable: () => true,
     params: RcsbParams,
     async apply(trajectory, params, plugin) {
         const builder = plugin.builders.structure;
@@ -208,7 +206,6 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
-
         } else if (p.kind === 'symmetry') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
 

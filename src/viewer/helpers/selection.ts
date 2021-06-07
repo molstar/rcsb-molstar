@@ -10,7 +10,7 @@ export type Target = {
     readonly label_seq_id?: number
     readonly label_comp_id?: string
     readonly label_asym_id?: string
-    readonly operatorName?: string
+    // TODO add support for 'operators'
 }
 
 export type Range = {
@@ -156,9 +156,8 @@ function targetToExpression(target: Target): Expression {
     if (target.label_asym_id) {
         chainTests.push(MS.core.rel.eq([target.label_asym_id, MS.ammp('label_asym_id')]));
     }
-    if (target.operatorName) {
-        chainTests.push(MS.core.rel.eq([target.operatorName, MS.acp('operatorName')]));
-    }
+    // TODO add support for 'operators'
+
     if (chainTests.length === 1) {
         tests['chain-test'] = chainTests[0];
     } else if (chainTests.length > 1) {
