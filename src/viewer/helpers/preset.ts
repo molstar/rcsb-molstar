@@ -89,7 +89,7 @@ type FeatureDensityProps = {
 
 export type MotifProps = {
     kind: 'motif',
-    label: string,
+    label?: string,
     targets: Target[],
     color?: number
 } & BaseProps
@@ -188,22 +188,25 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const params = {
                 ignoreHydrogens: CommonParams.ignoreHydrogens.defaultValue,
                 quality: CommonParams.quality.defaultValue,
-                theme: { globalName: 'superpose' as any, focus: { name: 'superpose' } },
+                theme: { globalName: 'superpose', focus: { name: 'superpose' } },
                 selectionExpressions: selectionExpressions
             };
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
         } else if (p.kind === 'motif') {
-            let selectionExpressions = createSelectionExpression(p.label, p.targets);
-            const globalExpressions = createSelectionExpression(p.label); // global reps, to be hidden
+            let selectionExpressions = createSelectionExpression(p.label || model.data!.entryId, p.targets);
+            const globalExpressions = createSelectionExpression(p.label || model.data!.entryId); // global reps, to be hidden
             selectionExpressions = selectionExpressions.concat(globalExpressions.map(e => { return { ...e, isHidden: true }; }));
+
+            if (p.color) {
+                selectionExpressions = selectionExpressions.map(e => { return { ...e, color: p.color }; });
+            }
 
             const params = {
                 ignoreHydrogens: true,
                 quality: CommonParams.quality.defaultValue,
-                theme: { globalName: 'superpose' as any, focus: { name: 'superpose' } },
                 selectionExpressions: selectionExpressions
             };
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
         } else if (p.kind === 'symmetry') {

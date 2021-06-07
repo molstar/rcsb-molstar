@@ -30,7 +30,8 @@ export type SelectionExpression = {
     type: StructureRepresentationRegistry.BuiltIn
     label: string
     expression: Expression
-    isHidden?: boolean
+    isHidden?: boolean,
+    color?: number
 };
 
 /**
@@ -40,7 +41,7 @@ export type SelectionExpression = {
  */
 export function createSelectionExpression(labelBase: string, selection?: Range | Target[]): SelectionExpression[] {
     if (selection) {
-        if (selection.hasOwnProperty('label_asym_id') && selection.hasOwnProperty('label_seq_id')) {
+        if ('label_asym_id' in selection && 'label_seq_id' in selection) {
             const range = selection as Range;
             const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
             const test = rangeToTest(range.label_asym_id, residues);

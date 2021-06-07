@@ -39,17 +39,25 @@ export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPres
 
             const { update, builder, typeParams, color } = reprBuilder(plugin, params);
 
-            let typeProps = { ...typeParams };
+            const typeProps = { ...typeParams };
             if (expr.type === 'cartoon') {
                 Object.assign(typeProps, { ...cartoonProps });
             }
 
+            const reprProps = {
+                type: expr.type,
+                typeParams: typeProps,
+                color: color as any
+            };
+            if (expr.color) {
+                Object.assign(reprProps, {
+                    color: 'uniform',
+                    colorParams: { value: expr.color }
+                });
+            }
+
             Object.assign(representations, {
-                [expr.label]: builder.buildRepresentation(update, comp, {
-                    type: expr.type,
-                    typeParams: typeProps,
-                    color: color as any
-                }, {
+                [expr.label]: builder.buildRepresentation(update, comp, reprProps, {
                     tag: expr.tag,
                     // this only hides the visuals but the state UI will still indicate them as visible
                     initialState: { isHidden: expr.isHidden || false }
