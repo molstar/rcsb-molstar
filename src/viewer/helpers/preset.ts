@@ -334,7 +334,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci);
 
             if (p.kind === 'feature-density') {
-                await initVolumeStreaming(plugin, structure);
+                await initVolumeStreaming(plugin, structure, 0);
             }
 
             plugin.managers.structure.focus.setFromLoci(target);
@@ -369,13 +369,25 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     }
 });
 
-async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject) {
+async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject, overrideRadius?: number) {
     if (!structure?.cell?.parent) return;
 
     const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
     if (!volumeRoot) {
+        const state = plugin.state.data;
         const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin));
-        await plugin.runTask(plugin.state.data.applyAction(InitVolumeStreaming, params, structure.ref));
+        await plugin.runTask(state.applyAction(InitVolumeStreaming, params, structure.ref));
+
+        // RO-2751: allow to specify radius of shown density
+        if (overrideRadius !== void 0) {
+            const { params, transform } = state.select(StateSelection.Generators.ofType(VolumeStreaming))[0];
+
+            const p = params?.values;
+            (p.entry.params.view.params as any).radius = overrideRadius;
+
+            const tree = state.build().to(transform.ref).update(p);
+            await PluginCommands.State.Update(plugin, { state, tree });
+        }
     }
 
     ViewerState(plugin).collapsed.next({

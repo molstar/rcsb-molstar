@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.6.6] - 2021-06-08
+### Added
+- Special density preset with 0(-ish) radius for ligands (RO-2751)
+
 ## [1.6.5] - 2021-06-03
 ### Bug fixes
 - Access to maps.rcsb.org via HTTPS
