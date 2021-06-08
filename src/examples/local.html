@@ -1,0 +1,17 @@
+
+<html>
+<head>
+    <script type="text/javascript" src="../../build/dist/viewer/rcsb-molstar.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../build/dist/viewer/rcsb-molstar.css">
+</head>
+<body>
+    <div id="viewerDiv"/>
+    <script type="text/javascript">
+        const viewer = new rcsbMolstar.Viewer("viewerDiv");
+        viewer.loadSnapshotFromUrl("./1m17_2eb3.molx", "molx").then(()=>{
+            viewer.clearFocus();
+        });
+    </script>
+</body>
+</body>
+</html>
