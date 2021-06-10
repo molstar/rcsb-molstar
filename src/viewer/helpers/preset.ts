@@ -143,7 +143,9 @@ type MembraneProps = {
 
 type FeatureDensityProps = {
     kind: 'feature-density',
-    target: Target
+    target: Target,
+    radius?: number,
+    hiddenChannels?: string[]
 } & BaseProps
 
 export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps | MembraneProps | FeatureDensityProps | EmptyProps;
@@ -334,7 +336,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci);
 
             if (p.kind === 'feature-density') {
-                await initVolumeStreaming(plugin, structure, 0);
+                await initVolumeStreaming(plugin, structure, p.radius || 0);
             }
 
             plugin.managers.structure.focus.setFromLoci(target);
@@ -385,8 +387,7 @@ async function initVolumeStreaming(plugin: PluginContext, structure: StructureOb
             const p = params?.values;
             (p.entry.params.view.params as any).radius = overrideRadius;
 
-            const tree = state.build().to(transform.ref).update(p);
-            await PluginCommands.State.Update(plugin, { state, tree });
+            await state.build().to(transform.ref).update(p).commit();
         }
     }
 
