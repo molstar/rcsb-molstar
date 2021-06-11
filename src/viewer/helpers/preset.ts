@@ -21,7 +21,6 @@ import {
     StructureElement
 } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
-import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 import { ViewerState } from '../types';
 import {
     StateSelection,
@@ -30,7 +29,6 @@ import {
     StateTransformer,
     StateObjectRef
 } from 'molstar/lib/mol-state';
-import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
 import { CustomStructureProperties } from 'molstar/lib/mol-plugin-state/transforms/model';
 import { FlexibleStructureFromModel as FlexibleStructureFromModel } from './superpose/flexible-structure';
@@ -39,6 +37,9 @@ import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/hel
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
 import { MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
+import { setSubtreeVisibility } from 'molstar/lib/mol-plugin/behavior/static/state';
+import { InitVolumeStreaming, VolumeStreamingVisual } from './density';
+import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 
 type Target = {
     readonly auth_seq_id?: number
@@ -336,7 +337,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci);
 
             if (p.kind === 'feature-density') {
-                await initVolumeStreaming(plugin, structure, p.radius || 0);
+                await initVolumeStreaming(plugin, structure, { overrideRadius: p.radius || 0, hiddenChannels: p.hiddenChannels || [] });
             }
 
             plugin.managers.structure.focus.setFromLoci(target);
@@ -371,7 +372,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
     }
 });
 
-async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject, overrideRadius?: number) {
+async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject, props?: { overrideRadius?: number, hiddenChannels: string[] }) {
     if (!structure?.cell?.parent) return;
 
     const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
@@ -381,13 +382,22 @@ async function initVolumeStreaming(plugin: PluginContext, structure: StructureOb
         await plugin.runTask(state.applyAction(InitVolumeStreaming, params, structure.ref));
 
         // RO-2751: allow to specify radius of shown density
-        if (overrideRadius !== void 0) {
+        if (props?.overrideRadius !== void 0) {
             const { params, transform } = state.select(StateSelection.Generators.ofType(VolumeStreaming))[0];
 
             const p = params?.values;
-            (p.entry.params.view.params as any).radius = overrideRadius;
+            (p.entry.params.view.params as any).radius = props.overrideRadius;
 
             await state.build().to(transform.ref).update(p).commit();
+        }
+        // RO-2751: hide all but 2Fo-Fc map
+        if (props?.hiddenChannels?.length) {
+            const cells = state.select(StateSelection.Generators.ofTransformer(VolumeStreamingVisual));
+            for (const cell of cells) {
+                if (props.hiddenChannels.indexOf(cell.obj!.tags![0]) !== -1) {
+                    setSubtreeVisibility(state, cell.transform.ref, true);
+                }
+            }
         }
     }
 
