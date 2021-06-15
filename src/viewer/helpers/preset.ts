@@ -193,7 +193,10 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             };
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
         } else if (p.kind === 'motif') {
-            let selectionExpressions = createSelectionExpression(p.label || model.data!.entryId, p.targets);
+            // let's force ASM_1 for motifs (as we use this contract in the rest of the stack)
+            // TODO should ASM_1 be the default, seems like we'd run into problems when selecting ligands that are e.g. ambiguous with asym_id & seq_id alone?
+            const targets = p.targets.map(t => { return t.operatorName ? t : { ...t, operatorName: 'ASM_1' }; });
+            let selectionExpressions = createSelectionExpression(p.label || model.data!.entryId, targets);
             const globalExpressions = createSelectionExpression(p.label || model.data!.entryId); // global reps, to be hidden
             selectionExpressions = selectionExpressions.concat(globalExpressions.map(e => { return { ...e, isHidden: true }; }));
 
