@@ -14,6 +14,11 @@ export type Target = {
      * Mol*-internal representation, like 'ASM_2'. Enumerated in the order of appearance in the source file.
      */
     readonly operatorName?: string
+    /**
+     * Strucmotif-/BioJava-specific representation, like 'Px42'. This is a single 'pdbx_struct_oper_list.id' value or a
+     * combination thereof.
+     */
+    readonly structOperExpression?: string
 }
 
 export type Range = {
@@ -38,11 +43,30 @@ export type SelectionExpression = {
 };
 
 /**
+ * This serves as adapter between the strucmotif-/BioJava-approach to identify transformed chains and the Mol* way.
+ * Looks for 'structOperExpression', converts it to an 'operatorName', and removes the original value. This will
+ * override pre-existing 'operatorName' values.
+ * @param targets collection to process
+ * @param structure parent structure
+ * @param operatorName optional value to which missing operators are set, will default to 'ASM_1' if not specified
+ */
+export function normalizeTargets(targets: Target[], structure: Structure, operatorName: string = 'ASM_1'): Target[] {
+    return targets.map(t => {
+        if (t.structOperExpression) {
+            const { structOperExpression, ...others } = t;
+            const oper = ''; // TODO impl
+            return { ...others, operatorName: oper };
+        }
+        return t.operatorName ? t : { ...t, operatorName };
+    });
+}
+
+/**
  * Convert a selection to an array of selection expressions.
  * @param labelBase the base label that will appear in the UI (e.g., the entry ID)
  * @param selection a selection by Range or a set of Targets
  */
-export function createSelectionExpression(labelBase: string, selection?: Range | Target[]): SelectionExpression[] {
+export function createSelectionExpressions(labelBase: string, selection?: Range | Target[]): SelectionExpression[] {
     if (selection) {
         if ('label_asym_id' in selection && 'label_seq_id' in selection) {
             const range = selection as Range;

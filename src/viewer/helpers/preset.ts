@@ -28,7 +28,15 @@ import { FlexibleStructureFromModel } from './superpose/flexible-structure';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
 import { MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
-import { createSelectionExpression, Range, SelectionExpression, Target, targetToLoci, toRange } from './selection';
+import {
+    normalizeTargets,
+    createSelectionExpressions,
+    Range,
+    SelectionExpression,
+    Target,
+    targetToLoci,
+    toRange
+} from './selection';
 import { RcsbSuperpositionRepresentationPreset } from './superpose/preset';
 
 type BaseProps = {
@@ -179,10 +187,10 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             let selectionExpressions: SelectionExpression[] = [];
             if (p.selection) {
                 for (const range of p.selection) {
-                    selectionExpressions = selectionExpressions.concat(createSelectionExpression(entryId, range));
+                    selectionExpressions = selectionExpressions.concat(createSelectionExpressions(entryId, range));
                 }
             } else {
-                selectionExpressions = selectionExpressions.concat(createSelectionExpression(entryId));
+                selectionExpressions = selectionExpressions.concat(createSelectionExpressions(entryId));
             }
 
             const params = {
@@ -192,12 +200,12 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 selectionExpressions: selectionExpressions
             };
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
-        } else if (p.kind === 'motif') {
+        } else if (p.kind === 'motif' && structure?.obj) {
             // let's force ASM_1 for motifs (as we use this contract in the rest of the stack)
             // TODO should ASM_1 be the default, seems like we'd run into problems when selecting ligands that are e.g. ambiguous with asym_id & seq_id alone?
-            const targets = p.targets.map(t => { return t.operatorName ? t : { ...t, operatorName: 'ASM_1' }; });
-            let selectionExpressions = createSelectionExpression(p.label || model.data!.entryId, targets);
-            const globalExpressions = createSelectionExpression(p.label || model.data!.entryId); // global reps, to be hidden
+            const targets = normalizeTargets(p.targets, structure!.obj.data);
+            let selectionExpressions = createSelectionExpressions(p.label || model.data!.entryId, targets);
+            const globalExpressions = createSelectionExpressions(p.label || model.data!.entryId); // global reps, to be hidden
             selectionExpressions = selectionExpressions.concat(globalExpressions.map(e => { return { ...e, isHidden: true }; }));
 
             if (p.color) {
