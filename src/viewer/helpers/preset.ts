@@ -38,8 +38,11 @@ import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
 import { MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { setSubtreeVisibility } from 'molstar/lib/mol-plugin/behavior/static/state';
-import { InitVolumeStreaming, VolumeStreamingVisual } from './density';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
+import {
+    InitVolumeStreaming,
+    VolumeStreamingVisual
+} from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 
 type Target = {
     readonly auth_seq_id?: number

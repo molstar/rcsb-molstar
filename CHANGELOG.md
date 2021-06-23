@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.6.9] - 2021-06-23
+### Added
+- Mol* 2.0.7 & some internal cleanup
+
 ## [1.6.8] - 2021-06-11
 ### Added
 - Hide all but 2Fo-Fc map (RO-2751)
