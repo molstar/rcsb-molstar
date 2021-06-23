@@ -2,6 +2,18 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.6.9] - 2021-06-23
+### Added
+- Mol* 2.0.7 & some internal cleanup
+
+## [1.6.8] - 2021-06-11
+### Added
+- Hide all but 2Fo-Fc map (RO-2751)
+
+## [1.6.6] - 2021-06-08
+### Added
+- Special density preset with 0(-ish) radius for ligands (RO-2751)
+
 ## [1.6.5] - 2021-06-03
 ### Bug fixes
 - Access to maps.rcsb.org via HTTPS
