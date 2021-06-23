@@ -13,14 +13,6 @@ import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
 import { RootStructureDefinition } from 'molstar/lib/mol-plugin-state/helpers/root-structure';
 import { StructureRepresentationPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
 import { StructureElement } from 'molstar/lib/mol-model/structure';
-import { InitVolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
-import {
-    Structure,
-    StructureSelection,
-    QueryContext,
-    StructureElement
-} from 'molstar/lib/mol-model/structure';
-import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { ViewerState } from '../types';
 import {
     StateSelection,
@@ -40,59 +32,9 @@ import {
     InitVolumeStreaming,
     VolumeStreamingVisual
 } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
-
-type Target = {
-    readonly auth_seq_id?: number
-    readonly label_seq_id?: number
-    readonly label_comp_id?: string
-    readonly label_asym_id?: string
-}
-
-function targetToExpression(target: Target): Expression {
-    const residueTests: Expression[] = [];
-    const tests = Object.create(null);
-
-    if (target.auth_seq_id) {
-        residueTests.push(MS.core.rel.eq([target.auth_seq_id, MS.ammp('auth_seq_id')]));
-    } else if (target.label_seq_id) {
-        residueTests.push(MS.core.rel.eq([target.label_seq_id, MS.ammp('label_seq_id')]));
-    }
-    if (target.label_comp_id) {
-        residueTests.push(MS.core.rel.eq([target.label_comp_id, MS.ammp('label_comp_id')]));
-    }
-    if (residueTests.length === 1) {
-        tests['residue-test'] = residueTests[0];
-    } else if (residueTests.length > 1) {
-        tests['residue-test'] = MS.core.logic.and(residueTests);
-    }
-
-    if (target.label_asym_id) {
-        tests['chain-test'] = MS.core.rel.eq([target.label_asym_id, MS.ammp('label_asym_id')]);
-    }
-
-    if (Object.keys(tests).length > 0) {
-        return MS.struct.modifier.union([
-            MS.struct.generator.atomGroups(tests)
-        ]);
-    } else {
-        return MS.struct.generator.empty;
-    }
-}
-
-function targetToLoci(target: Target, structure: Structure): StructureElement.Loci {
-    const expression = targetToExpression(target);
-    const query = compile<StructureSelection>(expression);
-    const selection = query(new QueryContext(structure));
-    return StructureSelection.toLociWithSourceUnits(selection);
-}
-
-type Range = {
-    label_asym_id: string
-    label_seq_id?: { beg: number, end?: number }
-}
 import {
-    normalizeTargets,
     createSelectionExpressions,
+    normalizeTargets,
     Range,
     SelectionExpression,
     Target,
