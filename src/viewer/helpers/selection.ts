@@ -11,12 +11,13 @@ export type Target = {
     readonly label_comp_id?: string
     readonly label_asym_id?: string
     /**
-     * Mol*-internal representation, like 'ASM_2'. Enumerated in the order of appearance in the source file.
+     * Mol*-internal representation, like 'ASM_2'. Enumerated in the order of appearance in the source file. Specify the
+     * assemblyId when using this selector.
      */
     readonly operatorName?: string
     /**
      * Strucmotif-/BioJava-specific representation, like 'Px42'. This is a single 'pdbx_struct_oper_list.id' value or a
-     * combination thereof.
+     * combination thereof. Specify the assemblyId when using this selector.
      */
     readonly structOperExpression?: string
 }
@@ -54,11 +55,21 @@ export function normalizeTargets(targets: Target[], structure: Structure, operat
     return targets.map(t => {
         if (t.structOperExpression) {
             const { structOperExpression, ...others } = t;
-            const oper = ''; // TODO impl
+            const oper = toOperatorName(structure, structOperExpression);
             return { ...others, operatorName: oper };
         }
         return t.operatorName ? t : { ...t, operatorName };
     });
+}
+
+function toOperatorName(structure: Structure, expression: string): string {
+    for (const unit of structure.units) {
+        const assembly = unit.conformation.operator.assembly;
+        if (!assembly) continue;
+
+        if (expression === assembly.operList.join('x')) return `ASM_${assembly.operId}`;
+    }
+    throw Error(`Unable to find expression '${expression}'`);
 }
 
 /**
