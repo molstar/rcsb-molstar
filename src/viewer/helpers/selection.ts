@@ -17,7 +17,8 @@ export type Target = {
     readonly operatorName?: string
     /**
      * Strucmotif-/BioJava-specific representation, like 'Px42'. This is a single 'pdbx_struct_oper_list.id' value or a
-     * combination thereof. Specify the assemblyId when using this selector.
+     * combination thereof. Specify the assemblyId when using this selector. Order matters, use order as specified in
+     * the source CIF file.
      */
     readonly structOperExpression?: string
 }
@@ -63,12 +64,17 @@ export function normalizeTargets(targets: Target[], structure: Structure, operat
 }
 
 function toOperatorName(structure: Structure, expression: string): string {
+    // Mol*-internal representation is flipped ('5xX0' insteadof 'X0x5')
+    expression = expression.indexOf('x') === -1 ? expression : expression.split('x').reverse().join('x');
     for (const unit of structure.units) {
         const assembly = unit.conformation.operator.assembly;
-        if (!assembly) continue;
+        if (!assembly) {
+            continue;
+        }
 
         if (expression === assembly.operList.join('x')) return `ASM_${assembly.operId}`;
     }
+    // TODO better error handling?
     throw Error(`Unable to find expression '${expression}'`);
 }
 
