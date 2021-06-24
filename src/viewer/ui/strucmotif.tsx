@@ -122,21 +122,23 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             const l = loci[i];
             const { structure, elements } = l.loci;
             pdbId.add(structure.model.entry);
+
+            // need to reverse here as Mol*, for some reason, inverts the order specified in the CIF file
+            const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location).reverse();
+            const struct_oper_id = struct_oper_list_ids?.length ? struct_oper_list_ids.join('x') : '1';
+
             // only first element and only first index will be considered (ignoring multiple residues)
             if (!determineBackboneAtom(structure, elements[0])) {
-                const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
-                const struct_oper_id = struct_oper_list_ids?.length ? struct_oper_list_ids.join('x') : '1';
                 alert(`No CA or C4' atom for ${StructureProperties.residue.label_seq_id(location)} | ${StructureProperties.chain.label_asym_id(location)} | ${struct_oper_id}`);
                 return;
             }
 
             // handle pure residue-info
-            const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
             // TODO honor NCS operators: StructureProperties.unit.struct_ncs_oper_id(location);
             const residueId = {
                 label_asym_id: StructureProperties.chain.label_asym_id(location),
                 // can be empty array if model is selected
-                struct_oper_id: struct_oper_list_ids?.length ? struct_oper_list_ids.join('x') : '1',
+                struct_oper_id,
                 label_seq_id: StructureProperties.residue.label_seq_id(location)
             };
             residueIds.push(residueId);

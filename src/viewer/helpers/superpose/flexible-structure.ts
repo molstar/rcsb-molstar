@@ -3,10 +3,11 @@ import { RootStructureDefinition } from 'molstar/lib/mol-plugin-state/helpers/ro
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { Task } from 'molstar/lib/mol-task';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
-import { PropsetProps, selectionTest, toRange } from '../preset';
+import { PropsetProps } from '../preset';
 import { StructureQueryHelper } from 'molstar/lib/mol-plugin-state/helpers/structure-query';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { StructureSelection, Structure } from 'molstar/lib/mol-model/structure';
+import { rangeToTest, toRange } from '../selection';
 
 export { FlexibleStructureFromModel as FlexibleStructureFromModel };
 type FlexibleStructureFromModel = typeof FlexibleStructureFromModel
@@ -36,7 +37,7 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
                     selectBlocks.push([]);
                 }
                 const residues: number[] = (p.label_seq_id) ? toRange(p.label_seq_id.beg, p.label_seq_id.end) : [];
-                const test = selectionTest(p.label_asym_id, residues);
+                const test = rangeToTest(p.label_asym_id, residues);
                 const expression = MS.struct.generator.atomGroups(test);
                 const { selection: sele } = StructureQueryHelper.createAndRun(base.data, expression);
                 const s = StructureSelection.unionStructure(sele);
