@@ -68,9 +68,7 @@ function toOperatorName(structure: Structure, expression: string): string {
     expression = expression.indexOf('x') === -1 ? expression : expression.split('x').reverse().join('x');
     for (const unit of structure.units) {
         const assembly = unit.conformation.operator.assembly;
-        if (!assembly) {
-            continue;
-        }
+        if (!assembly) continue;
 
         if (expression === assembly.operList.join('x')) return `ASM_${assembly.operId}`;
     }
