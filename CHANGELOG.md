@@ -2,6 +2,13 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.7.0] - 2021-06-24
+### Added
+- Visualize (an arbitrary number of) structural motifs
+
+### Bug fixes
+- Fix order of operators in strucmotif queries
+
 ## [1.6.9] - 2021-06-23
 ### Added
 - Mol* 2.0.7 & some internal cleanup
