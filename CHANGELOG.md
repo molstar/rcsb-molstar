@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.0.0]
+### Breaking changes
+- `loadStructureFromData()` is not async anymore
+- removed `pluginCall()` and `getPlugin()` - use `plugin()` getter instead
+
 ## [1.7.0] - 2021-06-24
 ### Added
 - Visualize (an arbitrary number of) structural motifs

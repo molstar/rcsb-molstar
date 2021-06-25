@@ -7,7 +7,6 @@
 
 import { BehaviorSubject } from 'rxjs';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
-import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { ViewerState as ViewerState, CollapsedState, ModelUrlProvider } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
@@ -92,12 +91,9 @@ export type ViewerProps = typeof DefaultViewerProps
 
 
 export class Viewer {
-    private readonly plugin: PluginUIContext;
+    private readonly _plugin: PluginUIContext;
     private readonly modelUrlProviders: ModelUrlProvider[];
-
-    private get customState() {
-        return this.plugin.customState as ViewerState;
-    }
+    private prevExpanded: boolean;
 
     constructor(elementOrId: string | HTMLElement, props: Partial<ViewerProps> = {}) {
         const element = typeof elementOrId === 'string' ? document.getElementById(elementOrId)! : elementOrId;
@@ -142,16 +138,16 @@ export class Viewer {
             ]
         };
 
-        this.plugin = new PluginUIContext(spec);
+        this._plugin = new PluginUIContext(spec);
         this.modelUrlProviders = o.modelUrlProviders;
 
-        (this.plugin.customState as ViewerState) = {
+        (this._plugin.customState as ViewerState) = {
             showImportControls: o.showImportControls,
             showExportControls: o.showExportControls,
             showSessionControls: o.showSessionControls,
             showStructureSourceControls: o.showStructureSourceControls,
             showSuperpositionControls: o.showSuperpositionControls,
-            modelLoader: new ModelLoader(this.plugin),
+            modelLoader: new ModelLoader(this._plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
                 strucmotifSubmit: true,
@@ -163,22 +159,22 @@ export class Viewer {
             })
         };
 
-        this.plugin.init()
+        this._plugin.init()
             .then(async () => {
                 // hide 'Membrane Orientation' preset from UI - has to happen 'before' react render, apparently
                 if (!o.showMembraneOrientationPreset) {
-                    this.plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
-                    this.plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
+                    this._plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
+                    this._plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
                 }
 
-                ReactDOM.render(React.createElement(Plugin, { plugin: this.plugin }), element);
+                ReactDOM.render(React.createElement(Plugin, { plugin: this._plugin }), element);
 
-                const renderer = this.plugin.canvas3d!.props.renderer;
-                await PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
-                this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
+                const renderer = this._plugin.canvas3d!.props.renderer;
+                await PluginCommands.Canvas3D.SetSettings(this._plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
+                this._plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
 
                 if (o.showWelcomeToast) {
-                    await PluginCommands.Toast.Show(this.plugin, {
+                    await PluginCommands.Toast.Show(this._plugin, {
                         title: 'Welcome',
                         message: `RCSB PDB Mol* Viewer ${RCSB_MOLSTAR_VERSION} [${BUILD_DATE.toLocaleString()}]`,
                         key: 'toast-welcome',
@@ -186,36 +182,39 @@ export class Viewer {
                     });
                 }
 
-                this.prevExpanded = this.plugin.layout.state.isExpanded;
-                this.plugin.layout.events.updated.subscribe(() => this.toggleControls());
+                this.prevExpanded = this._plugin.layout.state.isExpanded;
+                this._plugin.layout.events.updated.subscribe(() => this.toggleControls());
             });
     }
 
-    private prevExpanded: boolean;
+    get plugin() {
+        return this._plugin;
+    }
+
+    private get customState() {
+        return this._plugin.customState as ViewerState;
+    }
 
     private toggleControls(): void {
-
-        const currExpanded = this.plugin.layout.state.isExpanded;
+        const currExpanded = this._plugin.layout.state.isExpanded;
         const expandedChanged = (this.prevExpanded !== currExpanded);
         if (!expandedChanged) return;
 
-        if (currExpanded && !this.plugin.layout.state.showControls) {
-            this.plugin.layout.setProps({showControls: true});
-        } else if (!currExpanded && this.plugin.layout.state.showControls) {
-            this.plugin.layout.setProps({showControls: false});
+        if (currExpanded && !this._plugin.layout.state.showControls) {
+            this._plugin.layout.setProps({showControls: true});
+        } else if (!currExpanded && this._plugin.layout.state.showControls) {
+            this._plugin.layout.setProps({showControls: false});
         }
-        this.prevExpanded = this.plugin.layout.state.isExpanded;
+        this.prevExpanded = this._plugin.layout.state.isExpanded;
     }
 
-    //
-
     resetCamera(durationMs?: number) {
-        this.plugin.managers.camera.reset(undefined, durationMs);
+        this._plugin.managers.camera.reset(undefined, durationMs);
     }
 
     clear() {
-        const state = this.plugin.state.data;
-        return PluginCommands.State.RemoveObject(this.plugin, { state, ref: state.tree.root.ref });
+        const state = this._plugin.state.data;
+        return PluginCommands.State.RemoveObject(this._plugin, { state, ref: state.tree.root.ref });
     }
 
     async loadPdbId(pdbId: string, props?: PresetProps, matrix?: Mat4) {
@@ -225,7 +224,6 @@ export class Viewer {
                 await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, props, matrix);
                 break;
             } catch (e) {
-
                 console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`);
             }
         }
@@ -243,40 +241,32 @@ export class Viewer {
     }
 
     loadSnapshotFromUrl(url: string, type: PluginState.SnapshotType) {
-        return PluginCommands.State.Snapshots.OpenUrl(this.plugin, { url, type });
+        return PluginCommands.State.Snapshots.OpenUrl(this._plugin, { url, type });
     }
 
-    async loadStructureFromData(data: string | number[], format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4) {
+    loadStructureFromData(data: string | number[], format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4) {
         return this.customState.modelLoader.parse({ data, format, isBinary }, props, matrix);
     }
 
     handleResize() {
-        this.plugin.layout.events.updated.next();
+        this._plugin.layout.events.updated.next();
     }
 
     exportLoadedStructures() {
-        const content = encodeStructureData(this.plugin);
-        return downloadAsZipFile(this.plugin, content);
-    }
-
-    pluginCall(f: (plugin: PluginContext) => void){
-        f(this.plugin);
-    }
-
-    public getPlugin(): PluginContext {
-        return this.plugin;
+        const content = encodeStructureData(this._plugin);
+        return downloadAsZipFile(this._plugin, content);
     }
 
     public setFocus(modelId: string, asymId: string, begin: number, end: number): void;
     public setFocus(...args: any[]): void{
         if(args.length === 4)
-            ViewerMethods.setFocusFromRange(this.plugin, args[0], args[1], args[2], args[3]);
+            ViewerMethods.setFocusFromRange(this._plugin, args[0], args[1], args[2], args[3]);
         if(args.length === 2)
-            ViewerMethods.setFocusFromSet(this.plugin, args[0], args[1]);
+            ViewerMethods.setFocusFromSet(this._plugin, args[0], args[1]);
     }
 
     public clearFocus(): void {
-        this.plugin.managers.structure.focus.clear();
+        this._plugin.managers.structure.focus.clear();
     }
 
     public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
@@ -288,19 +278,19 @@ export class Viewer {
             if(args[2] === 'set')
                 this.clearSelection('select');
             (args[0] as Array<{modelId: string; asymId: string; position: number;}>).forEach(r=>{
-                ViewerMethods.selectSegment(this.plugin, r.modelId, r.asymId, r.position, r.position, args[1], 'add');
+                ViewerMethods.selectSegment(this._plugin, r.modelId, r.asymId, r.position, r.position, args[1], 'add');
             });
         }else if(args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>)[0].begin === 'number'){
-            ViewerMethods.selectMultipleSegments(this.plugin, args[0], args[1], args[2]);
+            ViewerMethods.selectMultipleSegments(this._plugin, args[0], args[1], args[2]);
         }else if(args.length === 5){
-            ViewerMethods.selectSegment(this.plugin, args[0], args[1], args[2], args[2], args[3], args[4]);
+            ViewerMethods.selectSegment(this._plugin, args[0], args[1], args[2], args[2], args[3], args[4]);
         }else if(args.length === 6){
-            ViewerMethods.selectSegment(this.plugin, args[0], args[1], args[2], args[3], args[4], args[5]);
+            ViewerMethods.selectSegment(this._plugin, args[0], args[1], args[2], args[3], args[4], args[5]);
         }
     }
 
     public clearSelection(mode: 'select'|'hover', options?: {modelId: string; labelAsymId: string;}): void {
-        ViewerMethods.clearSelection(this.plugin, mode, options);
+        ViewerMethods.clearSelection(this._plugin, mode, options);
     }
 
     public async createComponent(componentLabel: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
@@ -308,22 +298,22 @@ export class Viewer {
     public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; begin: number; end: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
     public async createComponent(componentLabel: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
     public async createComponent(...args: any[]): Promise<void>{
-        const structureRef: StructureRef | undefined = ViewerMethods.getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, args[1]);
+        const structureRef: StructureRef | undefined = ViewerMethods.getStructureRefWithModelId(this._plugin.managers.structure.hierarchy.current.structures, args[1]);
         if(structureRef == null)
             throw 'createComponent error: model not found';
         if (args.length === 4 && typeof args[2] === 'string') {
-            await ViewerMethods.createComponentFromChain(this.plugin, args[0], structureRef, args[2], args[3]);
+            await ViewerMethods.createComponentFromChain(this._plugin, args[0], structureRef, args[2], args[3]);
         } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].position === 'number') {
-            await ViewerMethods.createComponentFromSet(this.plugin, args[0], structureRef, args[2], args[3]);
+            await ViewerMethods.createComponentFromSet(this._plugin, args[0], structureRef, args[2], args[3]);
         } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].begin === 'number') {
-            await ViewerMethods.createComponentFromMultipleRange(this.plugin, args[0], structureRef, args[2], args[3]);
+            await ViewerMethods.createComponentFromMultipleRange(this._plugin, args[0], structureRef, args[2], args[3]);
         }else if (args.length === 6) {
-            await ViewerMethods.createComponentFromRange(this.plugin, args[0], structureRef, args[2], args[3], args[4], args[5]);
+            await ViewerMethods.createComponentFromRange(this._plugin, args[0], structureRef, args[2], args[3], args[4], args[5]);
         }
     }
 
     public removeComponent(componentLabel: string): void{
-        ViewerMethods.removeComponent(this.plugin, componentLabel);
+        ViewerMethods.removeComponent(this._plugin, componentLabel);
     }
 }
 
