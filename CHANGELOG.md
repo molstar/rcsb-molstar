@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.7.1] - 2021-06-30
+### Breaking Changes
+- Rename experimental 'structOperExpression' prop to 'struct_oper_id'
+
 ## [1.7.0] - 2021-06-24
 ### Added
 - Visualize (an arbitrary number of) structural motifs

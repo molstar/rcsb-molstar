@@ -20,7 +20,7 @@ export type Target = {
      * combination thereof. Specify the assemblyId when using this selector. Order matters, use order as specified in
      * the source CIF file.
      */
-    readonly structOperExpression?: string
+    readonly struct_oper_id?: string
 }
 
 export type Range = {
@@ -46,7 +46,7 @@ export type SelectionExpression = {
 
 /**
  * This serves as adapter between the strucmotif-/BioJava-approach to identify transformed chains and the Mol* way.
- * Looks for 'structOperExpression', converts it to an 'operatorName', and removes the original value. This will
+ * Looks for 'struct_oper_id', converts it to an 'operatorName', and removes the original value. This will
  * override pre-existing 'operatorName' values.
  * @param targets collection to process
  * @param structure parent structure
@@ -54,9 +54,9 @@ export type SelectionExpression = {
  */
 export function normalizeTargets(targets: Target[], structure: Structure, operatorName: string = 'ASM_1'): Target[] {
     return targets.map(t => {
-        if (t.structOperExpression) {
-            const { structOperExpression, ...others } = t;
-            const oper = toOperatorName(structure, structOperExpression);
+        if (t.struct_oper_id) {
+            const { struct_oper_id, ...others } = t;
+            const oper = toOperatorName(structure, struct_oper_id);
             return { ...others, operatorName: oper };
         }
         return t.operatorName ? t : { ...t, operatorName };
