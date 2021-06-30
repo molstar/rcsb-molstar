@@ -28,8 +28,8 @@ import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { encodeStructureData, downloadAsZipFile } from './helpers/export';
-import { ViewerMethods } from './helpers/viewer';
-import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
+import { setFocusFromRange, removeComponent, clearSelection, createComponent, select } from './helpers/viewer';
+import { SelectRange, SelectTarget, Target } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
@@ -257,63 +257,67 @@ export class Viewer {
         return downloadAsZipFile(this._plugin, content);
     }
 
-    public setFocus(modelId: string, asymId: string, begin: number, end: number): void;
-    public setFocus(...args: any[]): void{
-        if(args.length === 4)
-            ViewerMethods.setFocusFromRange(this._plugin, args[0], args[1], args[2], args[3]);
-        if(args.length === 2)
-            ViewerMethods.setFocusFromSet(this._plugin, args[0], args[1]);
+    setFocus(target: SelectRange) {
+        setFocusFromRange(this._plugin, target);
     }
 
-    public clearFocus(): void {
+    clearFocus(): void {
         this._plugin.managers.structure.focus.clear();
     }
 
-    public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
-    public select(selection: Array<{modelId: string; asymId: string; begin: number; end: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
-    public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
-    public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
-    public select(...args: any[]){
-        if(args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; position: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; position: number;}>)[0].position === 'number'){
-            if(args[2] === 'set')
-                this.clearSelection('select');
-            (args[0] as Array<{modelId: string; asymId: string; position: number;}>).forEach(r=>{
-                ViewerMethods.selectSegment(this._plugin, r.modelId, r.asymId, r.position, r.position, args[1], 'add');
-            });
-        }else if(args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>)[0].begin === 'number'){
-            ViewerMethods.selectMultipleSegments(this._plugin, args[0], args[1], args[2]);
-        }else if(args.length === 5){
-            ViewerMethods.selectSegment(this._plugin, args[0], args[1], args[2], args[2], args[3], args[4]);
-        }else if(args.length === 6){
-            ViewerMethods.selectSegment(this._plugin, args[0], args[1], args[2], args[3], args[4], args[5]);
-        }
+    select(targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
+        select(this._plugin, targets, mode, modifier);
     }
 
-    public clearSelection(mode: 'select'|'hover', options?: {modelId: string; labelAsymId: string;}): void {
-        ViewerMethods.clearSelection(this._plugin, mode, options);
+    // public select(selection: Array<{modelId: string; asymId: string; position: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
+    // public select(selection: Array<{modelId: string; asymId: string; begin: number; end: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
+    // public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
+    // public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
+    // public select(...args: any[]){
+    //     if(args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; position: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; position: number;}>)[0].position === 'number'){
+    //         if(args[2] === 'set')
+    //             this.clearSelection('select');
+    //         (args[0] as Array<{modelId: string; asymId: string; position: number;}>).forEach(r=>{
+    //             ViewerMethods.selectSegment(this._plugin, r.modelId, r.asymId, r.position, r.position, args[1], 'add');
+    //         });
+    //     }else if(args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>)[0].begin === 'number'){
+    //         ViewerMethods.selectMultipleSegments(this._plugin, args[0], args[1], args[2]);
+    //     }else if(args.length === 5){
+    //         ViewerMethods.selectSegment(this._plugin, args[0], args[1], args[2], args[2], args[3], args[4]);
+    //     }else if(args.length === 6){
+    //         ViewerMethods.selectSegment(this._plugin, args[0], args[1], args[2], args[3], args[4], args[5]);
+    //     }
+    // }
+
+    clearSelection(mode: 'select' | 'hover', target?: { modelId: string; target: Target }) {
+        clearSelection(this._plugin, mode, target);
     }
 
-    public async createComponent(componentLabel: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; position: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; begin: number; end: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    public async createComponent(componentLabel: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    public async createComponent(...args: any[]): Promise<void>{
-        const structureRef: StructureRef | undefined = ViewerMethods.getStructureRefWithModelId(this._plugin.managers.structure.hierarchy.current.structures, args[1]);
-        if(structureRef == null)
-            throw 'createComponent error: model not found';
-        if (args.length === 4 && typeof args[2] === 'string') {
-            await ViewerMethods.createComponentFromChain(this._plugin, args[0], structureRef, args[2], args[3]);
-        } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].position === 'number') {
-            await ViewerMethods.createComponentFromSet(this._plugin, args[0], structureRef, args[2], args[3]);
-        } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].begin === 'number') {
-            await ViewerMethods.createComponentFromMultipleRange(this._plugin, args[0], structureRef, args[2], args[3]);
-        }else if (args.length === 6) {
-            await ViewerMethods.createComponentFromRange(this._plugin, args[0], structureRef, args[2], args[3], args[4], args[5]);
-        }
+    async createComponent(label: string, targets: SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
+        await createComponent(this._plugin, label, targets, representationType);
     }
 
-    public removeComponent(componentLabel: string): void{
-        ViewerMethods.removeComponent(this._plugin, componentLabel);
+    // public async createComponent(componentLabel: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    // public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; position: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    // public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; begin: number; end: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    // public async createComponent(componentLabel: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
+    // public async createComponent(...args: any[]): Promise<void>{
+    //     const structureRef: StructureRef | undefined = ViewerMethods.getStructureRefWithModelId(this._plugin.managers.structure.hierarchy.current.structures, args[1]);
+    //     if(structureRef == null)
+    //         throw 'createComponent error: model not found';
+    //     if (args.length === 4 && typeof args[2] === 'string') {
+    //         await ViewerMethods.createComponentFromChain(this._plugin, args[0], structureRef, args[2], args[3]);
+    //     } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].position === 'number') {
+    //         await ViewerMethods.createComponentFromSet(this._plugin, args[0], structureRef, args[2], args[3]);
+    //     } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].begin === 'number') {
+    //         await ViewerMethods.createComponentFromMultipleRange(this._plugin, args[0], structureRef, args[2], args[3]);
+    //     }else if (args.length === 6) {
+    //         await ViewerMethods.createComponentFromRange(this._plugin, args[0], structureRef, args[2], args[3], args[4], args[5]);
+    //     }
+    // }
+
+    removeComponent(componentLabel: string): void{
+        removeComponent(this._plugin, componentLabel);
     }
 }
 

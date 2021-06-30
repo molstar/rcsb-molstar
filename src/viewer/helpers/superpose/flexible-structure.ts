@@ -19,33 +19,35 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
     isDecorator: true,
     params(a) {
         return {
-            selection: PD.Value<PropsetProps['selection']>([])
+            targets: PD.Value<PropsetProps['targets']>([])
         };
     }
 })({
     apply({ a, params }, plugin: PluginContext) {
         return Task.create('Build Flexible Structure', async ctx => {
             const base = await RootStructureDefinition.create(plugin, ctx, a.data);
-            const { selection } = params;
-            if (!selection?.length) return base;
+            const { targets } = params;
+            if (!targets?.length) return base;
 
             const selectChains: string[] = [];
             const selectBlocks: Structure[][] = [];
-            for (const p of selection) {
-                if (!selectChains.includes(p.label_asym_id)) {
-                    selectChains.push(p.label_asym_id);
+            for (const target of targets) {
+                if (!target.label_asym_id) continue;
+
+                if (!selectChains.includes(target.label_asym_id)) {
+                    selectChains.push(target.label_asym_id);
                     selectBlocks.push([]);
                 }
-                const residues: number[] = (p.label_seq_id) ? toRange(p.label_seq_id.beg, p.label_seq_id.end) : [];
-                const test = rangeToTest(p.label_asym_id, residues);
+                const residues: number[] = (target.label_seq_range) ? toRange(target.label_seq_range.beg, target.label_seq_range.end) : [];
+                const test = rangeToTest(target.label_asym_id, residues);
                 const expression = MS.struct.generator.atomGroups(test);
                 const { selection: sele } = StructureQueryHelper.createAndRun(base.data, expression);
                 const s = StructureSelection.unionStructure(sele);
-                if (!p.matrix) {
-                    selectBlocks[selectChains.indexOf(p.label_asym_id)].push(s);
+                if (!target.matrix) {
+                    selectBlocks[selectChains.indexOf(target.label_asym_id)].push(s);
                 } else {
-                    const ts = Structure.transform(s, p.matrix);
-                    selectBlocks[selectChains.indexOf(p.label_asym_id)].push(ts);
+                    const ts = Structure.transform(s, target.matrix);
+                    selectBlocks[selectChains.indexOf(target.label_asym_id)].push(ts);
                 }
             }
 

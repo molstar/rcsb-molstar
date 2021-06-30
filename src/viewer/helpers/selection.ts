@@ -5,11 +5,23 @@ import { Expression } from 'molstar/lib/mol-script/language/expression';
 import { QueryContext, Structure, StructureElement, StructureSelection } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 
+export type Range = {
+    readonly beg: number
+    readonly end?: number
+}
+
 export type Target = {
     readonly auth_seq_id?: number
+    // readonly auth_seq_range?: Range
     readonly label_seq_id?: number
+    readonly label_seq_range?: Range
     readonly label_comp_id?: string
+    // readonly auth_asym_id?: string
     readonly label_asym_id?: string
+    /**
+     * Mol*-internal UUID of a model.
+     */
+    readonly modelId?: string
     /**
      * Mol*-internal representation, like 'ASM_2'. Enumerated in the order of appearance in the source file. Specify the
      * assemblyId when using this selector.
@@ -23,17 +35,17 @@ export type Target = {
     readonly structOperExpression?: string
 }
 
-export type Range = {
-    label_asym_id: string
-    label_seq_id?: { beg: number, end?: number }
+type SelectBase = {
+    readonly modelId: string
+    readonly label_asym_id: string
 }
-
-export const toRange = (start: number, end?: number) => {
-    if (!end) return [start];
-    const b = start < end ? start : end;
-    const e = start < end ? end : start;
-    return [...Array(e - b + 1)].map((_, i) => b + i);
-};
+export type SelectSingle = {
+    readonly label_seq_id: number
+} & SelectBase;
+export type SelectRange = {
+    readonly label_seq_range: Range
+} & SelectBase;
+export type SelectTarget = SelectSingle | SelectRange;
 
 export type SelectionExpression = {
     tag: string
@@ -81,13 +93,13 @@ function toOperatorName(structure: Structure, expression: string): string {
  * @param labelBase the base label that will appear in the UI (e.g., the entry ID)
  * @param selection a selection by Range or a set of Targets
  */
-export function createSelectionExpressions(labelBase: string, selection?: Range | Target[]): SelectionExpression[] {
+export function createSelectionExpressions(labelBase: string, selection?: Target | Target[]): SelectionExpression[] {
     if (selection) {
-        if ('label_asym_id' in selection && 'label_seq_id' in selection) {
-            const range = selection as Range;
-            const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
-            const test = rangeToTest(range.label_asym_id, residues);
-            const label = labelFromProps(labelBase, range);
+        if ('label_asym_id' in selection && 'label_seq_range' in selection) {
+            const target = selection as Target;
+            const residues: number[] = (target.label_seq_id) ? toRange(target.label_seq_range!.beg, target.label_seq_range!.end) : [];
+            const test = rangeToTest(target.label_asym_id!, residues);
+            const label = labelFromProps(labelBase, target.label_asym_id, residues);
             return [{
                 expression: MS.struct.generator.atomGroups(test),
                 label: `${label}`,
@@ -147,11 +159,17 @@ export function createSelectionExpressions(labelBase: string, selection?: Range 
     }
 }
 
-const labelFromProps = (entryId: string, range: Range) => {
-    const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
-    return entryId + (range.label_asym_id ? `.${range.label_asym_id}` : '') +
-        (residues && residues.length > 0 ? `:${residues[0]}` : '') +
-        (residues && residues.length > 1 ? `-${residues[residues.length - 1]}` : '');
+export const toRange = (start: number, end?: number) => {
+    if (!end) return [start];
+    const b = start < end ? start : end;
+    const e = start < end ? end : start;
+    return [...Array(e - b + 1)].map((_, i) => b + i);
+};
+
+const labelFromProps = (entryId: string, label_asym_id?: string, range?: number[]) => {
+    return entryId + (label_asym_id ? `.${label_asym_id}` : '') +
+        (range && range.length > 0 ? `:${range[0]}` : '') +
+        (range && range.length > 1 ? `-${range[range.length - 1]}` : '');
 };
 
 export function rangeToTest(asymId: string, residues: number[]) {

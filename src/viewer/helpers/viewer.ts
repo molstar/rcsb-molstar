@@ -4,19 +4,95 @@
  * @author Joan Segura <joan.segura@rcsb.org>
  */
 
-import {StructureRef} from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
-import {Structure} from 'molstar/lib/mol-model/structure/structure';
-import {PluginContext} from 'molstar/lib/mol-plugin/context';
-import {Loci} from 'molstar/lib/mol-model/loci';
-import {StructureSelection} from 'molstar/lib/mol-model/structure/query';
-import {Script} from 'molstar/lib/mol-script/script';
-import {MolScriptBuilder} from 'molstar/lib/mol-script/language/builder';
-import {SetUtils} from 'molstar/lib/mol-util/set';
-import {StructureRepresentationRegistry} from 'molstar/lib/mol-repr/structure/registry';
-import {StructureSelectionQuery} from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
+import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
+import { Structure } from 'molstar/lib/mol-model/structure/structure';
+import { PluginContext } from 'molstar/lib/mol-plugin/context';
+import { Loci } from 'molstar/lib/mol-model/loci';
+import { StructureSelection } from 'molstar/lib/mol-model/structure/query';
+import { Script } from 'molstar/lib/mol-script/script';
+import { MolScriptBuilder as MS, MolScriptBuilder } from 'molstar/lib/mol-script/language/builder';
+import { SetUtils } from 'molstar/lib/mol-util/set';
+import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
+import { StructureSelectionQuery } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
+import {
+    rangeToTest,
+    SelectRange,
+    SelectTarget,
+    Target,
+    targetToLoci, toRange
+} from './selection';
+
+export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
+    const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+    if (!data) return;
+
+    return targetToLoci(target, data);
+}
+
+function getStructureWithModelId(structures: StructureRef[], target: { modelId: string }): Structure | undefined {
+    const structureRef = getStructureRefWithModelId(structures, target);
+    if (structureRef) return structureRef.cell?.obj?.data;
+}
+
+export function getStructureRefWithModelId(structures: StructureRef[], target: { modelId: string }): StructureRef | undefined {
+    for (const structure of structures) {
+        if (!structure.cell?.obj?.data?.units) continue;
+
+        const unit =  structure.cell.obj.data.units[0];
+        if (unit.model.id === target.modelId) return structure;
+    }
+}
+
+export function select(plugin: PluginContext, targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
+
+}
+
+export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', target?: { modelId: string; } & Target) {
+    if (mode == null || mode === 'select') {
+        if (!target) {
+            plugin.managers.interactivity.lociSelects.deselectAll();
+        } else {
+            const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+            if (!data) return;
+
+            const loci = targetToLoci(target, data);
+            plugin.managers.interactivity.lociSelects.deselect({ loci });
+        }
+    } else if (mode === 'hover') {
+        plugin.managers.interactivity.lociHighlights.clearHighlights();
+    }
+}
+
+export async function createComponent(plugin: PluginContext, componentLabel: string, targets: SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
+    for (const target of (Array.isArray(targets) ? targets : [targets])) {
+        const structureRef = getStructureRefWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+        if (!structureRef) throw 'createComponent error: model not found';
+
+        const test = 'label_seq_range' in target ?
+            rangeToTest(target.label_asym_id, toRange(target.label_seq_range.beg, target.label_seq_range.end)) :
+            void 0; // TODO
+        const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substr(2),
+            MS.struct.generator.atomGroups(test));
+        await plugin.managers.structure.component.add({
+            selection: sel,
+            options: { checkExisting: false, label: componentLabel },
+            representation: representationType,
+        }, [structureRef]);
+    }
+}
+
+export function removeComponent(plugin: PluginContext, componentLabel: string) {
+    plugin.managers.structure.hierarchy.currentComponentGroups.forEach(c => {
+        for (const comp of c) {
+            if (comp.cell.obj?.label === componentLabel) {
+                plugin.managers.structure.hierarchy.remove(c);
+                break;
+            }
+        }
+    });
+}
 
 export namespace ViewerMethods {
-
     export function selectMultipleSegments(plugin: PluginContext, selection: Array<{modelId: string; asymId: string; begin: number; end: number;}>, mode: 'select'|'hover', modifier: 'add'|'set' ): void {
         if(modifier === 'set'){
             selection.forEach(sel=>{
@@ -36,24 +112,6 @@ export namespace ViewerMethods {
             plugin.managers.structure.selection.fromLoci(modifier, loci);
         }else if(mode === 'hover') {
             plugin.managers.interactivity.lociHighlights.highlight({loci});
-        }
-    }
-
-    export function clearSelection(plugin: PluginContext, mode: 'select'|'hover', options?: {modelId: string; labelAsymId: string;}): void {
-        if(mode == null || mode === 'select') {
-            if(options == null){
-                plugin.managers.interactivity.lociSelects.deselectAll();
-            }else{
-                const data: Structure | undefined = ViewerMethods.getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, options.modelId);
-                if (data == null) return;
-                const sel: StructureSelection = Script.getStructureSelection(Q => Q.struct.generator.atomGroups({
-                    'chain-test': Q.core.rel.eq([options.labelAsymId, MolScriptBuilder.ammp('label_asym_id')])
-                }), data);
-                const loci: Loci = StructureSelection.toLociWithSourceUnits(sel);
-                plugin.managers.interactivity.lociSelects.deselect({loci});
-            }
-        }else if(mode === 'hover') {
-            plugin.managers.interactivity.lociHighlights.clearHighlights();
         }
     }
 
@@ -144,23 +202,6 @@ export namespace ViewerMethods {
         plugin.managers.structure.focus.setFromLoci(loci);
     }
 
-    export function getStructureRefWithModelId(structures: StructureRef[], modelId: string): StructureRef|undefined{
-        for(const structure of structures){
-            if(!structure.cell?.obj?.data?.units)
-                continue;
-            const unit =  structure.cell.obj.data.units[0];
-            const id: string = unit.model.id;
-            if(id === modelId)
-                return structure;
-        }
-    }
-
-    export function getStructureWithModelId(structures: StructureRef[], modelId: string): Structure|undefined{
-        const structureRef: StructureRef | undefined = getStructureRefWithModelId(structures, modelId);
-        if(structureRef != null)
-            return structureRef.cell?.obj?.data;
-    }
-
     export function getLociFromRange(plugin: PluginContext, modelId: string, asymId: string, begin: number, end: number): Loci | undefined {
         const data: Structure | undefined = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, modelId);
         if (data == null) return;
@@ -185,17 +226,6 @@ export namespace ViewerMethods {
             }))
         ), data);
         return StructureSelection.toLociWithSourceUnits(sel);
-    }
-
-    export function removeComponent(plugin: PluginContext, componentLabel: string): void{
-        plugin.managers.structure.hierarchy.currentComponentGroups.forEach(c=>{
-            for(const comp of c){
-                if(comp.cell.obj?.label === componentLabel) {
-                    plugin.managers.structure.hierarchy.remove(c);
-                    break;
-                }
-            }
-        });
     }
 }
 

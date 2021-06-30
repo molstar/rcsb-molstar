@@ -35,7 +35,6 @@ import {
 import {
     createSelectionExpressions,
     normalizeTargets,
-    Range,
     SelectionExpression,
     Target,
     targetToLoci,
@@ -51,12 +50,12 @@ type BaseProps = {
 type ColorProp = {
     name: 'color',
     value: number,
-    positions: Range[]
+    targets: Target[]
 };
 
 export type PropsetProps = {
     kind: 'prop-set',
-    selection?: (Range & {
+    targets?: (Target & {
         matrix?: Mat4
     })[],
     representation: ColorProp[]
@@ -160,10 +159,9 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
         if (p.kind === 'prop-set') {
-
             // This creates a single structure from selections/transformations as specified
             const _structure = plugin.state.data.build().to(modelProperties)
-                .apply(FlexibleStructureFromModel, { selection: p.selection });
+                .apply(FlexibleStructureFromModel, { targets: p.targets });
             structure = await _structure.commit();
 
             const _structureProperties = plugin.state.data.build().to(structure)
@@ -175,13 +173,15 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             for (const repr of p.representation) {
                 if (repr.name === 'color') {
                     const colorValue = repr.value;
-                    const positions = repr.positions;
-                    for (const range of positions) {
-                        if (!structure.data!.inheritedPropertyData.colors[range.label_asym_id])
-                            structure.data!.inheritedPropertyData.colors[range.label_asym_id] = new Map();
-                        const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
+                    const targets = repr.targets;
+                    for (const target of targets) {
+                        if (!target.label_asym_id) continue;
+
+                        if (!structure.data!.inheritedPropertyData.colors[target.label_asym_id])
+                            structure.data!.inheritedPropertyData.colors[target.label_asym_id] = new Map();
+                        const residues: number[] = (target.label_seq_range) ? toRange(target.label_seq_range.beg, target.label_seq_range.end) : [];
                         for (const num of residues) {
-                            structure.data!.inheritedPropertyData.colors[range.label_asym_id].set(num, colorValue);
+                            structure.data!.inheritedPropertyData.colors[target.label_asym_id].set(num, colorValue);
                         }
                     }
                 }
@@ -191,9 +191,9 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             // creating structure selections to have multiple components per each flexible part
             const entryId = model.data!.entryId;
             let selectionExpressions: SelectionExpression[] = [];
-            if (p.selection) {
-                for (const range of p.selection) {
-                    selectionExpressions = selectionExpressions.concat(createSelectionExpressions(entryId, range));
+            if (p.targets) {
+                for (const target of p.targets) {
+                    selectionExpressions = selectionExpressions.concat(createSelectionExpressions(entryId, target));
                 }
             } else {
                 selectionExpressions = selectionExpressions.concat(createSelectionExpressions(entryId));
