@@ -129,6 +129,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         const p = params.preset;
 
         const modelParams = { modelIndex: p.modelIndex || 0 };
+        // jump through some hoops to determine the unknown assemblyId of query selections
+        if (p.kind === 'motif') determineAssemblyId(trajectory, p);
 
         const structureParams: RootStructureDefinition.Params = { name: 'model', params: {} };
         if (p.assemblyId && p.assemblyId !== '' && p.assemblyId !== '0') {
@@ -291,6 +293,68 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         };
     }
 });
+
+function determineAssemblyId(traj: any, p: MotifProps) {
+    // nothing to do if assembly is known
+    if (p.assemblyId && p.assemblyId !== '' && p.assemblyId !== '0') return;
+
+    function equals(expr: string, val: string): boolean {
+        const list = parseOperatorList(expr);
+        const split = val.split('x');
+        let matches = 0;
+        for (let i = 0, il = Math.min(list.length, split.length); i < il; i++) {
+            if (list[i].indexOf(split[i]) !== -1) matches++;
+        }
+        return matches === split.length;
+    }
+
+    function parseOperatorList(value: string): string[][] {
+        // '(X0)(1-5)' becomes [['X0'], ['1', '2', '3', '4', '5']]
+        // kudos to Glen van Ginkel.
+
+        const oeRegex = /\(?([^()]+)\)?]*/g, groups: string[] = [], ret: string[][] = [];
+
+        let g: any;
+        while (g = oeRegex.exec(value)) groups[groups.length] = g[1];
+
+        groups.forEach(g => {
+            const group: string[] = [];
+            g.split(',').forEach(e => {
+                const dashIndex = e.indexOf('-');
+                if (dashIndex > 0) {
+                    const from = parseInt(e.substring(0, dashIndex)), to = parseInt(e.substr(dashIndex + 1));
+                    for (let i = from; i <= to; i++) group[group.length] = i.toString();
+                } else {
+                    group[group.length] = e.trim();
+                }
+            });
+            ret[ret.length] = group;
+        });
+
+        return ret;
+    }
+
+    // set of provided struct_oper_ids
+    const struct_oper_ids = p.targets.map(t => t.struct_oper_id || '1').filter((x, i, a) => a.indexOf(x) === i);
+
+    try {
+        // find first assembly that contains all requested struct_oper_ids - if multiple, the first will be returned
+        const pdbx_struct_assembly_gen = traj.obj.data.representative.sourceData.data.frame.categories.pdbx_struct_assembly_gen;
+        const assembly_id = pdbx_struct_assembly_gen.getField('assembly_id');
+        const oper_expression = pdbx_struct_assembly_gen.getField('oper_expression');
+
+        for (let i = 0, il = pdbx_struct_assembly_gen.rowCount; i < il; i++) {
+            if (struct_oper_ids.some(val => !equals(oper_expression.str(i), val))) continue;
+
+            Object.assign(p, { assemblyId: assembly_id.str(i) });
+            return;
+        }
+    } catch (error) {
+        console.warn(error);
+    }
+    // default to '1' if error or legitimately not found
+    Object.assign(p, { assemblyId: '1' });
+}
 
 async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject, props?: { overrideRadius?: number, hiddenChannels: string[] }) {
     if (!structure?.cell?.parent) return;

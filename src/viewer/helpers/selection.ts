@@ -64,8 +64,6 @@ export function normalizeTargets(targets: Target[], structure: Structure, operat
 }
 
 function toOperatorName(structure: Structure, expression: string): string {
-    // Mol*-internal representation is flipped ('5xX0' insteadof 'X0x5')
-    expression = expression.indexOf('x') === -1 ? expression : expression.split('x').reverse().join('x');
     for (const unit of structure.units) {
         const assembly = unit.conformation.operator.assembly;
         if (!assembly) continue;
