@@ -117,6 +117,16 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             return false;
         };
 
+        function join(opers: any[]) {
+            // this makes the assumptions that '1' is the identity operator
+            if (!opers || !opers.length) return '1';
+            if (opers.length > 1) {
+                // Mol* operators are right-to-left
+                return opers[1] + 'x' + opers[0];
+            }
+            return opers[0];
+        }
+
         const loci = this.plugin.managers.structure.selection.additionsHistory;
         for (let i = 0; i < Math.min(MAX_MOTIF_SIZE, loci.length); i++) {
             const l = loci[i];
@@ -124,9 +134,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             pdbId.add(structure.model.entry);
 
             const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
-            // this makes the assumptions that '1' is the identity operator
-            // TODO is the order always correct or does Mol* sometimes gives right-to-left order?
-            const struct_oper_id = struct_oper_list_ids?.length ? struct_oper_list_ids.join('x') : '1';
+            const struct_oper_id = join(struct_oper_list_ids);
 
             // only first element and only first index will be considered (ignoring multiple residues)
             if (!determineBackboneAtom(structure, elements[0])) {

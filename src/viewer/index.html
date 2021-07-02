@@ -90,6 +90,9 @@
             <button style="padding: 3px;" onclick="motifs1()">Motifs 1</button>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
+            <button style="padding: 3px;" onclick="motifs2()">Motifs 2</button>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
             <button style="padding: 3px" onclick="propset()">Propset</button>
         </div>
         <script>
@@ -438,6 +441,48 @@
                                 -0.23732979915044658, -0.2525976533016715, 0.9380133218572628, 0,
                                 -0.5577097614377604, -0.7551818399893184, -0.344470913935246, 0,
                                 154.77888998938096, 207.0215940587305, 25.17873980937774, 1
+                            ]
+                        }]);
+                    })
+                    .then(function() {
+                        viewer.resetCamera(0)
+                    });
+            }
+
+            function motifs2() {
+                viewer.clear()
+                    .then(function() {
+                        return viewer.loadPdbIds([{
+                            pdbId: '1M4X',
+                            props: {
+                                label: '1M4X',
+                                kind: 'motif',
+                                // assemblyId: '7', // library should be able to infer assemblyId of the query
+                                targets: [
+                                    { label_asym_id: 'C', label_seq_id: 161, struct_oper_id: 'Px81' },
+                                    { label_asym_id: 'C', label_seq_id: 165, struct_oper_id: 'Px81' },
+                                    { label_asym_id: 'C', label_seq_id: 170, struct_oper_id: 'Px81' }
+                                ],
+                                // color: 13203230
+                            }
+                        }, {
+                            pdbId: '6Z1U',
+                            props: {
+                                label: '6Z1U',
+                                kind: 'motif',
+                                assemblyId: '1',
+                                targets: [
+                                    { label_asym_id: 'B', label_seq_id: 318 },
+                                    { label_asym_id: 'B', label_seq_id: 313 },
+                                    { label_asym_id: 'B', label_seq_id: 140 }
+                                ],
+                                // color: 13203230
+                            },
+                            matrix: [
+                                0.06100543003250275, 0.970442655069822, 0.23349387728072024, 0,
+                                -0.12571833183698783, -0.22459600865041415, 0.9663081982154702, 0,
+                                0.990188486373516, -0.08830450792195021, 0.10830085564753325, 0,
+                                -446.93412657022236, 100.02208856523754, 351.2076146944444, 1
                             ]
                         }]);
                     })

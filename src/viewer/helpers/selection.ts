@@ -64,11 +64,21 @@ export function normalizeTargets(targets: Target[], structure: Structure, operat
 }
 
 function toOperatorName(structure: Structure, expression: string): string {
+    function join(opers: any[]) {
+        // this makes the assumptions that '1' is the identity operator
+        if (!opers || !opers.length) return '1';
+        if (opers.length > 1) {
+            // Mol* operators are right-to-left
+            return opers[1] + 'x' + opers[0];
+        }
+        return opers[0];
+    }
+
     for (const unit of structure.units) {
         const assembly = unit.conformation.operator.assembly;
         if (!assembly) continue;
 
-        if (expression === assembly.operList.join('x')) return `ASM_${assembly.operId}`;
+        if (expression === join(assembly.operList)) return `ASM_${assembly.operId}`;
     }
     // TODO better error handling?
     throw Error(`Unable to find expression '${expression}'`);
