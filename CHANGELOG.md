@@ -2,7 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [1.7.1] - 2021-06-30
+## [1.7.1] - 2021-07-02
+### Bug fixes
+- Strucmotif UI now reports chained operators that can be used by sierra/arches/strucmotif
+- Motif preset now works if no assemblyId was provided
+
 ### Breaking Changes
 - Rename experimental 'structOperExpression' prop to 'struct_oper_id'
 
