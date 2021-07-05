@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.7.2] - 2021-07-05
+### Bug fixes
+- Code that determines assemblyId is now aware of label_asym_id
+
 ## [1.7.1] - 2021-07-02
 ### Bug fixes
 - Strucmotif UI now reports chained operators that can be used by sierra/arches/strucmotif
