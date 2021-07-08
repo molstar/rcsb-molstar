@@ -297,25 +297,6 @@ export class Viewer {
         await createComponent(this._plugin, label, targets, representationType);
     }
 
-    // public async createComponent(componentLabel: string, modelId: string, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    // public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; position: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    // public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; begin: number; end: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    // public async createComponent(componentLabel: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    // public async createComponent(...args: any[]): Promise<void>{
-    //     const structureRef: StructureRef | undefined = ViewerMethods.getStructureRefWithModelId(this._plugin.managers.structure.hierarchy.current.structures, args[1]);
-    //     if(structureRef == null)
-    //         throw 'createComponent error: model not found';
-    //     if (args.length === 4 && typeof args[2] === 'string') {
-    //         await ViewerMethods.createComponentFromChain(this._plugin, args[0], structureRef, args[2], args[3]);
-    //     } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].position === 'number') {
-    //         await ViewerMethods.createComponentFromSet(this._plugin, args[0], structureRef, args[2], args[3]);
-    //     } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].begin === 'number') {
-    //         await ViewerMethods.createComponentFromMultipleRange(this._plugin, args[0], structureRef, args[2], args[3]);
-    //     }else if (args.length === 6) {
-    //         await ViewerMethods.createComponentFromRange(this._plugin, args[0], structureRef, args[2], args[3], args[4], args[5]);
-    //     }
-    // }
-
     removeComponent(componentLabel: string): void{
         removeComponent(this._plugin, componentLabel);
     }

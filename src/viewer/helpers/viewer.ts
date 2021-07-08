@@ -8,10 +8,7 @@ import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hie
 import { Structure } from 'molstar/lib/mol-model/structure/structure';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { Loci } from 'molstar/lib/mol-model/loci';
-import { StructureSelection } from 'molstar/lib/mol-model/structure/query';
-import { Script } from 'molstar/lib/mol-script/script';
-import { MolScriptBuilder as MS, MolScriptBuilder } from 'molstar/lib/mol-script/language/builder';
-import { SetUtils } from 'molstar/lib/mol-util/set';
+import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { StructureSelectionQuery } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import {
@@ -26,7 +23,10 @@ export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
     const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
     if (!data) return;
 
-    return targetToLoci(target, data);
+    const loci = targetToLoci(target, data);
+    if (!loci) return;
+
+    plugin.managers.structure.focus.setFromLoci(loci);
 }
 
 function getStructureWithModelId(structures: StructureRef[], target: { modelId: string }): Structure | undefined {
@@ -44,7 +44,7 @@ export function getStructureRefWithModelId(structures: StructureRef[], target: {
 }
 
 export function select(plugin: PluginContext, targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
-
+    // TODO impl
 }
 
 export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', target?: { modelId: string; } & Target) {
@@ -65,14 +65,15 @@ export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', 
 
 export async function createComponent(plugin: PluginContext, componentLabel: string, targets: SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
     for (const target of (Array.isArray(targets) ? targets : [targets])) {
+        // TODO are there performance implications when a large collection of residues is selected? - could move modelId out of 'target'
         const structureRef = getStructureRefWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
         if (!structureRef) throw 'createComponent error: model not found';
 
-        const test = 'label_seq_range' in target ?
-            rangeToTest(target.label_asym_id, toRange(target.label_seq_range.beg, target.label_seq_range.end)) :
-            void 0; // TODO
+        const range = 'label_seq_range' in target ?
+            toRange(target.label_seq_range.beg, target.label_seq_range.end) :
+            target.label_seq_id ? [target.label_seq_id] : [];
         const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substr(2),
-            MS.struct.generator.atomGroups(test));
+            MS.struct.generator.atomGroups(rangeToTest(target.label_asym_id, range)));
         await plugin.managers.structure.component.add({
             selection: sel,
             options: { checkExisting: false, label: componentLabel },
@@ -113,119 +114,6 @@ export namespace ViewerMethods {
         }else if(mode === 'hover') {
             plugin.managers.interactivity.lociHighlights.highlight({loci});
         }
-    }
-
-    export async function createComponentFromChain(plugin: PluginContext, componentLabel: string, structureRef: StructureRef, asymId: string, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
-        const selection: StructureSelectionQuery = StructureSelectionQuery(
-            'innerQuery_' + Math.random().toString(36).substr(2),
-            MolScriptBuilder.struct.generator.atomGroups({
-                'chain-test': MolScriptBuilder.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')])
-            }));
-        await plugin.managers.structure.component.add({
-            selection: selection,
-            options: {checkExisting: false, label: componentLabel},
-            representation: representationType,
-        }, [structureRef]);
-
-    }
-
-    export async function createComponentFromSet(plugin: PluginContext, componentLabel: string, structureRef: StructureRef, residues: Array<{asymId: string, position: number}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
-        await plugin.managers.structure.component.add({
-            selection: StructureSelectionQuery(
-                'innerQuery_' + Math.random().toString(36).substr(2),
-                MolScriptBuilder.struct.combinator.merge(
-                    residues.map(r=>MolScriptBuilder.struct.generator.atomGroups({
-                        'chain-test': MolScriptBuilder.core.rel.eq([r.asymId, MolScriptBuilder.ammp('label_asym_id')]),
-                        'residue-test': MolScriptBuilder.core.rel.eq([r.position, MolScriptBuilder.ammp('label_seq_id')])
-                    }))
-                )
-            ),
-            options: { checkExisting: false, label: componentLabel },
-            representation: representationType,
-        }, [structureRef]);
-    }
-
-    export async function createComponentFromRange(plugin: PluginContext, componentLabel: string, structureRef: StructureRef, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
-        const seq_id: Array<number> = new Array<number>();
-        for(let n = begin; n <= end; n++){
-            seq_id.push(n);
-        }
-        await plugin.managers.structure.component.add({
-            selection: StructureSelectionQuery(
-                'innerQuery_' + Math.random().toString(36).substr(2),
-                MolScriptBuilder.struct.generator.atomGroups({
-                    'chain-test': MolScriptBuilder.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')]),
-                    'residue-test': MolScriptBuilder.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seq_id))), MolScriptBuilder.ammp('label_seq_id')])
-                })
-            ),
-            options: { checkExisting: false, label: componentLabel },
-            representation: representationType,
-        }, [structureRef]);
-    }
-
-    export async function createComponentFromMultipleRange(plugin: PluginContext, componentLabel: string, structureRef: StructureRef, residues: Array<{asymId: string; begin: number; end: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>{
-        const seqIdMap: Map<string, Array<number>> = new Map<string, Array<number>>();
-        residues.forEach(res=>{
-            if(!seqIdMap.has(res.asymId)){
-                seqIdMap.set(res.asymId, new Array<number>());
-            }
-            for(let n = res.begin; n <= res.end; n++){
-                seqIdMap.get(res.asymId)!.push(n);
-            }
-        });
-        await plugin.managers.structure.component.add({
-            selection: StructureSelectionQuery(
-                'innerQuery_' + Math.random().toString(36).substr(2),
-                MolScriptBuilder.struct.combinator.merge(
-                    Array.from(seqIdMap).map(([asymId, seqIds])=>MolScriptBuilder.struct.generator.atomGroups({
-                        'chain-test': MolScriptBuilder.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')]),
-                        'residue-test': MolScriptBuilder.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seqIds))), MolScriptBuilder.ammp('label_seq_id')])
-                    }))
-                )
-            ),
-            options: { checkExisting: false, label: componentLabel },
-            representation: representationType,
-        }, [structureRef]);
-    }
-
-    export function setFocusFromRange(plugin: PluginContext, modelId: string, asymId: string, begin: number, end: number): void{
-        const loci: Loci | undefined = getLociFromRange(plugin, modelId, asymId, begin, end);
-        if(loci == null)
-            return;
-        plugin.managers.structure.focus.setFromLoci(loci);
-    }
-
-    export function setFocusFromSet(plugin: PluginContext, modelId: string, residues: Array<{asymId: string, position: number}>): void{
-        const loci: Loci | undefined = getLociFromSet(plugin, modelId, residues);
-        if(loci == null)
-            return;
-        plugin.managers.structure.focus.setFromLoci(loci);
-    }
-
-    export function getLociFromRange(plugin: PluginContext, modelId: string, asymId: string, begin: number, end: number): Loci | undefined {
-        const data: Structure | undefined = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, modelId);
-        if (data == null) return;
-        const seq_id: Array<number> = new Array<number>();
-        for (let n = begin; n <= end; n++) {
-            seq_id.push(n);
-        }
-        const sel: StructureSelection = Script.getStructureSelection(Q => Q.struct.generator.atomGroups({
-            'chain-test': Q.core.rel.eq([asymId, MolScriptBuilder.ammp('label_asym_id')]),
-            'residue-test': Q.core.set.has([MolScriptBuilder.set(...SetUtils.toArray(new Set(seq_id))), MolScriptBuilder.ammp('label_seq_id')])
-        }), data);
-        return StructureSelection.toLociWithSourceUnits(sel);
-    }
-
-    export function getLociFromSet(plugin: PluginContext, modelId: string, residues: Array<{asymId: string, position: number}>): Loci | undefined {
-        const data: Structure | undefined = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, modelId);
-        if (data == null) return;
-        const sel: StructureSelection = Script.getStructureSelection(Q=>Q.struct.combinator.merge(
-            residues.map(r=>MolScriptBuilder.struct.generator.atomGroups({
-                'chain-test': MolScriptBuilder.core.rel.eq([r.asymId, MolScriptBuilder.ammp('label_asym_id')]),
-                'residue-test': MolScriptBuilder.core.rel.eq([r.position, MolScriptBuilder.ammp('label_seq_id')])
-            }))
-        ), data);
-        return StructureSelection.toLociWithSourceUnits(sel);
     }
 }
 
