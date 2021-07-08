@@ -7,6 +7,8 @@
 - `loadStructureFromData()` is not async anymore
 - Removed `pluginCall()` and `getPlugin()` - replaced by `plugin()` getter
 - Signature changes to `setFocus()`, `select()`, `clearSelection()`, and `createComponent()`: effectively the overloaded methods were replaced by ones that use `Target` objects to reference residues/ranges
+- Merged `Range` into `Target`
+- `ColorProp` and `PropsetProps` now use `Target` (`positions` and `selection` props renamed to `targets` of type `Target[]`)
 
 ## [1.7.2] - 2021-07-05
 ### Bug fixes
