@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.7.3] - 2021-07-08
+### Bug fixes
+- Strucmotif: relative URLs when running inside of sierra
+
 ## [1.7.2] - 2021-07-05
 ### Bug fixes
 - Code that determines assemblyId is now aware of label_asym_id
