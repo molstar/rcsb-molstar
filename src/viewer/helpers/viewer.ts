@@ -7,7 +7,6 @@
 import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
 import { Structure } from 'molstar/lib/mol-model/structure/structure';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
-import { Loci } from 'molstar/lib/mol-model/loci';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { StructureSelectionQuery } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
@@ -16,7 +15,8 @@ import {
     SelectRange,
     SelectTarget,
     Target,
-    targetToLoci, toRange
+    targetToLoci,
+    toRange
 } from './selection';
 
 export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
@@ -44,7 +44,20 @@ export function getStructureRefWithModelId(structures: StructureRef[], target: {
 }
 
 export function select(plugin: PluginContext, targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
-    // TODO impl
+    for (const target of (Array.isArray(targets) ? targets : [targets])) {
+        // TODO are there performance implications when a large collection of residues is selected? - could move modelId out of 'target'
+        const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+        if (!data) return;
+
+        const loci = targetToLoci(target, data);
+        if (!loci) return;
+
+        if (mode === 'hover') {
+            plugin.managers.interactivity.lociHighlights.highlight({ loci });
+        }
+
+        plugin.managers.structure.selection.fromLoci(modifier, loci);
+    }
 }
 
 export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', target?: { modelId: string; } & Target) {
@@ -104,28 +117,3 @@ export function removeComponent(plugin: PluginContext, componentLabel: string) {
         }
     });
 }
-
-export namespace ViewerMethods {
-    export function selectMultipleSegments(plugin: PluginContext, selection: Array<{modelId: string; asymId: string; begin: number; end: number;}>, mode: 'select'|'hover', modifier: 'add'|'set' ): void {
-        if(modifier === 'set'){
-            selection.forEach(sel=>{
-                clearSelection(plugin, mode, {modelId: sel.modelId, labelAsymId: sel.asymId});
-            });
-        }
-        selection.forEach(sel=>{
-            selectSegment(plugin, sel.modelId, sel.asymId, sel.begin, sel.end, mode, 'add');
-        });
-    }
-
-    export function selectSegment(plugin: PluginContext, modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void {
-        const loci: Loci | undefined = getLociFromRange(plugin, modelId, asymId, begin, end);
-        if(loci == null)
-            return;
-        if(mode == null || mode === 'select') {
-            plugin.managers.structure.selection.fromLoci(modifier, loci);
-        }else if(mode === 'hover') {
-            plugin.managers.interactivity.lociHighlights.highlight({loci});
-        }
-    }
-}
-
