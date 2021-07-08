@@ -5,7 +5,8 @@
 ## [2.0.0]
 ### Breaking changes
 - `loadStructureFromData()` is not async anymore
-- removed `pluginCall()` and `getPlugin()` - use `plugin()` getter instead
+- Removed `pluginCall()` and `getPlugin()` - use `plugin()` getter instead
+- Signature changes to `setFocus()`, `select()`, `clearSelection()`, and `createComponent()`: effectively the overloaded methods were replaced by ones that use `Target` objects to reference residues/ranges
 
 ## [1.7.0] - 2021-06-24
 ### Added

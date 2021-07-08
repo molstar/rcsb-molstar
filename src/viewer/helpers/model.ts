@@ -48,26 +48,6 @@ export class ModelLoader {
         }
     }
 
-    /* async handleTrajectoryWithCustomPreset(data: any, format: BuiltInTrajectoryFormat, config: {props?: PresetProps; matrix?: Mat4; preset?: TrajectoryHierarchyPresetProvider;}) {
-        const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format);
-
-        const selector = await this.plugin.builders.structure.hierarchy.applyPreset(trajectory, config?.preset ?? RcsbPreset, {
-            preset: config.props || { kind: 'standard', assemblyId: '' }
-        });
-
-        if (config?.matrix && selector?.structureProperties) {
-            const params = {
-                transform: {
-                    name: 'matrix' as const,
-                    params: { data: matrix, transpose: false }
-                }
-            };
-            const b = this.plugin.state.data.build().to(selector.structureProperties)
-                .insert(StateTransforms.Model.TransformStructureConformation, params);
-            await this.plugin.runTask(this.plugin.state.data.updateTree(b));
-        }
-    } */
-
     constructor(private plugin: PluginContext) {
 
     }
