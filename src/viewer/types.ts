@@ -50,6 +50,7 @@ export interface ViewerState {
     showSuperpositionControls: boolean
     modelLoader: ModelLoader
     collapsed: BehaviorSubject<CollapsedState>
+    detachedFromSierra: boolean
 }
 export function ViewerState(plugin: PluginContext) {
     return plugin.customState as ViewerState;

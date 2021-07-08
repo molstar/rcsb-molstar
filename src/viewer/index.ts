@@ -61,6 +61,11 @@ const DefaultViewerProps = {
     showStructureSourceControls: true,
     showSuperpositionControls: true,
     showMembraneOrientationPreset: false,
+    /**
+     * Needed when running outside of sierra. If set to true, the strucmotif UI will use an absolute URL to sierra-prod.
+     * Otherwise, the link will be relative on the current host.
+     */
+    detachedFromSierra: false,
     modelUrlProviders: [
         (pdbId: string) => ({
             url: `https://models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
@@ -160,7 +165,8 @@ export class Viewer {
                 component: false,
                 volume: true,
                 custom: true
-            })
+            }),
+            detachedFromSierra: o.detachedFromSierra
         };
 
         this.plugin.init()

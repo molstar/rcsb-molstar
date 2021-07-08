@@ -24,8 +24,10 @@ import { Vec3 } from 'molstar/lib/mol-math/linear-algebra/3d/vec3';
 import { Structure } from 'molstar/lib/mol-model/structure/structure/structure';
 import { Unit } from 'molstar/lib/mol-model/structure/structure/unit';
 import { UnitIndex } from 'molstar/lib/mol-model/structure/structure/element/element';
+import { ViewerState } from '../types';
 
-const ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
+const ABSOLUTE_ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
+const RELATIVE_ADVANCED_SEARCH_URL = '/search?query=';
 const RETURN_TYPE = '&return_type=assembly';
 const MIN_MOTIF_SIZE = 3;
 const MAX_MOTIF_SIZE = 10;
@@ -215,7 +217,8 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             }
         };
         // console.log(query);
-        const url = ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
+        const sierraUrl = (this.plugin.customState as ViewerState).detachedFromSierra ? ABSOLUTE_ADVANCED_SEARCH_URL : RELATIVE_ADVANCED_SEARCH_URL;
+        const url = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
         // console.log(url);
         window.open(url, '_blank');
     }
