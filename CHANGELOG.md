@@ -8,6 +8,18 @@
 - Removed `pluginCall()` and `getPlugin()` - use `plugin()` getter instead
 - Signature changes to `setFocus()`, `select()`, `clearSelection()`, and `createComponent()`: effectively the overloaded methods were replaced by ones that use `Target` objects to reference residues/ranges
 
+## [1.7.2] - 2021-07-05
+### Bug fixes
+- Code that determines assemblyId is now aware of label_asym_id
+
+## [1.7.1] - 2021-07-02
+### Bug fixes
+- Strucmotif UI now reports chained operators that can be used by sierra/arches/strucmotif
+- Motif preset now works if no assemblyId was provided
+
+### Breaking Changes
+- Rename experimental 'structOperExpression' prop to 'struct_oper_id'
+
 ## [1.7.0] - 2021-06-24
 ### Added
 - Visualize (an arbitrary number of) structural motifs

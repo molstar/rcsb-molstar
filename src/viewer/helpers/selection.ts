@@ -32,7 +32,7 @@ export type Target = {
      * combination thereof. Specify the assemblyId when using this selector. Order matters, use order as specified in
      * the source CIF file.
      */
-    readonly structOperExpression?: string
+    readonly struct_oper_id?: string
 }
 
 type SelectBase = {
@@ -58,7 +58,7 @@ export type SelectionExpression = {
 
 /**
  * This serves as adapter between the strucmotif-/BioJava-approach to identify transformed chains and the Mol* way.
- * Looks for 'structOperExpression', converts it to an 'operatorName', and removes the original value. This will
+ * Looks for 'struct_oper_id', converts it to an 'operatorName', and removes the original value. This will
  * override pre-existing 'operatorName' values.
  * @param targets collection to process
  * @param structure parent structure
@@ -66,9 +66,9 @@ export type SelectionExpression = {
  */
 export function normalizeTargets(targets: Target[], structure: Structure, operatorName: string = 'ASM_1'): Target[] {
     return targets.map(t => {
-        if (t.structOperExpression) {
-            const { structOperExpression, ...others } = t;
-            const oper = toOperatorName(structure, structOperExpression);
+        if (t.struct_oper_id) {
+            const { struct_oper_id, ...others } = t;
+            const oper = toOperatorName(structure, struct_oper_id);
             return { ...others, operatorName: oper };
         }
         return t.operatorName ? t : { ...t, operatorName };
@@ -76,13 +76,21 @@ export function normalizeTargets(targets: Target[], structure: Structure, operat
 }
 
 function toOperatorName(structure: Structure, expression: string): string {
-    // Mol*-internal representation is flipped ('5xX0' insteadof 'X0x5')
-    expression = expression.indexOf('x') === -1 ? expression : expression.split('x').reverse().join('x');
+    function join(opers: any[]) {
+        // this makes the assumptions that '1' is the identity operator
+        if (!opers || !opers.length) return '1';
+        if (opers.length > 1) {
+            // Mol* operators are right-to-left
+            return opers[1] + 'x' + opers[0];
+        }
+        return opers[0];
+    }
+
     for (const unit of structure.units) {
         const assembly = unit.conformation.operator.assembly;
         if (!assembly) continue;
 
-        if (expression === assembly.operList.join('x')) return `ASM_${assembly.operId}`;
+        if (expression === join(assembly.operList)) return `ASM_${assembly.operId}`;
     }
     // TODO better error handling?
     throw Error(`Unable to find expression '${expression}'`);

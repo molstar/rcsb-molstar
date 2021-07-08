@@ -83,17 +83,17 @@
 
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-            Superposed
-            <button style="padding: 3px;" onclick="superposed()">3PQR | 1U19</button>
+            <button style="padding: 3px;" onclick="superposed()">Superposed</button>
 
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-            Superpose Motifs
-            <button style="padding: 3px;" onclick="motifs()">4CHA | 6YIW</button>
+            <button style="padding: 3px;" onclick="motifs1()">Motifs 1</button>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-            Superpose Propset
-            <button style="padding: 3px" onclick="propset()">4HHB | 1OJ6</button>
+            <button style="padding: 3px;" onclick="motifs2()">Motifs 2</button>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+            <button style="padding: 3px" onclick="propset()">Propset</button>
         </div>
         <script>
 
@@ -360,7 +360,7 @@
                         targets: [
                             { label_asym_id: 'A', label_seq_id: 61 },
                             { label_asym_id: 'A', label_seq_id: 69 },
-                            { label_asym_id: 'A', label_seq_id: 87, structOperExpression: '4' }
+                            { label_asym_id: 'A', label_seq_id: 87, struct_oper_id: '4' }
                         ],
                     }
                 },
@@ -371,9 +371,21 @@
                         kind: 'motif',
                         assemblyId: '6',
                         targets: [
-                            { label_asym_id: 'A', label_seq_id: 46, structOperExpression: 'X0x5' },
-                            { label_asym_id: 'A', label_seq_id: 49, structOperExpression: 'X0x5' },
-                            { label_asym_id: 'A', label_seq_id: 145, structOperExpression: 'X0x5' }
+                            { label_asym_id: 'A', label_seq_id: 46, struct_oper_id: 'X0x5' },
+                            { label_asym_id: 'A', label_seq_id: 49, struct_oper_id: 'X0x5' },
+                            { label_asym_id: 'A', label_seq_id: 145, struct_oper_id: 'X0x5' }
+                        ],
+                    }
+                },
+                {
+                    id: '1G2F',
+                    info: 'motif selection with strucmotif-expression & chain: STRUCTURE OF A CYS2HIS2 ZINC FINGER/TATA BOX COMPLEX (TATAZF;CLONE #6)',
+                    props: {
+                        kind: 'motif',
+                        targets: [
+                            { label_asym_id: 'F', label_seq_id: 7 },
+                            { label_asym_id: 'F', label_seq_id: 25 },
+                            { label_asym_id: 'F', label_seq_id: 29 }
                         ],
                     }
                 }
@@ -407,40 +419,82 @@
                     });
             }
 
-            function motifs() {
+            function motifs1() {
                 viewer.clear()
                     .then(function() {
                         return viewer.loadPdbIds([{
-                            pdbId: '4cha',
+                            pdbId: '5CBG',
                             props: {
-                                label: '4CHA',
+                                label: '5CBG',
                                 kind: 'motif',
-                                assemblyId: '1',
+                                // assemblyId: '2', // library should be able to infer assemblyId of the query
                                 targets: [
-                                    { label_asym_id: 'B', label_seq_id: 42 },
-                                    { label_asym_id: 'B', label_seq_id: 87 },
-                                    { label_asym_id: 'C', label_seq_id: 47 }
+                                    { label_asym_id: 'C', label_seq_id: 30, struct_oper_id: '3' },
+                                    { label_asym_id: 'C', label_seq_id: 32, struct_oper_id: '3' },
+                                    { label_asym_id: 'C', label_seq_id: 34, struct_oper_id: '3' }
                                 ],
                                 // color: 13203230
                             }
                         }, {
-                            pdbId: '6yiw',
+                            pdbId: '2W02',
                             props: {
-                                label: '6YIW #1',
+                                label: '2W02 #1',
                                 kind: 'motif',
-                                assemblyId: '1',
+                                assemblyId: '2',
                                 targets: [
-                                    { label_asym_id: 'A', label_seq_id: 40 },
-                                    { label_asym_id: 'A', label_seq_id: 84 },
-                                    { label_asym_id: 'A', label_seq_id: 177 }
+                                    { label_asym_id: 'B', label_seq_id: 519 },
+                                    { label_asym_id: 'B', label_seq_id: 517 },
+                                    { label_asym_id: 'B', label_seq_id: 515 }
                                 ],
                                 // color: 4947916
                             },
                             matrix: [
-                                0.1651637134205112, 0.7020365618749254, 0.6927233311791812, 0,
-                                0.39076998819946046, 0.5983062863806071, -0.6995201240851049, 0,
-                                -0.9055494266420474, 0.3862308292566522, -0.17551633097799743, 0,
-                                2.4392572425563213, 13.865339409688449, 28.536458135725827, 1
+                                0.7953831708253857, -0.6048923987758781, 0.03835097744411625, 0,
+                                -0.23732979915044658, -0.2525976533016715, 0.9380133218572628, 0,
+                                -0.5577097614377604, -0.7551818399893184, -0.344470913935246, 0,
+                                154.77888998938096, 207.0215940587305, 25.17873980937774, 1
+                            ]
+                        }]);
+                    })
+                    .then(function() {
+                        viewer.resetCamera(0)
+                    });
+            }
+
+            function motifs2() {
+                viewer.clear()
+                    .then(function() {
+                        return viewer.loadPdbIds([{
+                            pdbId: '1M4X',
+                            props: {
+                                label: '1M4X',
+                                kind: 'motif',
+                                // assemblyId: '7', // library should be able to infer assemblyId of the query
+                                targets: [
+                                    { label_asym_id: 'C', label_seq_id: 161, struct_oper_id: 'Px81' },
+                                    { label_asym_id: 'C', label_seq_id: 165, struct_oper_id: 'Px81' },
+                                    { label_asym_id: 'C', label_seq_id: 170, struct_oper_id: 'Px81' }
+                                ],
+                                // color: 13203230
+                            }
+                        }, {
+                            pdbId: '6KIN',
+                            props: {
+                                label: '6KIN @ 1.88 RMSD',
+                                kind: 'motif',
+                                assemblyId: '1',
+                                targets: [
+                                    { label_asym_id: 'B', label_seq_id: 160 },
+                                    { label_asym_id: 'B', label_seq_id: 163 },
+                                    { label_asym_id: 'B', label_seq_id: 167 }
+                                ],
+                                // color: 13203230
+                            },
+                            matrix: [
+                                -0.8175763932146345, -0.5719837107806522, 0.0663586909134339, 0,
+                                -0.4927708198934652, 0.7546183669143351, 0.43327593907008527, 0,
+                                -0.29790226638894773, 0.32153655300313416, -0.8988150448024284, 0,
+                                340.5134831570596, -107.81055538151446, 774.3972821273203, 1.0
                             ]
                         }]);
                     })
