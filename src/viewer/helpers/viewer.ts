@@ -48,19 +48,21 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
 }
 
 export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', target?: { modelId: string; } & Target) {
-    if (mode == null || mode === 'select') {
-        if (!target) {
-            plugin.managers.interactivity.lociSelects.deselectAll();
-        } else {
-            const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
-            if (!data) return;
-
-            const loci = targetToLoci(target, data);
-            plugin.managers.interactivity.lociSelects.deselect({ loci });
-        }
-    } else if (mode === 'hover') {
+    if (mode === 'hover') {
         plugin.managers.interactivity.lociHighlights.clearHighlights();
+        return;
     }
+
+    if (!target) {
+        plugin.managers.interactivity.lociSelects.deselectAll();
+        return;
+    }
+
+    const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+    if (!data) return;
+
+    const loci = targetToLoci(target, data);
+    plugin.managers.interactivity.lociSelects.deselect({ loci });
 }
 
 export async function createComponent(plugin: PluginContext, componentLabel: string, targets: SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
@@ -69,17 +71,27 @@ export async function createComponent(plugin: PluginContext, componentLabel: str
         const structureRef = getStructureRefWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
         if (!structureRef) throw 'createComponent error: model not found';
 
-        const range = 'label_seq_range' in target ?
-            toRange(target.label_seq_range.beg, target.label_seq_range.end) :
-            target.label_seq_id ? [target.label_seq_id] : [];
+        const residues = toResidues(target);
         const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substr(2),
-            MS.struct.generator.atomGroups(rangeToTest(target.label_asym_id, range)));
+            MS.struct.generator.atomGroups(rangeToTest(target.label_asym_id, residues)));
         await plugin.managers.structure.component.add({
             selection: sel,
             options: { checkExisting: false, label: componentLabel },
             representation: representationType,
         }, [structureRef]);
     }
+}
+
+function toResidues(target: SelectTarget): number[] {
+    if ('label_seq_range' in target) {
+        return toRange(target.label_seq_range.beg, target.label_seq_range.end);
+    }
+
+    if (target.label_seq_id) {
+        return [target.label_seq_id];
+    }
+
+    return [];
 }
 
 export function removeComponent(plugin: PluginContext, componentLabel: string) {
