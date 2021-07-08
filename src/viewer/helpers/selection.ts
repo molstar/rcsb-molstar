@@ -105,7 +105,7 @@ export function createSelectionExpressions(labelBase: string, selection?: Target
     if (selection) {
         if ('label_asym_id' in selection && 'label_seq_range' in selection) {
             const target = selection as Target;
-            const residues: number[] = (target.label_seq_id) ? toRange(target.label_seq_range!.beg, target.label_seq_range!.end) : [];
+            const residues: number[] = (target.label_seq_range) ? toRange(target.label_seq_range!.beg, target.label_seq_range!.end) : [];
             const test = rangeToTest(target.label_asym_id!, residues);
             const label = labelFromProps(labelBase, target.label_asym_id, residues);
             return [{
