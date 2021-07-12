@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.7.4] - 2021-07-12
+### Bug fixes
+- structure selection: handle selection of full chains
+
 ## [1.7.3] - 2021-07-08
 ### Bug fixes
 - Strucmotif: relative URLs when running inside of sierra
