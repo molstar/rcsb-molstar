@@ -91,7 +91,7 @@ function toOperatorName(structure: Structure, expression: string): string {
  */
 export function createSelectionExpressions(labelBase: string, selection?: Range | Target[]): SelectionExpression[] {
     if (selection) {
-        if ('label_asym_id' in selection && 'label_seq_id' in selection) {
+        if ('label_asym_id' in selection) {
             const range = selection as Range;
             const residues: number[] = (range.label_seq_id) ? toRange(range.label_seq_id.beg, range.label_seq_id.end) : [];
             const test = rangeToTest(range.label_asym_id, residues);
