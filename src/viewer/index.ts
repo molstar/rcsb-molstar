@@ -36,7 +36,7 @@ import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spe
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
-import {PluginContext} from "molstar/lib/mol-plugin/context";
+import {PluginContext} from 'molstar/lib/mol-plugin/context';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
