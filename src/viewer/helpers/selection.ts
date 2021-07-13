@@ -35,7 +35,7 @@ export type Target = {
     readonly struct_oper_id?: string
 }
 
-type SelectBase = {
+export type SelectBase = {
     readonly modelId: string
     readonly label_asym_id: string
 }
@@ -212,6 +212,8 @@ function targetToExpression(target: Target): Expression {
         residueTests.push(MS.core.rel.eq([target.auth_seq_id, MS.ammp('auth_seq_id')]));
     } else if (target.label_seq_id) {
         residueTests.push(MS.core.rel.eq([target.label_seq_id, MS.ammp('label_seq_id')]));
+    }else if(target.label_seq_range){
+        residueTests.push(MS.core.rel.inRange([MS.ammp('label_seq_id'), target.label_seq_range.beg, target.label_seq_range.end]));
     }
     if (target.label_comp_id) {
         residueTests.push(MS.core.rel.eq([target.label_comp_id, MS.ammp('label_comp_id')]));

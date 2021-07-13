@@ -11,7 +11,7 @@ import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder'
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { StructureSelectionQuery } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import {
-    rangeToTest,
+    rangeToTest, SelectBase,
     SelectRange,
     SelectTarget,
     Target,
@@ -54,9 +54,9 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
 
         if (mode === 'hover') {
             plugin.managers.interactivity.lociHighlights.highlight({ loci });
+        }else if(mode === 'select'){
+            plugin.managers.structure.selection.fromLoci(modifier, loci);
         }
-
-        plugin.managers.structure.selection.fromLoci(modifier, loci);
     }
 }
 
@@ -78,7 +78,7 @@ export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', 
     plugin.managers.interactivity.lociSelects.deselect({ loci });
 }
 
-export async function createComponent(plugin: PluginContext, componentLabel: string, targets: SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
+export async function createComponent(plugin: PluginContext, componentLabel: string, targets: SelectBase | SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
     for (const target of (Array.isArray(targets) ? targets : [targets])) {
         // TODO are there performance implications when a large collection of residues is selected? - could move modelId out of 'target'
         const structureRef = getStructureRefWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
@@ -95,12 +95,12 @@ export async function createComponent(plugin: PluginContext, componentLabel: str
     }
 }
 
-function toResidues(target: SelectTarget): number[] {
+function toResidues(target: SelectBase | SelectTarget): number[] {
     if ('label_seq_range' in target) {
         return toRange(target.label_seq_range.beg, target.label_seq_range.end);
     }
 
-    if (target.label_seq_id) {
+    if ('label_seq_id' in target) {
         return [target.label_seq_id];
     }
 

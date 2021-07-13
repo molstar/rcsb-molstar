@@ -29,13 +29,14 @@ import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { encodeStructureData, downloadAsZipFile } from './helpers/export';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select } from './helpers/viewer';
-import { SelectRange, SelectTarget, Target } from './helpers/selection';
+import {SelectBase, SelectRange, SelectTarget, Target} from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
+import {PluginContext} from "molstar/lib/mol-plugin/context";
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -191,6 +192,10 @@ export class Viewer {
         return this._plugin;
     }
 
+    pluginCall(f: (plugin: PluginContext) => void){
+        f(this.plugin);
+    }
+
     private get customState() {
         return this._plugin.customState as ViewerState;
     }
@@ -269,11 +274,11 @@ export class Viewer {
         select(this._plugin, targets, mode, modifier);
     }
 
-    clearSelection(mode: 'select' | 'hover', target?: { modelId: string; target: Target }) {
+    clearSelection(mode: 'select' | 'hover', target?: { modelId: string; } & Target) {
         clearSelection(this._plugin, mode, target);
     }
 
-    async createComponent(label: string, targets: SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
+    async createComponent(label: string, targets: SelectBase | SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
         await createComponent(this._plugin, label, targets, representationType);
     }
 
