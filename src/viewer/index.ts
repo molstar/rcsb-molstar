@@ -37,6 +37,7 @@ import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spe
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
+import { MotifAlignmentRequest, alignMotifs } from './helpers/superpose/pecos-integration';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -242,6 +243,28 @@ export class Viewer {
             await this.loadPdbId(pdbId, props, matrix);
         }
         this.resetCamera(0);
+    }
+
+    async alignMotifs(request: MotifAlignmentRequest) {
+        const { query, hits } = request;
+
+        await this.loadPdbId(query.entry_id,
+            {
+                kind: 'motif',
+                label: query.entry_id,
+                targets: query.residue_ids
+            });
+
+        for (const hit of hits) {
+            const { rmsd, matrix } = await alignMotifs(query, hit);
+            await this.loadPdbId(hit.entry_id, {
+                kind: 'motif',
+                assemblyId: hit.assembly_id,
+                label: `${hit.entry_id} #${hit.id}: ${rmsd.toFixed(2)} RMSD`,
+                targets: hit.residue_ids
+            }, matrix);
+            this.resetCamera(0);
+        }
     }
 
     loadStructureFromUrl(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps, matrix?: Mat4) {

@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.8.0] - 2021-07-13
+### Added
+- Moved code for motif alignment (i.e., talking to pecos) here
+
 ## [1.7.4] - 2021-07-12
 ### Bug fixes
 - structure selection: handle selection of full chains
