@@ -9,7 +9,7 @@
 - Signature changes to `setFocus()`, `select()`, `clearSelection()`, and `createComponent()`
   - Effectively the overloaded methods were replaced by ones that use `Target` objects to reference residues/ranges
 - Merged `Range` into `Target`
-  - 'CIF' fields are not represented as camelCase (`label_asym_id` to `labelAsymId`)
+  - 'CIF' fields are now represented as camelCase (`label_asym_id` to `labelAsymId`)
   - Renamed `label_seq_id` to `labelSeqRange` (if referring to a range and not a single residue)
 - `ColorProp` and `PropsetProps` now use `Target`
   - `positions` and `selection` props renamed to `targets` of type `Target[]`
