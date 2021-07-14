@@ -334,11 +334,11 @@ function determineAssemblyId(traj: any, p: MotifProps) {
         return ret;
     }
 
-    // set of provided [struct_oper_id, label_asym_id] combinations
+    // set of provided [structOperId, labelAsymId] combinations
     const ids = p.targets.map(t => [t.structOperId || '1', t.labelAsymId!]).filter((x, i, a) => a.indexOf(x) === i);
 
     try {
-        // find first assembly that contains all requested struct_oper_ids - if multiple, the first will be returned
+        // find first assembly that contains all requested structOperIds - if multiple, the first will be returned
         const pdbx_struct_assembly_gen = traj.obj.data.representative.sourceData.data.frame.categories.pdbx_struct_assembly_gen;
         const assembly_id = pdbx_struct_assembly_gen.getField('assembly_id');
         const oper_expression = pdbx_struct_assembly_gen.getField('oper_expression');
