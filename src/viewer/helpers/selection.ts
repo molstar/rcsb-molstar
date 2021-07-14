@@ -213,7 +213,7 @@ function targetToExpression(target: Target): Expression {
     } else if (target.label_seq_id) {
         residueTests.push(MS.core.rel.eq([target.label_seq_id, MS.ammp('label_seq_id')]));
     }else if(target.label_seq_range){
-        residueTests.push(MS.core.rel.inRange([MS.ammp('label_seq_id'), target.label_seq_range.beg, target.label_seq_range.end]));
+        residueTests.push(MS.core.rel.inRange([MS.ammp('label_seq_id'), target.label_seq_range.beg, target.label_seq_range.end ?? target.label_seq_range.beg]));
     }
     if (target.label_comp_id) {
         residueTests.push(MS.core.rel.eq([target.label_comp_id, MS.ammp('label_comp_id')]));
