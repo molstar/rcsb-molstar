@@ -32,22 +32,22 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
             const selectChains: string[] = [];
             const selectBlocks: Structure[][] = [];
             for (const target of targets) {
-                if (!target.label_asym_id) continue;
+                if (!target.labelAsymId) continue;
 
-                if (!selectChains.includes(target.label_asym_id)) {
-                    selectChains.push(target.label_asym_id);
+                if (!selectChains.includes(target.labelAsymId)) {
+                    selectChains.push(target.labelAsymId);
                     selectBlocks.push([]);
                 }
-                const residues: number[] = (target.label_seq_range) ? toRange(target.label_seq_range.beg, target.label_seq_range.end) : [];
-                const test = rangeToTest(target.label_asym_id, residues);
+                const residues: number[] = (target.labelSeqRange) ? toRange(target.labelSeqRange.beg, target.labelSeqRange.end) : [];
+                const test = rangeToTest(target.labelAsymId, residues);
                 const expression = MS.struct.generator.atomGroups(test);
                 const { selection: sele } = StructureQueryHelper.createAndRun(base.data, expression);
                 const s = StructureSelection.unionStructure(sele);
                 if (!target.matrix) {
-                    selectBlocks[selectChains.indexOf(target.label_asym_id)].push(s);
+                    selectBlocks[selectChains.indexOf(target.labelAsymId)].push(s);
                 } else {
                     const ts = Structure.transform(s, target.matrix);
-                    selectBlocks[selectChains.indexOf(target.label_asym_id)].push(ts);
+                    selectBlocks[selectChains.indexOf(target.labelAsymId)].push(ts);
                 }
             }
 

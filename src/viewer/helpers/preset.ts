@@ -177,13 +177,13 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     const colorValue = repr.value;
                     const targets = repr.targets;
                     for (const target of targets) {
-                        if (!target.label_asym_id) continue;
+                        if (!target.labelAsymId) continue;
 
-                        if (!structure.data!.inheritedPropertyData.colors[target.label_asym_id])
-                            structure.data!.inheritedPropertyData.colors[target.label_asym_id] = new Map();
-                        const residues: number[] = (target.label_seq_range) ? toRange(target.label_seq_range.beg, target.label_seq_range.end) : [];
+                        if (!structure.data!.inheritedPropertyData.colors[target.labelAsymId])
+                            structure.data!.inheritedPropertyData.colors[target.labelAsymId] = new Map();
+                        const residues: number[] = (target.labelSeqRange) ? toRange(target.labelSeqRange.beg, target.labelSeqRange.end) : [];
                         for (const num of residues) {
-                            structure.data!.inheritedPropertyData.colors[target.label_asym_id].set(num, colorValue);
+                            structure.data!.inheritedPropertyData.colors[target.labelAsymId].set(num, colorValue);
                         }
                     }
                 }
@@ -246,7 +246,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         if ((p.kind === 'feature' || p.kind === 'feature-density') && structure?.obj) {
             let loci = targetToLoci(p.target, structure!.obj.data);
             // if target is only defined by chain: then don't force first residue
-            const chainMode = p.target.label_asym_id && !p.target.auth_seq_id && !p.target.label_seq_id && !p.target.label_comp_id;
+            const chainMode = p.target.labelAsymId && !p.target.authSeqId && !p.target.labelSeqId && !p.target.labelCompId;
             // HELP-16678: check for rare case where ligand is not present in requested assembly
             if (loci.elements.length === 0 && !!p.assemblyId) {
                 // switch to Model (a.k.a. show coordinates independent of assembly)
@@ -335,7 +335,7 @@ function determineAssemblyId(traj: any, p: MotifProps) {
     }
 
     // set of provided [struct_oper_id, label_asym_id] combinations
-    const ids = p.targets.map(t => [t.struct_oper_id || '1', t.label_asym_id!]).filter((x, i, a) => a.indexOf(x) === i);
+    const ids = p.targets.map(t => [t.structOperId || '1', t.labelAsymId!]).filter((x, i, a) => a.indexOf(x) === i);
 
     try {
         // find first assembly that contains all requested struct_oper_ids - if multiple, the first will be returned

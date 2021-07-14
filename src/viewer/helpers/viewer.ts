@@ -45,7 +45,6 @@ export function getStructureRefWithModelId(structures: StructureRef[], target: {
 
 export function select(plugin: PluginContext, targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
     for (const target of (Array.isArray(targets) ? targets : [targets])) {
-        // TODO are there performance implications when a large collection of residues is selected? - could move modelId out of 'target'
         const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
         if (!data) return;
 
@@ -80,13 +79,12 @@ export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', 
 
 export async function createComponent(plugin: PluginContext, componentLabel: string, targets: SelectBase | SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
     for (const target of (Array.isArray(targets) ? targets : [targets])) {
-        // TODO are there performance implications when a large collection of residues is selected? - could move modelId out of 'target'
         const structureRef = getStructureRefWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
         if (!structureRef) throw 'createComponent error: model not found';
 
         const residues = toResidues(target);
         const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substr(2),
-            MS.struct.generator.atomGroups(rangeToTest(target.label_asym_id, residues)));
+            MS.struct.generator.atomGroups(rangeToTest(target.labelAsymId, residues)));
         await plugin.managers.structure.component.add({
             selection: sel,
             options: { checkExisting: false, label: componentLabel },
@@ -96,12 +94,12 @@ export async function createComponent(plugin: PluginContext, componentLabel: str
 }
 
 function toResidues(target: SelectBase | SelectTarget): number[] {
-    if ('label_seq_range' in target) {
-        return toRange(target.label_seq_range.beg, target.label_seq_range.end);
+    if ('labelSeqRange' in target) {
+        return toRange(target.labelSeqRange.beg, target.labelSeqRange.end);
     }
 
-    if ('label_seq_id' in target) {
-        return [target.label_seq_id];
+    if ('labelSeqId' in target) {
+        return [target.labelSeqId];
     }
 
     return [];

@@ -11,20 +11,20 @@ export type Range = {
 }
 
 export type Target = {
-    readonly auth_seq_id?: number
-    // readonly auth_seq_range?: Range
-    readonly label_seq_id?: number
-    readonly label_seq_range?: Range
-    readonly label_comp_id?: string
-    // readonly auth_asym_id?: string
-    readonly label_asym_id?: string
+    readonly authSeqId?: number
+    // readonly authSeqRange?: Range
+    readonly labelSeqId?: number
+    readonly labelSeqRange?: Range
+    readonly labelCompId?: string
+    // readonly authAsymId?: string
+    readonly labelAsymId?: string
     /**
      * Mol*-internal UUID of a model.
      */
     readonly modelId?: string
     /**
-     * Mol*-internal representation, like 'ASM_2'. Enumerated in the order of appearance in the source file. Specify the
-     * assemblyId when using this selector.
+     * Mol*-internal representation, like 'ASM_2'. Enumerated in the order of appearance in the source file. If
+     * possible, specify the assemblyId when using this selector.
      */
     readonly operatorName?: string
     /**
@@ -32,18 +32,18 @@ export type Target = {
      * combination thereof. Specify the assemblyId when using this selector. Order matters, use order as specified in
      * the source CIF file.
      */
-    readonly struct_oper_id?: string
+    readonly structOperId?: string
 }
 
 export type SelectBase = {
     readonly modelId: string
-    readonly label_asym_id: string
+    readonly labelAsymId: string
 }
 export type SelectSingle = {
-    readonly label_seq_id: number
+    readonly labelSeqId: number
 } & SelectBase;
 export type SelectRange = {
-    readonly label_seq_range: Range
+    readonly labelSeqRange: Range
 } & SelectBase;
 export type SelectTarget = SelectSingle | SelectRange;
 
@@ -58,7 +58,7 @@ export type SelectionExpression = {
 
 /**
  * This serves as adapter between the strucmotif-/BioJava-approach to identify transformed chains and the Mol* way.
- * Looks for 'struct_oper_id', converts it to an 'operatorName', and removes the original value. This will
+ * Looks for 'structOperId', converts it to an 'operatorName', and removes the original value. This will
  * override pre-existing 'operatorName' values.
  * @param targets collection to process
  * @param structure parent structure
@@ -66,9 +66,9 @@ export type SelectionExpression = {
  */
 export function normalizeTargets(targets: Target[], structure: Structure, operatorName: string = 'ASM_1'): Target[] {
     return targets.map(t => {
-        if (t.struct_oper_id) {
-            const { struct_oper_id, ...others } = t;
-            const oper = toOperatorName(structure, struct_oper_id);
+        if (t.structOperId) {
+            const { structOperId, ...others } = t;
+            const oper = toOperatorName(structure, structOperId);
             return { ...others, operatorName: oper };
         }
         return t.operatorName ? t : { ...t, operatorName };
@@ -103,11 +103,11 @@ function toOperatorName(structure: Structure, expression: string): string {
  */
 export function createSelectionExpressions(labelBase: string, selection?: Target | Target[]): SelectionExpression[] {
     if (selection) {
-        if ('label_asym_id' in selection && 'label_seq_range' in selection) {
+        if ('labelAsymId' in selection && 'labelSeqRange' in selection) {
             const target = selection as Target;
-            const residues: number[] = (target.label_seq_range) ? toRange(target.label_seq_range!.beg, target.label_seq_range!.end) : [];
-            const test = rangeToTest(target.label_asym_id!, residues);
-            const label = labelFromProps(labelBase, target.label_asym_id, residues);
+            const residues: number[] = (target.labelSeqRange) ? toRange(target.labelSeqRange!.beg, target.labelSeqRange!.end) : [];
+            const test = rangeToTest(target.labelAsymId!, residues);
+            const label = labelFromProps(labelBase, target.labelAsymId, residues);
             return [{
                 expression: MS.struct.generator.atomGroups(test),
                 label: `${label}`,
@@ -174,8 +174,8 @@ export const toRange = (start: number, end?: number) => {
     return [...Array(e - b + 1)].map((_, i) => b + i);
 };
 
-const labelFromProps = (entryId: string, label_asym_id?: string, range?: number[]) => {
-    return entryId + (label_asym_id ? `.${label_asym_id}` : '') +
+const labelFromProps = (entryId: string, labelAsymId?: string, range?: number[]) => {
+    return entryId + (labelAsymId ? `.${labelAsymId}` : '') +
         (range && range.length > 0 ? `:${range[0]}` : '') +
         (range && range.length > 1 ? `-${range[range.length - 1]}` : '');
 };
@@ -208,15 +208,15 @@ function targetToExpression(target: Target): Expression {
     const chainTests: Expression[] = [];
     const tests: { 'residue-test': Expression, 'chain-test': Expression } = Object.create(null);
 
-    if (target.auth_seq_id) {
-        residueTests.push(MS.core.rel.eq([target.auth_seq_id, MS.ammp('auth_seq_id')]));
-    } else if (target.label_seq_id) {
-        residueTests.push(MS.core.rel.eq([target.label_seq_id, MS.ammp('label_seq_id')]));
-    }else if(target.label_seq_range){
-        residueTests.push(MS.core.rel.inRange([MS.ammp('label_seq_id'), target.label_seq_range.beg, target.label_seq_range.end ?? target.label_seq_range.beg]));
+    if (target.authSeqId) {
+        residueTests.push(MS.core.rel.eq([target.authSeqId, MS.ammp('auth_seq_id')]));
+    } else if (target.labelSeqId) {
+        residueTests.push(MS.core.rel.eq([target.labelSeqId, MS.ammp('label_seq_id')]));
+    }else if(target.labelSeqRange){
+        residueTests.push(MS.core.rel.inRange([MS.ammp('label_seq_id'), target.labelSeqRange.beg, target.labelSeqRange.end ?? target.labelSeqRange.beg]));
     }
-    if (target.label_comp_id) {
-        residueTests.push(MS.core.rel.eq([target.label_comp_id, MS.ammp('label_comp_id')]));
+    if (target.labelCompId) {
+        residueTests.push(MS.core.rel.eq([target.labelCompId, MS.ammp('label_comp_id')]));
     }
     if (residueTests.length === 1) {
         tests['residue-test'] = residueTests[0];
@@ -224,8 +224,8 @@ function targetToExpression(target: Target): Expression {
         tests['residue-test'] = MS.core.logic.and(residueTests);
     }
 
-    if (target.label_asym_id) {
-        chainTests.push(MS.core.rel.eq([target.label_asym_id, MS.ammp('label_asym_id')]));
+    if (target.labelAsymId) {
+        chainTests.push(MS.core.rel.eq([target.labelAsymId, MS.ammp('label_asym_id')]));
     }
     if (target.operatorName) {
         chainTests.push(MS.core.rel.eq([target.operatorName, MS.acp('operatorName')]));
