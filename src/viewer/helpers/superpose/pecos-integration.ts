@@ -18,23 +18,28 @@ export type MotifAlignmentRequest = {
 
 export async function alignMotifs(query: MotifSelection, hit: MotifSelection): Promise<{ rmsd: number, matrix: Mat4 }> {
     const q = {
-        mode: 'pairwise',
-        method: {
-            name: 'qcp',
-            parameters: {
-                atom_pairing_strategy: 'all'
-            }
+        options: {
+            return_sequence_data: false
         },
-        structures: [
-            {
-                entry_id: query.entry_id,
-                residue_ids: convertToPecosIdentifiers(query.residue_ids)
+        context: {
+            mode: 'pairwise',
+            method: {
+                name: 'qcp',
+                parameters: {
+                    atom_pairing_strategy: 'all'
+                }
             },
-            {
-                entry_id: hit.entry_id,
-                residue_ids: convertToPecosIdentifiers(hit.residue_ids)
-            }
-        ]
+            structures: [
+                {
+                    entry_id: query.entry_id,
+                    residue_ids: convertToPecosIdentifiers(query.residue_ids)
+                },
+                {
+                    entry_id: hit.entry_id,
+                    residue_ids: convertToPecosIdentifiers(hit.residue_ids)
+                }
+            ]
+        }
     };
 
     const formData = new FormData();
