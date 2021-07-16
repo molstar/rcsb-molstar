@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.8.1] - 2021-07-16
+### Added
+- Prepare for pecos API changes
+
 ## [1.8.0] - 2021-07-13
 ### Added
 - Moved code for motif alignment (i.e., talking to pecos) here
