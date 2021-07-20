@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.8.2] - 2021-07-20
+### Bug fixes
+- Post-pare for pecos API changes
+
 ## [1.8.1] - 2021-07-16
 ### Added
 - Prepare for pecos API changes

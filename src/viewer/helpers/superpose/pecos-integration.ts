@@ -56,8 +56,8 @@ export async function alignMotifs(query: MotifSelection, hit: MotifSelection): P
     // polls every 25ms for up to 10 seconds
     const result = await pollUntilDone(url, 25, 10 * 1000);
 
-    const { alignment_summary, rigid_blocks } = result.results[0];
-    return { rmsd: alignment_summary.scores[0].value, matrix: rigid_blocks[0].transformations[0] };
+    const { alignment_summary, blocks } = result.results[0];
+    return { rmsd: alignment_summary.scores[0].value, matrix: blocks[0].transformations[0] };
 }
 
 // convert strucmotif/arches residue identifiers to the pecos/sierra flavor
