@@ -37,6 +37,7 @@ import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
 import {PluginContext} from 'molstar/lib/mol-plugin/context';
+import {TrajectoryHierarchyPresetProvider} from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -222,11 +223,11 @@ export class Viewer {
         return PluginCommands.State.RemoveObject(this._plugin, { state, ref: state.tree.root.ref });
     }
 
-    async loadPdbId(pdbId: string, props?: PresetProps, matrix?: Mat4) {
+    async loadPdbId<P>(pdbId: string, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}) {
         for (const provider of this.modelUrlProviders) {
             try {
                 const p = provider(pdbId);
-                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, props, matrix);
+                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
                 break;
             } catch (e) {
                 console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`);
@@ -234,23 +235,23 @@ export class Viewer {
         }
     }
 
-    async loadPdbIds(args: { pdbId: string, props?: PresetProps, matrix?: Mat4 }[]) {
-        for (const { pdbId, props, matrix } of args) {
-            await this.loadPdbId(pdbId, props, matrix);
+    async loadPdbIds<P>(args: { pdbId: string, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P} }[]) {
+        for (const { pdbId, config } of args) {
+            await this.loadPdbId(pdbId, config);
         }
         this.resetCamera(0);
     }
 
-    loadStructureFromUrl(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps, matrix?: Mat4) {
-        return this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, props, matrix);
+    loadStructureFromUrl<P>(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}) {
+        return this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
     }
 
     loadSnapshotFromUrl(url: string, type: PluginState.SnapshotType) {
         return PluginCommands.State.Snapshots.OpenUrl(this._plugin, { url, type });
     }
 
-    loadStructureFromData(data: string | number[], format: BuiltInTrajectoryFormat, isBinary: boolean, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4) {
-        return this.customState.modelLoader.parse({ data, format, isBinary }, props, matrix);
+    loadStructureFromData<P>(data: string | number[], format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps & { dataLabel?: string }; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}) {
+        return this.customState.modelLoader.parse({ data, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
     }
 
     handleResize() {

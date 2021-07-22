@@ -13,6 +13,9 @@
   - Renamed `label_seq_id` to `labelSeqRange` (if referring to a range and not a single residue)
 - `ColorProp` and `PropsetProps` now use `Target`
   - `positions` and `selection` props renamed to `targets` of type `Target[]`
+- Changed loading methods signature 
+  - Added optional configuration parameter `config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}`
+  - The loading configuration includes an optional trajectory preset provider `TrajectoryHierarchyPresetProvider` 
 
 ## [1.7.2] - 2021-07-05
 ### Bug fixes
