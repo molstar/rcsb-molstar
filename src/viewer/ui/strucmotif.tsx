@@ -41,7 +41,7 @@ const MAX_MOTIF_EXTENT_SQUARED = MAX_MOTIF_EXTENT * MAX_MOTIF_EXTENT;
 export class StrucmotifSubmitControls extends CollapsableControls {
     protected defaultState() {
         return {
-            header: 'Structural Motif Search',
+            header: 'Structure Motif Search',
             isCollapsed: false,
             brand: { accent:  'gray' as const, svg: SearchIconSvg }
         };

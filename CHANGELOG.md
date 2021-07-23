@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.8.3] - 2021-07-23
+### General
+- Rename 'Structural Motif Search' to 'Structure Motif Search'
+
 ## [1.8.2] - 2021-07-20
 ### Bug fixes
 - Post-pare for pecos API changes
