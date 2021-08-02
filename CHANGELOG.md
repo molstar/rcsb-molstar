@@ -2,6 +2,9 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## Unreleased
+- Reset camera for membrane preset
+
 ## [1.8.3] - 2021-07-23
 ### General
 - Rename 'Structural Motif Search' to 'Structure Motif Search'

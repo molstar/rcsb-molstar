@@ -239,6 +239,9 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             console.warn('Using empty representation');
         } else if (p.kind === 'membrane') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
+
+            // reset the camera because the membranes render 1st and the structure might not be fully visible
+            requestAnimationFrame(() => plugin.canvas3d?.requestCameraReset());
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
