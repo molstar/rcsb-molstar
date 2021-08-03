@@ -2,7 +2,9 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## Unreleased
+## [1.8.3] - 2021-08-03
+### General
+- Mol* 2.2.1
 - Reset camera for membrane preset
 
 ## [1.8.3] - 2021-07-23

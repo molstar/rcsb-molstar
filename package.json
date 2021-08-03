@@ -49,7 +49,7 @@
         "file-loader": "^6.2.0",
         "fs-extra": "^9.0.1",
         "mini-css-extract-plugin": "^1.3.2",
-        "molstar": "^2.0.7",
+        "molstar": "^2.2.1",
         "node-sass": "^5.0.0",
         "raw-loader": "^4.0.2",
         "react": "^17.0.1",
