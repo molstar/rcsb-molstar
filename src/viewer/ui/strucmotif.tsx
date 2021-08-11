@@ -209,10 +209,11 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             service: 'strucmotif',
             parameters: {
                 value: {
-                    data: pdbId.values().next().value as string,
+                    entry_id: pdbId.values().next().value as string,
                     residue_ids: residueIds.sort((a, b) => this.sortResidueIds(a, b))
                 },
-                score_cutoff: 0,
+                rmsd_cutoff: 2,
+                atom_pairing_scheme: 'ALL',
                 exchanges: exchanges
             }
         };

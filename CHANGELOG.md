@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.8.5] - 2021-08-11
+### General
+- Update strucmotif integration with rcsb.org
+
 ## [1.8.4] - 2021-08-03
 ### General
 - Mol* 2.2.1
