@@ -5,6 +5,13 @@
 RCSB PDB implementation of [Mol* (/'mol-star/)](https://github.com/molstar/molstar).
 Try it [here](https://rcsb.org/3d-view/).
 
+## Functionality
+Provides custom features used in the Mol* viewer on [rcsb.org](https://www.rcsb.org/3d-view):
+- visualization of structure alignment
+- visualization of structure motifs & UI to launch structure motif queries
+- interactivity functionality to highlight and add representations for selections of a structure, used in the [3D Protein Feature View](https://www.rcsb.org/3d-sequence/4hhb)
+- linkable focus representation on ligands or chains
+
 ## Install
     npm install @rcsb/rcsb-molstar
 
