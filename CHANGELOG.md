@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.8.6] - 2021-08-23
+### General
+- Display warning if membrane preset calculation fails
+- Add fallback if membrane preset calculation fails
+
 ## [1.8.5] - 2021-08-11
 ### General
 - Update strucmotif integration with rcsb.org

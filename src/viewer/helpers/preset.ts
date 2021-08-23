@@ -238,10 +238,20 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         } else if (p.kind === 'empty') {
             console.warn('Using empty representation');
         } else if (p.kind === 'membrane') {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
+            try {
+                representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
 
-            // reset the camera because the membranes render 1st and the structure might not be fully visible
-            requestAnimationFrame(() => plugin.canvas3d?.requestCameraReset());
+                // reset the camera because the membranes render 1st and the structure might not be fully visible
+                requestAnimationFrame(() => plugin.canvas3d?.requestCameraReset());
+            } catch (error) {
+                const msg = 'Membrane calculation failed! - This can happen for tiny structures with only a dozen of residues.';
+                plugin.log.error(msg);
+                console.error(msg);
+                console.error(error);
+
+                // fall back to default representation to show something
+                representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
+            }
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
