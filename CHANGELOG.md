@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.8.7] - 2021-08-25
+### General
+- Mol* 2.2.3
+
 ## [1.8.6] - 2021-08-23
 ### General
 - Display warning if membrane preset calculation fails
