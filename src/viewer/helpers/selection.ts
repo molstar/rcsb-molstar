@@ -50,9 +50,9 @@ export type SelectionExpression = {
  * override pre-existing 'operatorName' values.
  * @param targets collection to process
  * @param structure parent structure
- * @param operatorName optional value to which missing operators are set, will default to 'ASM_1' if not specified
+ * @param operatorName optional value to which missing operators are set
  */
-export function normalizeTargets(targets: Target[], structure: Structure, operatorName: string = 'ASM_1'): Target[] {
+export function normalizeTargets(targets: Target[], structure: Structure, operatorName = undefined): Target[] {
     return targets.map(t => {
         if (t.struct_oper_id) {
             const { struct_oper_id, ...others } = t;

@@ -505,18 +505,6 @@
             function motifsAlphaFold() {
                 viewer.clear()
                     .then(function() {
-                        const url = 'https://alphafold.ebi.ac.uk/files/AF-F1Q6S1-F1-model_v1.cif';
-                        const label = 'AF-F1Q6S1-F1';
-                        const targets = [
-                            { label_asym_id: "A", struct_oper_id: '1', label_seq_id: 260 },
-                            { label_asym_id: "A", struct_oper_id: '1', label_seq_id: 265 },
-                            { label_asym_id: "A", struct_oper_id: '1', label_seq_id: 283 },
-                            { label_asym_id: "A", struct_oper_id: '1', label_seq_id: 342 },
-                            { label_asym_id: "A", struct_oper_id: '1', label_seq_id: 344 }];
-                        const mat = [-0.471, 0.856, 0.215, 0, 0.405, -0.007, 0.914, 0, 0.784, 0.518, -0.343, 0, 54.981, 65.575, 12.287, 1];
-                        return viewer.loadStructureFromUrl(url, 'mmcif', false, { kind: 'motif', label, targets, unsafe: true }, mat);
-                    })
-                    .then(function() {
                         return viewer.loadPdbId('1LAP', {
                             label: '1LAP',
                             kind: 'motif',
@@ -528,6 +516,20 @@
                                 { label_asym_id: 'A', label_seq_id: 250, struct_oper_id: '1' }
                             ],
                         });
+                    })
+                    .then(function() {
+                        const url = 'https://alphafold.ebi.ac.uk/files/AF-F1Q6S1-F1-model_v1.cif';
+                        const label = 'AF-F1Q6S1-F1';
+                        const targets = [
+                            // AF target must be devoid of struct_oper_id
+                            { label_asym_id: 'A', label_seq_id: 260 },
+                            { label_asym_id: 'A', label_seq_id: 265 },
+                            { label_asym_id: 'A', label_seq_id: 283 },
+                            { label_asym_id: 'A', label_seq_id: 342 },
+                            { label_asym_id: 'A', label_seq_id: 344 }
+                        ];
+                        const mat = [-0.471, 0.856, 0.215, 0, 0.405, -0.007, 0.914, 0, 0.784, 0.518, -0.343, 0, 54.981, 65.575, 12.287, 1];
+                        return viewer.loadStructureFromUrl(url, 'mmcif', false, { kind: 'motif', label, targets, skipTargetNormalization: true }, mat);
                     })
                     .then(function() {
                         viewer.resetCamera(0)
