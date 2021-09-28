@@ -514,7 +514,7 @@
                             { label_asym_id: "A", struct_oper_id: '1', label_seq_id: 342 },
                             { label_asym_id: "A", struct_oper_id: '1', label_seq_id: 344 }];
                         const mat = [-0.471, 0.856, 0.215, 0, 0.405, -0.007, 0.914, 0, 0.784, 0.518, -0.343, 0, 54.981, 65.575, 12.287, 1];
-                        return viewer.loadStructureFromUrl(url, 'mmcif', false, { assemblyId: '1', kind: 'motif', label, targets, unsafe: true }, mat);
+                        return viewer.loadStructureFromUrl(url, 'mmcif', false, { kind: 'motif', label, targets, unsafe: true }, mat);
                     })
                     .then(function() {
                         viewer.resetCamera(0)

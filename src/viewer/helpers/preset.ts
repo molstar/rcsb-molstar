@@ -354,20 +354,26 @@ function determineAssemblyId(traj: any, p: MotifProps) {
     try {
         // find first assembly that contains all requested struct_oper_ids - if multiple, the first will be returned
         const pdbx_struct_assembly_gen = traj.obj.data.representative.sourceData.data.frame.categories.pdbx_struct_assembly_gen;
-        const assembly_id = pdbx_struct_assembly_gen.getField('assembly_id');
-        const oper_expression = pdbx_struct_assembly_gen.getField('oper_expression');
-        const asym_id_list = pdbx_struct_assembly_gen.getField('asym_id_list');
+        if (pdbx_struct_assembly_gen) {
+            const assembly_id = pdbx_struct_assembly_gen.getField('assembly_id');
+            const oper_expression = pdbx_struct_assembly_gen.getField('oper_expression');
+            const asym_id_list = pdbx_struct_assembly_gen.getField('asym_id_list');
 
-        for (let i = 0, il = pdbx_struct_assembly_gen.rowCount; i < il; i++) {
-            if (ids.some(val => !equals(oper_expression.str(i), val[0]) || asym_id_list.str(i).indexOf(val[1]) === -1)) continue;
+            for (let i = 0, il = pdbx_struct_assembly_gen.rowCount; i < il; i++) {
+                if (ids.some(val => !equals(oper_expression.str(i), val[0]) || asym_id_list.str(i).indexOf(val[1]) === -1)) continue;
 
-            Object.assign(p, { assemblyId: assembly_id.str(i) });
-            return;
+                Object.assign(p, {assemblyId: assembly_id.str(i)});
+                return;
+            }
+        } else {
+            // this happens e.g. for AlphaFold structures
+            console.warn(`Source file is missing 'pdbx_struct_assembly_gen' category`);
         }
     } catch (error) {
         console.warn(error);
     }
     // default to '1' if error or legitimately not found
+    console.warn(`Could not auto-detect assembly-of-interest. Falling back to '1'`);
     Object.assign(p, { assemblyId: '1' });
 }
 
