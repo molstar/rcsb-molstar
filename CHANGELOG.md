@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.8.8] - 2021-09-28
+### General
+- Mol* 2.3.1
+
 ## [1.8.7] - 2021-08-25
 ### General
 - Mol* 2.2.3

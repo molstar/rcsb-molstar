@@ -285,7 +285,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         const history = this.plugin.managers.structure.selection.additionsHistory;
         return <div key={e.entry.id}>
             <div className='msp-flex-row'>
-                <Button noOverflow title='Click to focus. Hover to highlight.' onClick={() => this.focusLoci(e.entry.loci)} style={{ width: 'auto', textAlign: 'left' }} onMouseEnter={() => this.highlight(e.entry.loci)} onMouseLeave={this.plugin.managers.interactivity.lociHighlights.clearHighlights}>
+                <Button noOverflow title='Click to focus. Hover to highlight.' onClick={() => this.focusLoci(e.entry.loci)} style={{ width: 'auto', textAlign: 'left' }} onMouseEnter={() => this.highlight(e.entry.loci)} onMouseLeave={() => this.plugin.managers.interactivity.lociHighlights.clearHighlights()}>
                     {idx}. <span dangerouslySetInnerHTML={{ __html: e.entry.label }} />
                 </Button>
                 <ToggleButton icon={TuneSvg} className='msp-form-control' title='Define exchanges' toggle={() => this.toggleExchanges(idx)} isSelected={this.state.action === idx} disabled={this.state.isBusy} style={{ flex: '0 0 40px', padding: 0 }} />
