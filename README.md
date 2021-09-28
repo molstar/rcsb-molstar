@@ -5,6 +5,8 @@
 RCSB PDB implementation of [Mol* (/'mol-star/)](https://github.com/molstar/molstar).
 Try it [here](https://rcsb.org/3d-view/).
 
+PDBe also maintains a flavor of Mol* called [PDBe Molstar](https://github.com/PDBeurope/pdbe-molstar).
+
 ## Functionality
 Provides custom features used in the Mol* viewer on [rcsb.org](https://www.rcsb.org/3d-view):
 - visualization of structure alignment
