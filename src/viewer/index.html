@@ -517,6 +517,19 @@
                         return viewer.loadStructureFromUrl(url, 'mmcif', false, { kind: 'motif', label, targets, unsafe: true }, mat);
                     })
                     .then(function() {
+                        return viewer.loadPdbId('1LAP', {
+                            label: '1LAP',
+                            kind: 'motif',
+                            targets: [
+                                { label_asym_id: 'A', label_seq_id: 332, struct_oper_id: '1' },
+                                { label_asym_id: 'A', label_seq_id: 334, struct_oper_id: '1' },
+                                { label_asym_id: 'A', label_seq_id: 255, struct_oper_id: '1' },
+                                { label_asym_id: 'A', label_seq_id: 273, struct_oper_id: '1' },
+                                { label_asym_id: 'A', label_seq_id: 250, struct_oper_id: '1' }
+                            ],
+                        });
+                    })
+                    .then(function() {
                         viewer.resetCamera(0)
                     });
             }
