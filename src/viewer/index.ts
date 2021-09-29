@@ -188,7 +188,6 @@ export class Viewer {
                 const renderer = this.plugin.canvas3d!.props.renderer;
                 await PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
                 this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
-                // this.plugin.representation.structure.themes.colorThemeRegistry.add(AlphaFoldConfidenceColorThemeProvider);
 
                 if (o.showWelcomeToast) {
                     await PluginCommands.Toast.Show(this.plugin, {
