@@ -440,30 +440,35 @@
             }
 
             function motifs1() {
-                const payload = {
-                    query: {
-                        entry_id: '1G2F',
-                        residue_ids: [
-                            { label_asym_id: 'F', struct_oper_id: '1', label_seq_id: 7 },
-                            { label_asym_id: 'F', struct_oper_id: '1', label_seq_id: 25 },
-                            { label_asym_id: 'F', struct_oper_id: '1', label_seq_id: 29 }
-                        ]
-                    },
-                    hits: [{
-                        assembly_id: '1',
-                        entry_id: '5WJQ',
-                        id: '1',
-                        residue_ids: [
-                            { label_asym_id: 'C', struct_oper_id: '1', label_seq_id: 95 },
-                            { label_asym_id: 'C', struct_oper_id: '1', label_seq_id: 111 },
-                            { label_asym_id: 'C', struct_oper_id: '1', label_seq_id: 115 }
-                        ]
-                    }]
-                };
-
                 viewer.clear()
                     .then(function() {
-                        return viewer.alignMotifs(payload);
+                        return viewer.loadPdbIds([
+                            {
+                                'pdbId': '4CHA',
+                                'props': {
+                                    'kind': 'motif',
+                                    'label': '4CHA',
+                                    'targets': [
+                                        { 'label_asym_id': 'B', 'struct_oper_id': '1', 'label_seq_id': 42 },
+                                        { 'label_asym_id': 'B', 'struct_oper_id': '1', 'label_seq_id': 87 },
+                                        { 'label_asym_id': 'C', 'struct_oper_id': '1', 'label_seq_id': 47 }
+                                    ]
+                                }
+                            }, {
+                                'pdbId': '3RU4',
+                                'props': {
+                                    'kind': 'motif',
+                                    'assemblyId': '1',
+                                    'label': '3RU4 #2: 0.26 Å',
+                                    'targets': [
+                                        { 'label_asym_id': 'D', 'struct_oper_id': '2', 'label_seq_id': 42 },
+                                        { 'label_asym_id': 'D', 'struct_oper_id': '2', 'label_seq_id': 87 },
+                                        { 'label_asym_id': 'E', 'struct_oper_id': '2', 'label_seq_id': 46 }
+                                    ]
+                                },
+                                'matrix': [-0.049396686, -0.99700946, -0.059431925, 0.0, -0.7568329, 0.076193266, -0.6491522, 0.0, 0.6517392, 0.012914069, -0.7583332, 0.0, 20.371853, 11.498471, 45.705563, 1.0]
+                            }
+                        ]);
                     });
             }
 
