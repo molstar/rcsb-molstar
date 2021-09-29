@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.9.0] - 2021-09-29
+### Added
+- Integrate PDBe/AlphaFold confidence coloring theme
+
 ## [1.8.8] - 2021-09-28
 ### General
 - Mol* 2.3.1
