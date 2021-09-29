@@ -40,28 +40,29 @@
         <div id="viewer"></div>
         <script>
             function getQueryParam(id) {
-                var a = new RegExp(id + '=([^&#=]*)', 'i')
-                var m = a.exec(window.location.search)
+                const a = new RegExp(id + '=([^&#=]*)', 'i')
+                const m = a.exec(window.location.search)
                 return m ? decodeURIComponent(m[1]) : undefined
             }
 
-            var isEmbedded = getQueryParam('embedded') === '1';
+            const isEmbedded = getQueryParam('embedded') === '1';
 
-            var pdbId = getQueryParam('pdbId')
-            var url = getQueryParam('url')
-            var _props = getQueryParam('props')
-            var props = _props && JSON.parse(_props)
-            var _loadPdbIds = getQueryParam('loadPdbIds')
-            var loadPdbIds = _loadPdbIds && JSON.parse(_loadPdbIds)
+            const pdbId = getQueryParam('pdbId')
+            const url = getQueryParam('url')
+            const _props = getQueryParam('props')
+            const props = _props && JSON.parse(_props)
+            const _loadPdbIds = getQueryParam('loadPdbIds')
+            const loadPdbIds = _loadPdbIds && JSON.parse(_loadPdbIds)
 
             // create an instance of the plugin
-            var viewer = new rcsbMolstar.Viewer('viewer', {
+            const viewer = new rcsbMolstar.Viewer('viewer', {
                 showImportControls: !pdbId,
                 showExportControls: true,
                 showSessionControls: !pdbId,
                 layoutShowLog: !pdbId,
                 layoutShowControls: !isEmbedded,
                 showMembraneOrientationPreset: true,
+                showAlphaFoldConfidenceColorTheme: true,
                 detachedFromSierra: true // needed when running without sierra
             })
 
@@ -72,7 +73,7 @@
         </script>
         <div id="menu">
             <h2> RCSB PDB Mol* Viewer - Test Page</h2>
-            Examples
+            <label for="examples">Examples</label>
             <select id="examples" onchange="loadExample(parseInt(this.value))">
                 <option value=''></option>
             </select>
@@ -102,11 +103,13 @@
         <script>
 
             function loadExample(index) {
-                var e = examples[index]
-                viewer.loadPdbId(e.id, e.props)
+                const e = examples[index];
+                // let URL, if specified, take precedence over ID
+                if (e.url) return viewer.loadStructureFromUrl(e.url, e.format ?? 'mmcif', e.isBinary ?? false, e.props)
+                if (e.id) return viewer.loadPdbId(e.id, e.props)
             }
 
-            var examples = [
+            const examples = [
                 {
                     id: '1CRN',
                     info: 'small: only polymer',
@@ -401,13 +404,18 @@
                             { label_asym_id: 'F', label_seq_id: 29 }
                         ],
                     }
+                },
+                {
+                    id: 'AF-Q8W3K0-F1',
+                    url: 'https://alphafold.ebi.ac.uk/files/AF-Q8W3K0-F1-model_v1.cif',
+                    info: 'confidence coloring: Probable disease resistance protein At1g58602'
                 }
             ];
 
-            var examplesSelect = document.getElementById('examples');
-            for (var i = 0, il = examples.length; i < il; ++i) {
-                var e = examples[i]
-                var option = document.createElement('option')
+            const examplesSelect = document.getElementById('examples');
+            for (let i = 0, il = examples.length; i < il; ++i) {
+                const e = examples[i]
+                const option = document.createElement('option')
                 Object.assign(option, { text: '[' + e.id + '] ' + e.info, value: i })
                 examplesSelect.appendChild(option)
             }
