@@ -38,6 +38,7 @@ import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
 import { MotifAlignmentRequest, alignMotifs } from './helpers/superpose/pecos-integration';
+import { AlphaFoldConfidenceColorThemeProvider } from './helpers/af-confidence/color';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -62,6 +63,7 @@ const DefaultViewerProps = {
     showStructureSourceControls: true,
     showSuperpositionControls: true,
     showMembraneOrientationPreset: false,
+    showAlphaFoldConfidenceColorTheme: false,
     /**
      * Needed when running outside of sierra. If set to true, the strucmotif UI will use an absolute URL to sierra-prod.
      * Otherwise, the link will be relative on the current host.
@@ -173,6 +175,7 @@ export class Viewer {
         this.plugin.init()
             .then(async () => {
                 // hide 'Membrane Orientation' preset from UI - has to happen 'before' react render, apparently
+                // the corresponding behavior must be registered either way, because the 3d-view uses it (even without appearing in the UI)
                 if (!o.showMembraneOrientationPreset) {
                     this.plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
                     this.plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
@@ -183,6 +186,10 @@ export class Viewer {
                 const renderer = this.plugin.canvas3d!.props.renderer;
                 await PluginCommands.Canvas3D.SetSettings(this.plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
                 this.plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
+                // conditionally load PDBe's AlphaFold preset
+                if (o.showAlphaFoldConfidenceColorTheme) {
+                    this.plugin.representation.structure.themes.colorThemeRegistry.add(AlphaFoldConfidenceColorThemeProvider);
+                }
 
                 if (o.showWelcomeToast) {
                     await PluginCommands.Toast.Show(this.plugin, {

@@ -4,33 +4,31 @@
  * @author Mandar Deshpande <mandar@ebi.ac.uk>
  * @author David Sehnal <david.sehnal@gmail.com>
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
 
 import { Column, Table } from 'molstar/lib/mol-data/db';
 import { toTable } from 'molstar/lib/mol-io/reader/cif/schema';
-import { Model, ResidueIndex, Unit, IndexedCustomProperty } from 'molstar/lib/mol-model/structure';
-import { StructureElement, Structure } from 'molstar/lib/mol-model/structure/structure';
+import { IndexedCustomProperty, Model, ResidueIndex, Unit } from 'molstar/lib/mol-model/structure';
+import { Structure, StructureElement } from 'molstar/lib/mol-model/structure/structure';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
 import { PropertyWrapper } from 'molstar/lib/mol-model-props/common/wrapper';
 import { CustomProperty } from 'molstar/lib/mol-model-props/common/custom-property';
 import { CustomModelProperty } from 'molstar/lib/mol-model-props/common/custom-model-property';
 import { CustomPropertyDescriptor } from 'molstar/lib/mol-model/custom-property';
-import { dateToUtcString } from 'molstar/lib/mol-util/date';
 import { arraySetAdd } from 'molstar/lib/mol-util/array';
+import { dateToUtcString } from 'molstar/lib/mol-util/date';
 
-export { AfConfidence };
-
-type AfConfidence = PropertyWrapper<{
+export type AlphaFoldConfidence = PropertyWrapper<{
     score: IndexedCustomProperty.Residue<[number, string]>,
     category: string[]
-} | undefined>
+}>
 
-namespace AfConfidence {
-    export const DefaultServerUrl = '';
-
+export namespace AlphaFoldConfidence {
     export function isApplicable(model?: Model): boolean {
-        return !!model && Model.isFromPdbArchive(model);
+        if (!model || !MmcifFormat.is(model.sourceData)) return false;
+        return model.sourceData.data.frame.categoryNames.includes('ma_qa_metric_local');
     }
 
     export interface Info {
@@ -48,7 +46,7 @@ namespace AfConfidence {
             ordinal_id: Column.Schema.int
         }
     };
-    export type Schema = typeof Schema
+    export type Schema = typeof Schema;
 
     function tryGetInfoFromCif(categoryName: string, model: Model): undefined | Info {
         if (!MmcifFormat.is(model.sourceData) || !model.sourceData.data.frame.categoryNames.includes(categoryName)) {
@@ -61,22 +59,23 @@ namespace AfConfidence {
         return { timestamp_utc: timestampField.str(0) || dateToUtcString(new Date()) };
     }
 
-    export function fromCif(ctx: CustomProperty.Context, model: Model): AfConfidence | undefined {
-        let info = tryGetInfoFromCif('ma_qa_metric_local', model);
+
+    export function fromCif(ctx: CustomProperty.Context, model: Model): AlphaFoldConfidence | undefined {
+        const info = tryGetInfoFromCif('ma_qa_metric_local', model);
         if (!info) return;
         const data = getCifData(model);
         const metricMap = createScoreMapFromCif(model, data.residues);
         return { info, data: metricMap };
     }
 
-    export async function fromCifOrServer(ctx: CustomProperty.Context, model: Model, props: AfConfidenceProps): Promise<any> {
+    export async function obtain(ctx: CustomProperty.Context, model: Model, _props: AlphaFoldConfidenceProps): Promise<CustomProperty.Data<any>> {
         const cif = fromCif(ctx, model);
         return { value: cif };
     }
 
-    export function getConfidenceScore(e: StructureElement.Location) {
+    export function getConfidenceScore(e: StructureElement.Location): [number, string] {
         if (!Unit.isAtomic(e.unit)) return [-1, 'No Score'];
-        const prop = AfConfidenceProvider.get(e.unit.model).value;
+        const prop = AlphaFoldConfidenceProvider.get(e.unit.model).value;
         if (!prop || !prop.data) return [-1, 'No Score'];
         const rI = e.unit.residueIndex[e.element];
         return prop.data.score.has(rI) ? prop.data.score.get(rI)! : [-1, 'No Score'];
@@ -85,7 +84,7 @@ namespace AfConfidence {
     const _emptyArray: string[] = [];
     export function getCategories(structure?: Structure) {
         if (!structure) return _emptyArray;
-        const prop = AfConfidenceProvider.get(structure.models[0]).value;
+        const prop = AlphaFoldConfidenceProvider.get(structure.models[0]).value;
         if (!prop || !prop.data) return _emptyArray;
         return prop.data.category;
     }
@@ -98,48 +97,45 @@ namespace AfConfidence {
     }
 }
 
-export const AfConfidenceParams = {
-    serverUrl: PD.Text(AfConfidence.DefaultServerUrl, { description: 'JSON API Server URL' })
-};
-export type AfConfidenceParams = typeof AfConfidenceParams
-export type AfConfidenceProps = PD.Values<AfConfidenceParams>
+export const AlphaFoldConfidenceParams = {};
+export type AlphaFoldConfidenceParams = typeof AlphaFoldConfidenceParams
+export type AlphaFoldConfidenceProps = PD.Values<AlphaFoldConfidenceParams>
 
-export const AfConfidenceProvider: CustomModelProperty.Provider<AfConfidenceParams, AfConfidence> = CustomModelProperty.createProvider({
-    label: 'AF Confidence Score',
+export const AlphaFoldConfidenceProvider: CustomModelProperty.Provider<AlphaFoldConfidenceParams, AlphaFoldConfidence> = CustomModelProperty.createProvider({
+    label: 'AlphaFold Confidence Score',
     descriptor: CustomPropertyDescriptor({
         name: 'af_confidence_score'
     }),
     type: 'static',
-    defaultParams: AfConfidenceParams,
-    getParams: () => AfConfidenceParams,
-    isApplicable: (data: Model) => AfConfidence.isApplicable(data),
-    obtain: async (ctx: CustomProperty.Context, data: Model, props: Partial<AfConfidenceProps>) => {
-        const p = { ...PD.getDefaultValues(AfConfidenceParams), ...props };
-        return await AfConfidence.fromCifOrServer(ctx, data, p);
+    defaultParams: AlphaFoldConfidenceParams,
+    getParams: () => AlphaFoldConfidenceParams,
+    isApplicable: (data: Model) => AlphaFoldConfidence.isApplicable(data),
+    obtain: async (ctx: CustomProperty.Context, data: Model, props: Partial<AlphaFoldConfidenceProps>) => {
+        const p = { ...PD.getDefaultValues(AlphaFoldConfidenceParams), ...props };
+        return await AlphaFoldConfidence.obtain(ctx, data, p);
     }
 });
 
-function createScoreMapFromCif(modelData: Model, residueData: Table<typeof AfConfidence.Schema.local_metric_values>): AfConfidence['data'] | undefined {
-    const ret = new Map<ResidueIndex, [number, string]>();
+function createScoreMapFromCif(modelData: Model, residueData: Table<typeof AlphaFoldConfidence.Schema.local_metric_values>): AlphaFoldConfidence['data'] {
     const { label_asym_id, label_seq_id, metric_value, _rowCount } = residueData;
 
+    const ret = new Map<ResidueIndex, [number, string]>();
     const categories: string[] = [];
+
+    const toCategory = (v: number): 'Very low' | 'Low' | 'Confident' | 'Very high' => {
+        if (v > 50 && v <= 70)  return 'Low';
+        if (v > 70 && v <= 90) return 'Confident';
+        if (v > 90) return 'Very high';
+        return 'Very low';
+    };
 
     for (let i = 0; i < _rowCount; i++) {
         const confidenceScore = metric_value.value(i);
-        const idx = modelData.atomicHierarchy.index.findResidue('1', label_asym_id.value(i), label_seq_id.value(i), '');
+        const idx = modelData.atomicHierarchy.index.findResidue('1', label_asym_id.value(i), label_seq_id.value(i));
+        const confidenceCategory = toCategory(confidenceScore);
 
-        let confidencyCategory = 'Very low';
-        if(confidenceScore > 50 && confidenceScore <= 70) {
-            confidencyCategory = 'Low';
-        } else if(confidenceScore > 70 && confidenceScore <= 90) {
-            confidencyCategory = 'Confident';
-        } else if(confidenceScore > 90) {
-            confidencyCategory = 'Very high';
-        }
-
-        ret.set(idx, [confidenceScore, confidencyCategory]);
-        arraySetAdd(categories, confidencyCategory);
+        ret.set(idx, [confidenceScore, confidenceCategory]);
+        arraySetAdd(categories, confidenceCategory);
     }
 
     return {
