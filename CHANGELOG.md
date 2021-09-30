@@ -15,7 +15,8 @@
   - `positions` and `selection` props renamed to `targets` of type `Target[]`
 - Changed loading methods signature 
   - Added optional configuration parameter `config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}`
-  - The loading configuration includes an optional trajectory preset provider `TrajectoryHierarchyPresetProvider` 
+  - The loading configuration includes an optional trajectory preset provider `TrajectoryHierarchyPresetProvider`
+- Remove `alignMotif` methods (& pecos-integration) as the strucmotif service now reports RMSD and transformations for all hits
 
 ## [1.9.0] - 2021-09-29
 ### Added

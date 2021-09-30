@@ -492,17 +492,24 @@
                                 }
                             }, {
                                 pdbId: '3RU4',
-                                props: {
-                                    kind: 'motif',
-                                    assemblyId: '1',
-                                    label: '3RU4 #2: 0.26 Å',
-                                    targets: [
-                                        { labelAsymId: 'D', structOperId: '2', labelSeqId: 42 },
-                                        { labelAsymId: 'D', structOperId: '2', labelSeqId: 87 },
-                                        { labelAsymId: 'E', structOperId: '2', labelSeqId: 46 }
+                                config: {
+                                    props: {
+                                        kind: 'motif',
+                                        assemblyId: '1',
+                                        label: '3RU4 #2: 0.26 Å',
+                                        targets: [
+                                            { labelAsymId: 'D', structOperId: '2', labelSeqId: 42 },
+                                            { labelAsymId: 'D', structOperId: '2', labelSeqId: 87 },
+                                            { labelAsymId: 'E', structOperId: '2', labelSeqId: 46 }
+                                        ]
+                                    },
+                                    matrix: [
+                                        -0.049396686, -0.99700946, -0.059431925, 0.0,
+                                        -0.7568329, 0.076193266, -0.6491522, 0.0,
+                                        0.6517392, 0.012914069, -0.7583332, 0.0,
+                                        20.371853, 11.498471, 45.705563, 1.0
                                     ]
-                                },
-                                matrix: [-0.049396686, -0.99700946, -0.059431925, 0.0, -0.7568329, 0.076193266, -0.6491522, 0.0, 0.6517392, 0.012914069, -0.7583332, 0.0, 20.371853, 11.498471, 45.705563, 1.0]
+                                }
                             }
                         ]);
                     });
@@ -562,11 +569,11 @@
                                 label: '1LAP',
                                 kind: 'motif',
                                 targets: [
-                                    {label_asym_id: 'A', label_seq_id: 332, struct_oper_id: '1'},
-                                    {label_asym_id: 'A', label_seq_id: 334, struct_oper_id: '1'},
-                                    {label_asym_id: 'A', label_seq_id: 255, struct_oper_id: '1'},
-                                    {label_asym_id: 'A', label_seq_id: 273, struct_oper_id: '1'},
-                                    {label_asym_id: 'A', label_seq_id: 250, struct_oper_id: '1'}
+                                    { labelAsymId: 'A', labelSeqId: 332, structOperId: '1' },
+                                    { labelAsymId: 'A', labelSeqId: 334, structOperId: '1' },
+                                    { labelAsymId: 'A', labelSeqId: 255, structOperId: '1' },
+                                    { labelAsymId: 'A', labelSeqId: 273, structOperId: '1' },
+                                    { labelAsymId: 'A', labelSeqId: 250, structOperId: '1' }
                                 ],
                             }
                         });
@@ -576,14 +583,14 @@
                         const label = 'AF-F1Q6S1-F1 @ 0.23 RMSD';
                         const targets = [
                             // AF target must be devoid of struct_oper_id
-                            { label_asym_id: 'A', label_seq_id: 260 },
-                            { label_asym_id: 'A', label_seq_id: 265 },
-                            { label_asym_id: 'A', label_seq_id: 283 },
-                            { label_asym_id: 'A', label_seq_id: 342 },
-                            { label_asym_id: 'A', label_seq_id: 344 }
+                            { labelAsymId: 'A', labelSeqId: 260 },
+                            { labelAsymId: 'A', labelSeqId: 265 },
+                            { labelAsymId: 'A', labelSeqId: 283 },
+                            { labelAsymId: 'A', labelSeqId: 342 },
+                            { labelAsymId: 'A', labelSeqId: 344 }
                         ];
-                        const mat = [-0.471, 0.856, 0.215, 0, 0.405, -0.007, 0.914, 0, 0.784, 0.518, -0.343, 0, 54.981, 65.575, 12.287, 1];
-                        return viewer.loadStructureFromUrl(url, 'mmcif', false, { props: { kind: 'motif', label, targets } }, mat);
+                        const matrix = [-0.471, 0.856, 0.215, 0, 0.405, -0.007, 0.914, 0, 0.784, 0.518, -0.343, 0, 54.981, 65.575, 12.287, 1];
+                        return viewer.loadStructureFromUrl(url, 'mmcif', false, { props: { kind: 'motif', label, targets }, matrix });
                     })
                     .then(function() {
                         viewer.resetCamera(0)

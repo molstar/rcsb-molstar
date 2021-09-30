@@ -31,14 +31,13 @@ import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { encodeStructureData, downloadAsZipFile } from './helpers/export';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select } from './helpers/viewer';
-import {SelectBase, SelectRange, SelectTarget, Target} from './helpers/selection';
+import { SelectBase, SelectRange, SelectTarget, Target } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
-import { MotifAlignmentRequest, alignMotifs } from './helpers/superpose/pecos-integration';
 import { AlphaFoldConfidenceScore } from './helpers/af-confidence/behavior';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
@@ -205,7 +204,7 @@ export class Viewer {
         return this._plugin;
     }
 
-    pluginCall(f: (plugin: PluginContext) => void){
+    pluginCall(f: (plugin: PluginContext) => void) {
         f(this.plugin);
     }
 
@@ -219,9 +218,9 @@ export class Viewer {
         if (!expandedChanged) return;
 
         if (currExpanded && !this._plugin.layout.state.showControls) {
-            this._plugin.layout.setProps({showControls: true});
+            this._plugin.layout.setProps({ showControls: true });
         } else if (!currExpanded && this._plugin.layout.state.showControls) {
-            this._plugin.layout.setProps({showControls: false});
+            this._plugin.layout.setProps({ showControls: false });
         }
         this.prevExpanded = this._plugin.layout.state.isExpanded;
     }
@@ -235,7 +234,7 @@ export class Viewer {
         return PluginCommands.State.RemoveObject(this._plugin, { state, ref: state.tree.root.ref });
     }
 
-    async loadPdbId<P>(pdbId: string, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}) {
+    async loadPdbId<P>(pdbId: string, config?: { props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P }) {
         for (const provider of this.modelUrlProviders) {
             try {
                 const p = provider(pdbId);
@@ -252,33 +251,6 @@ export class Viewer {
             await this.loadPdbId(pdbId, config);
         }
         this.resetCamera(0);
-    }
-
-    async alignMotifs(request: MotifAlignmentRequest) {
-        const { query, hits } = request;
-
-        await this.loadPdbId(query.entry_id,
-            {
-                props: {
-                    kind: 'motif',
-                    label: query.entry_id,
-                    targets: query.residue_ids
-                }
-            });
-
-        for (const hit of hits) {
-            const { rmsd, matrix } = await alignMotifs(query, hit);
-            await this.loadPdbId(hit.entry_id, {
-                props: {
-                    kind: 'motif',
-                    assemblyId: hit.assembly_id,
-                    label: `${hit.entry_id} #${hit.id}: ${rmsd.toFixed(2)} RMSD`,
-                    targets: hit.residue_ids
-                },
-                matrix
-            });
-            this.resetCamera(0);
-        }
     }
 
     loadStructureFromUrl<P>(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}) {
@@ -322,7 +294,7 @@ export class Viewer {
         await createComponent(this._plugin, label, targets, representationType);
     }
 
-    removeComponent(componentLabel: string): void{
+    removeComponent(componentLabel: string): void {
         removeComponent(this._plugin, componentLabel);
     }
 }
