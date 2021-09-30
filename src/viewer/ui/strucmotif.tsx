@@ -43,7 +43,7 @@ export class StrucmotifSubmitControls extends CollapsableControls {
         return {
             header: 'Structure Motif Search',
             isCollapsed: false,
-            brand: { accent:  'gray' as const, svg: SearchIconSvg }
+            brand: { accent: 'gray' as const, svg: SearchIconSvg }
         };
     }
 
@@ -156,7 +156,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
             // retrieve CA/C4', used to compute residue distance
             const coords = [x(location), y(location), z(location)] as Vec3;
-            coordinates.push({coords, residueId});
+            coordinates.push({ coords, residueId });
 
             // handle potential exchanges - can be empty if deselected by users
             const residueMapEntry = this.state.residueMap.get(l)!;

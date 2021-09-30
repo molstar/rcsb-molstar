@@ -30,8 +30,8 @@ export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPres
         const structure = structureCell.obj!.data;
         const cartoonProps = { sizeFactor: structure.isCoarseGrained ? 0.8 : 0.2 };
 
-        let components = Object.create(null);
-        let representations = Object.create(null);
+        const components = Object.create(null);
+        const representations = Object.create(null);
 
         for (const expr of params.selectionExpressions) {
             const comp = await plugin.builders.structure.tryCreateComponentFromExpression(structureCell, expr.expression, expr.label, { label: expr.label });

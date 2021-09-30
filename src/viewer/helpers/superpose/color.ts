@@ -22,7 +22,7 @@ export function SuperposeColorTheme(ctx: ThemeDataContext, props: {}): ColorThem
 
     let DefaultColor = Color(0xCCCCCC);
     const colorValues: Color[] = Array.from(defaultColorLookup.values());
-    if (colorValues.every( (val, i, arr) => val === arr[0] )) {
+    if (colorValues.every((val, i, arr) => val === arr[0])) {
         DefaultColor = colorValues[0];
     }
 

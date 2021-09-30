@@ -80,7 +80,7 @@ export function AlphaFoldConfidenceColorTheme(ctx: ThemeDataContext, props: PD.V
     };
 }
 
-export const AlphaFoldConfidenceColorThemeProvider: ColorTheme.Provider<AlphaFoldConfidenceColorThemeParams, 'af-confidence'> =  {
+export const AlphaFoldConfidenceColorThemeProvider: ColorTheme.Provider<AlphaFoldConfidenceColorThemeParams, 'af-confidence'> = {
     name: 'af-confidence',
     label: 'AlphaFold Confidence',
     category: ColorTheme.Category.Validation,

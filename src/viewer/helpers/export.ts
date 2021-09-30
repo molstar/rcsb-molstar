@@ -32,10 +32,9 @@ function exportParams(): encode_mmCIF_categories_Params {
         .add('pdbx_struct_assembly')
         .add('pdbx_struct_assembly_gen')
         .add('pdbx_struct_oper_list');
-    const params: encode_mmCIF_categories_Params = {
+    return {
         skipCategoryNames: skipCategories
     };
-    return params;
 }
 
 function to_mmCIF(name: string, structure: Structure, asBinary = false) {
@@ -94,5 +93,5 @@ export function encodeStructureData(plugin: PluginContext): { [k: string]: Uint8
 export async function downloadAsZipFile(plugin: PluginContext, content: { [k: string]: Uint8Array }) {
     const filename = `mol-star_download_${getFormattedTime()}.zip`;
     const buf = await plugin.runTask(Zip(content));
-    download(new Blob([buf], { type : 'application/zip' }), filename);
+    download(new Blob([buf], { type: 'application/zip' }), filename);
 }

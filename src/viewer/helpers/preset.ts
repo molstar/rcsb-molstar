@@ -361,7 +361,7 @@ function determineAssemblyId(traj: any, p: MotifProps) {
             for (let i = 0, il = pdbx_struct_assembly_gen.rowCount; i < il; i++) {
                 if (ids.some(val => !equals(oper_expression.str(i), val[0]) || asym_id_list.str(i).indexOf(val[1]) === -1)) continue;
 
-                Object.assign(p, {assemblyId: assembly_id.str(i)});
+                Object.assign(p, { assemblyId: assembly_id.str(i) });
                 return;
             }
         } else {

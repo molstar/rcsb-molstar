@@ -123,7 +123,7 @@ function createScoreMapFromCif(modelData: Model, residueData: Table<typeof Alpha
     const categories: string[] = [];
 
     const toCategory = (v: number): 'Very low' | 'Low' | 'Confident' | 'Very high' => {
-        if (v > 50 && v <= 70)  return 'Low';
+        if (v > 50 && v <= 70) return 'Low';
         if (v > 70 && v <= 90) return 'Confident';
         if (v > 90) return 'Very high';
         return 'Very low';

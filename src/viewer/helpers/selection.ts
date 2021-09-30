@@ -212,7 +212,7 @@ function targetToExpression(target: Target): Expression {
         residueTests.push(MS.core.rel.eq([target.authSeqId, MS.ammp('auth_seq_id')]));
     } else if (target.labelSeqId) {
         residueTests.push(MS.core.rel.eq([target.labelSeqId, MS.ammp('label_seq_id')]));
-    }else if(target.labelSeqRange){
+    } else if (target.labelSeqRange) {
         residueTests.push(MS.core.rel.inRange([MS.ammp('label_seq_id'), target.labelSeqRange.beg, target.labelSeqRange.end ?? target.labelSeqRange.beg]));
     }
     if (target.labelCompId) {

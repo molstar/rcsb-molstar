@@ -50,7 +50,7 @@ export const AlphaFoldConfidenceScore = PluginBehavior.create<{ autoAttach: bool
         }
 
         update(p: { autoAttach: boolean, showTooltip: boolean }) {
-            let updated = this.params.autoAttach !== p.autoAttach;
+            const updated = this.params.autoAttach !== p.autoAttach;
             this.params.autoAttach = p.autoAttach;
             this.params.showTooltip = p.showTooltip;
             this.ctx.customModelProperties.setDefaultAutoAttach(this.provider.descriptor.name, this.params.autoAttach);

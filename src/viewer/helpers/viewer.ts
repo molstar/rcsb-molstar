@@ -38,7 +38,7 @@ export function getStructureRefWithModelId(structures: StructureRef[], target: {
     for (const structure of structures) {
         if (!structure.cell?.obj?.data?.units) continue;
 
-        const unit =  structure.cell.obj.data.units[0];
+        const unit = structure.cell.obj.data.units[0];
         if (unit.model.id === target.modelId) return structure;
     }
 }
@@ -53,7 +53,7 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
 
         if (mode === 'hover') {
             plugin.managers.interactivity.lociHighlights.highlight({ loci });
-        }else if(mode === 'select'){
+        } else if (mode === 'select') {
             plugin.managers.structure.selection.fromLoci(modifier, loci);
         }
     }
@@ -80,7 +80,7 @@ export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', 
 export async function createComponent(plugin: PluginContext, componentLabel: string, targets: SelectBase | SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
     for (const target of (Array.isArray(targets) ? targets : [targets])) {
         const structureRef = getStructureRefWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
-        if (!structureRef) throw 'createComponent error: model not found';
+        if (!structureRef) throw Error('createComponent error: model not found');
 
         const residues = toResidues(target);
         const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substr(2),
