@@ -42,16 +42,22 @@ const sharedConfig = {
             'node_modules',
             path.resolve(__dirname, 'build/src/')
         ],
+        fallback: {
+            fs: false,
+            buffer: require.resolve('buffer'),
+            crypto: require.resolve('crypto-browserify'),
+            path: require.resolve('path-browserify'),
+            stream: require.resolve('stream-browserify')
+        }
     },
     watchOptions: {
         aggregateTimeout: 750
     },
-    devtool: ''
+    devtool: false
 };
 
 module.exports = [
     {
-        node: { fs: 'empty' },
         entry: path.resolve(__dirname, `build/src/viewer/index.js`),
         output: {
             library: 'rcsbMolstar',

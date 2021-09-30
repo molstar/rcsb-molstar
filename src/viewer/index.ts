@@ -3,6 +3,8 @@
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @author Joan Segura <joan.segura@rcsb.org>
+ * @author Yana Rose <yana.rose@rcsb.org>
+ * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
 
 import { BehaviorSubject } from 'rxjs';
@@ -36,8 +38,10 @@ import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spe
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
-import {PluginContext} from 'molstar/lib/mol-plugin/context';
-import {TrajectoryHierarchyPresetProvider} from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
+import { MotifAlignmentRequest, alignMotifs } from './helpers/superpose/pecos-integration';
+import { AlphaFoldConfidenceScore } from './helpers/af-confidence/behavior';
+import { PluginContext } from 'molstar/lib/mol-plugin/context';
+import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -52,7 +56,8 @@ const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
     'mp4-export': PluginSpec.Behavior(Mp4Export),
-    'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation)
+    'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
+    'af-confidence': PluginSpec.Behavior(AlphaFoldConfidenceScore)
 };
 
 const DefaultViewerProps = {
@@ -62,6 +67,11 @@ const DefaultViewerProps = {
     showStructureSourceControls: true,
     showSuperpositionControls: true,
     showMembraneOrientationPreset: false,
+    /**
+     * Needed when running outside of sierra. If set to true, the strucmotif UI will use an absolute URL to sierra-prod.
+     * Otherwise, the link will be relative on the current host.
+     */
+    detachedFromSierra: false,
     modelUrlProviders: [
         (pdbId: string) => ({
             url: `https://models.rcsb.org/${pdbId.toLowerCase()}.bcif`,
@@ -158,12 +168,14 @@ export class Viewer {
                 component: false,
                 volume: true,
                 custom: true
-            })
+            }),
+            detachedFromSierra: o.detachedFromSierra
         };
 
         this._plugin.init()
             .then(async () => {
                 // hide 'Membrane Orientation' preset from UI - has to happen 'before' react render, apparently
+                // the corresponding behavior must be registered either way, because the 3d-view uses it (even without appearing in the UI)
                 if (!o.showMembraneOrientationPreset) {
                     this._plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
                     this._plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
@@ -242,6 +254,33 @@ export class Viewer {
         this.resetCamera(0);
     }
 
+    async alignMotifs(request: MotifAlignmentRequest) {
+        const { query, hits } = request;
+
+        await this.loadPdbId(query.entry_id,
+            {
+                props: {
+                    kind: 'motif',
+                    label: query.entry_id,
+                    targets: query.residue_ids
+                }
+            });
+
+        for (const hit of hits) {
+            const { rmsd, matrix } = await alignMotifs(query, hit);
+            await this.loadPdbId(hit.entry_id, {
+                props: {
+                    kind: 'motif',
+                    assemblyId: hit.assembly_id,
+                    label: `${hit.entry_id} #${hit.id}: ${rmsd.toFixed(2)} RMSD`,
+                    targets: hit.residue_ids
+                },
+                matrix
+            });
+            this.resetCamera(0);
+        }
+    }
+
     loadStructureFromUrl<P>(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}) {
         return this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
     }
@@ -255,7 +294,7 @@ export class Viewer {
     }
 
     handleResize() {
-        this._plugin.layout.events.updated.next();
+        this._plugin.layout.events.updated.next(void 0);
     }
 
     exportLoadedStructures() {

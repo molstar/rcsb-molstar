@@ -238,7 +238,20 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         } else if (p.kind === 'empty') {
             console.warn('Using empty representation');
         } else if (p.kind === 'membrane') {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
+            try {
+                representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
+
+                // reset the camera because the membranes render 1st and the structure might not be fully visible
+                requestAnimationFrame(() => plugin.canvas3d?.requestCameraReset());
+            } catch (error) {
+                const msg = 'Membrane calculation failed! - This can happen for tiny structures with only a dozen of residues.';
+                plugin.log.error(msg);
+                console.error(msg);
+                console.error(error);
+
+                // fall back to default representation to show something
+                representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
+            }
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
@@ -340,20 +353,26 @@ function determineAssemblyId(traj: any, p: MotifProps) {
     try {
         // find first assembly that contains all requested structOperIds - if multiple, the first will be returned
         const pdbx_struct_assembly_gen = traj.obj.data.representative.sourceData.data.frame.categories.pdbx_struct_assembly_gen;
-        const assembly_id = pdbx_struct_assembly_gen.getField('assembly_id');
-        const oper_expression = pdbx_struct_assembly_gen.getField('oper_expression');
-        const asym_id_list = pdbx_struct_assembly_gen.getField('asym_id_list');
+        if (pdbx_struct_assembly_gen) {
+            const assembly_id = pdbx_struct_assembly_gen.getField('assembly_id');
+            const oper_expression = pdbx_struct_assembly_gen.getField('oper_expression');
+            const asym_id_list = pdbx_struct_assembly_gen.getField('asym_id_list');
 
-        for (let i = 0, il = pdbx_struct_assembly_gen.rowCount; i < il; i++) {
-            if (ids.some(val => !equals(oper_expression.str(i), val[0]) || asym_id_list.str(i).indexOf(val[1]) === -1)) continue;
+            for (let i = 0, il = pdbx_struct_assembly_gen.rowCount; i < il; i++) {
+                if (ids.some(val => !equals(oper_expression.str(i), val[0]) || asym_id_list.str(i).indexOf(val[1]) === -1)) continue;
 
-            Object.assign(p, { assemblyId: assembly_id.str(i) });
-            return;
+                Object.assign(p, {assemblyId: assembly_id.str(i)});
+                return;
+            }
+        } else {
+            // this happens e.g. for AlphaFold structures
+            console.warn(`Source file is missing 'pdbx_struct_assembly_gen' category`);
         }
     } catch (error) {
         console.warn(error);
     }
     // default to '1' if error or legitimately not found
+    console.warn(`Could not auto-detect assembly-of-interest. Falling back to '1'`);
     Object.assign(p, { assemblyId: '1' });
 }
 
