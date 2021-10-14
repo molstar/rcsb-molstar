@@ -24,8 +24,10 @@ import { Vec3 } from 'molstar/lib/mol-math/linear-algebra/3d/vec3';
 import { Structure } from 'molstar/lib/mol-model/structure/structure/structure';
 import { Unit } from 'molstar/lib/mol-model/structure/structure/unit';
 import { UnitIndex } from 'molstar/lib/mol-model/structure/structure/element/element';
+import { ViewerState } from '../types';
 
-const ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
+const ABSOLUTE_ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
+const RELATIVE_ADVANCED_SEARCH_URL = '/search?query=';
 const RETURN_TYPE = '&return_type=assembly';
 const MIN_MOTIF_SIZE = 3;
 const MAX_MOTIF_SIZE = 10;
@@ -39,9 +41,9 @@ const MAX_MOTIF_EXTENT_SQUARED = MAX_MOTIF_EXTENT * MAX_MOTIF_EXTENT;
 export class StrucmotifSubmitControls extends CollapsableControls {
     protected defaultState() {
         return {
-            header: 'Structural Motif Search',
+            header: 'Structure Motif Search',
             isCollapsed: false,
-            brand: { accent:  'gray' as const, svg: SearchIconSvg }
+            brand: { accent: 'gray' as const, svg: SearchIconSvg }
         };
     }
 
@@ -154,7 +156,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
             // retrieve CA/C4', used to compute residue distance
             const coords = [x(location), y(location), z(location)] as Vec3;
-            coordinates.push({coords, residueId});
+            coordinates.push({ coords, residueId });
 
             // handle potential exchanges - can be empty if deselected by users
             const residueMapEntry = this.state.residueMap.get(l)!;
@@ -207,15 +209,17 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             service: 'strucmotif',
             parameters: {
                 value: {
-                    data: pdbId.values().next().value as string,
+                    entry_id: pdbId.values().next().value as string,
                     residue_ids: residueIds.sort((a, b) => this.sortResidueIds(a, b))
                 },
-                score_cutoff: 0,
+                rmsd_cutoff: 2,
+                atom_pairing_scheme: 'ALL',
                 exchanges: exchanges
             }
         };
         // console.log(query);
-        const url = ADVANCED_SEARCH_URL + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
+        const sierraUrl = (this.plugin.customState as ViewerState).detachedFromSierra ? ABSOLUTE_ADVANCED_SEARCH_URL : RELATIVE_ADVANCED_SEARCH_URL;
+        const url = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
         // console.log(url);
         window.open(url, '_blank');
     }
@@ -281,7 +285,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         const history = this.plugin.managers.structure.selection.additionsHistory;
         return <div key={e.entry.id}>
             <div className='msp-flex-row'>
-                <Button noOverflow title='Click to focus. Hover to highlight.' onClick={() => this.focusLoci(e.entry.loci)} style={{ width: 'auto', textAlign: 'left' }} onMouseEnter={() => this.highlight(e.entry.loci)} onMouseLeave={this.plugin.managers.interactivity.lociHighlights.clearHighlights}>
+                <Button noOverflow title='Click to focus. Hover to highlight.' onClick={() => this.focusLoci(e.entry.loci)} style={{ width: 'auto', textAlign: 'left' }} onMouseEnter={() => this.highlight(e.entry.loci)} onMouseLeave={() => this.plugin.managers.interactivity.lociHighlights.clearHighlights()}>
                     {idx}. <span dangerouslySetInnerHTML={{ __html: e.entry.label }} />
                 </Button>
                 <ToggleButton icon={TuneSvg} className='msp-form-control' title='Define exchanges' toggle={() => this.toggleExchanges(idx)} isSelected={this.state.action === idx} disabled={this.state.isBusy} style={{ flex: '0 0 40px', padding: 0 }} />

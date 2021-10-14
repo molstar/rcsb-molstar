@@ -9,7 +9,7 @@ export class ExportControls extends CollapsableControls {
         return {
             header: 'Export',
             isCollapsed: true,
-            brand: { accent:  'gray' as const, svg: ExportOutlinedSvg }
+            brand: { accent: 'gray' as const, svg: ExportOutlinedSvg }
         };
     }
 

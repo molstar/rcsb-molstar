@@ -44,7 +44,7 @@ export class SessionControls extends CollapsableControls {
         return {
             header: 'Session',
             isCollapsed: true,
-            brand: { accent:  'gray' as const, svg: SaveOutlinedSvg }
+            brand: { accent: 'gray' as const, svg: SaveOutlinedSvg }
         };
     }
 

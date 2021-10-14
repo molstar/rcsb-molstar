@@ -62,9 +62,9 @@ export type SelectionExpression = {
  * override pre-existing 'operatorName' values.
  * @param targets collection to process
  * @param structure parent structure
- * @param operatorName optional value to which missing operators are set, will default to 'ASM_1' if not specified
+ * @param operatorName optional value to which missing operators are set
  */
-export function normalizeTargets(targets: Target[], structure: Structure, operatorName: string = 'ASM_1'): Target[] {
+export function normalizeTargets(targets: Target[], structure: Structure, operatorName = undefined): Target[] {
     return targets.map(t => {
         if (t.structOperId) {
             const { structOperId, ...others } = t;
@@ -103,7 +103,7 @@ function toOperatorName(structure: Structure, expression: string): string {
  */
 export function createSelectionExpressions(labelBase: string, selection?: Target | Target[]): SelectionExpression[] {
     if (selection) {
-        if ('labelAsymId' in selection && 'labelSeqRange' in selection) {
+        if ('labelAsymId' in selection) {
             const target = selection as Target;
             const residues: number[] = (target.labelSeqRange) ? toRange(target.labelSeqRange!.beg, target.labelSeqRange!.end) : [];
             const test = rangeToTest(target.labelAsymId!, residues);
@@ -212,7 +212,7 @@ function targetToExpression(target: Target): Expression {
         residueTests.push(MS.core.rel.eq([target.authSeqId, MS.ammp('auth_seq_id')]));
     } else if (target.labelSeqId) {
         residueTests.push(MS.core.rel.eq([target.labelSeqId, MS.ammp('label_seq_id')]));
-    }else if(target.labelSeqRange){
+    } else if (target.labelSeqRange) {
         residueTests.push(MS.core.rel.inRange([MS.ammp('label_seq_id'), target.labelSeqRange.beg, target.labelSeqRange.end ?? target.labelSeqRange.beg]));
     }
     if (target.labelCompId) {

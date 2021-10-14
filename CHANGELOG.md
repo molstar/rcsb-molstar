@@ -15,7 +15,63 @@
   - `positions` and `selection` props renamed to `targets` of type `Target[]`
 - Changed loading methods signature 
   - Added optional configuration parameter `config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}`
-  - The loading configuration includes an optional trajectory preset provider `TrajectoryHierarchyPresetProvider` 
+  - The loading configuration includes an optional trajectory preset provider `TrajectoryHierarchyPresetProvider`
+- Remove `alignMotif` methods (& pecos-integration) as the strucmotif service now reports RMSD and transformations for all hits
+
+## [1.9.1] - 2021-10-14
+### Bug fixes
+- More robust 'chain-mode' check in feature preset
+- Don't expand MP4 export controls as part of the symmetry preset
+
+## [1.9.0] - 2021-09-29
+### Added
+- Integrate PDBe/AlphaFold confidence coloring theme
+
+## [1.8.8] - 2021-09-28
+### General
+- Mol* 2.3.1
+
+## [1.8.7] - 2021-08-25
+### General
+- Mol* 2.2.3
+
+## [1.8.6] - 2021-08-23
+### General
+- Display warning if membrane preset calculation fails
+- Add fallback if membrane preset calculation fails
+
+## [1.8.5] - 2021-08-11
+### General
+- Update strucmotif integration with rcsb.org
+
+## [1.8.4] - 2021-08-03
+### General
+- Mol* 2.2.1
+- Reset camera for membrane preset
+
+## [1.8.3] - 2021-07-23
+### General
+- Rename 'Structural Motif Search' to 'Structure Motif Search'
+
+## [1.8.2] - 2021-07-20
+### Bug fixes
+- Post-pare for pecos API changes
+
+## [1.8.1] - 2021-07-16
+### Added
+- Prepare for pecos API changes
+
+## [1.8.0] - 2021-07-13
+### Added
+- Moved code for motif alignment (i.e., talking to pecos) here
+
+## [1.7.4] - 2021-07-12
+### Bug fixes
+- structure selection: handle selection of full chains
+
+## [1.7.3] - 2021-07-08
+### Bug fixes
+- Strucmotif: relative URLs when running inside of sierra
 
 ## [1.7.2] - 2021-07-05
 ### Bug fixes

@@ -40,28 +40,29 @@
         <div id="viewer"></div>
         <script>
             function getQueryParam(id) {
-                var a = new RegExp(id + '=([^&#=]*)', 'i')
-                var m = a.exec(window.location.search)
+                const a = new RegExp(id + '=([^&#=]*)', 'i')
+                const m = a.exec(window.location.search)
                 return m ? decodeURIComponent(m[1]) : undefined
             }
 
-            var isEmbedded = getQueryParam('embedded') === '1';
+            const isEmbedded = getQueryParam('embedded') === '1';
 
-            var pdbId = getQueryParam('pdbId')
-            var url = getQueryParam('url')
-            var _config = getQueryParam('config')
-            var config = _config && JSON.parse(_config)
-            var _loadPdbIds = getQueryParam('loadPdbIds')
-            var loadPdbIds = _loadPdbIds && JSON.parse(_loadPdbIds)
+            const pdbId = getQueryParam('pdbId')
+            const url = getQueryParam('url')
+            const _config = getQueryParam('config')
+            const config = _config && JSON.parse(_config)
+            const _loadPdbIds = getQueryParam('loadPdbIds')
+            const loadPdbIds = _loadPdbIds && JSON.parse(_loadPdbIds)
 
             // create an instance of the plugin
-            var viewer = new rcsbMolstar.Viewer('viewer', {
+            const viewer = new rcsbMolstar.Viewer('viewer', {
                 showImportControls: !pdbId,
                 showExportControls: true,
                 showSessionControls: !pdbId,
                 layoutShowLog: !pdbId,
                 layoutShowControls: !isEmbedded,
-                showMembraneOrientationPreset: true
+                showMembraneOrientationPreset: true,
+                detachedFromSierra: true // needed when running without sierra
             })
 
             // load pdbId or url
@@ -71,7 +72,7 @@
         </script>
         <div id="menu">
             <h2> RCSB PDB Mol* Viewer - Test Page</h2>
-            Examples
+            <label for="examples">Examples</label>
             <select id="examples" onchange="loadExample(parseInt(this.value))">
                 <option value=''></option>
             </select>
@@ -93,16 +94,21 @@
             <button style="padding: 3px;" onclick="motifs2()">Motifs 2</button>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
+            <button style="padding: 3px;" onclick="motifsAlphaFold()">Motifs AF</button>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
             <button style="padding: 3px" onclick="propset()">Propset</button>
         </div>
         <script>
 
             function loadExample(index) {
-                var e = examples[index]
-                viewer.loadPdbId(e.id, e.config)
+                const e = examples[index];
+                // let URL, if specified, take precedence over ID
+                if (e.url) return viewer.loadStructureFromUrl(e.url, e.format ?? 'mmcif', e.isBinary ?? false, e.config)
+                if (e.id) return viewer.loadPdbId(e.id, e.config)
             }
 
-            var examples = [
+            const examples = [
                 {
                     id: '1CRN',
                     info: 'small: only polymer',
@@ -334,6 +340,17 @@
                     }
                 },
                 {
+                    id: '5XES',
+                    // this will fail membrane calculation due to tiny size but should still show default representation
+                    info: 'failing membrane: TK9 NMR structure in SDS micelle',
+                    config: {
+                        props: {
+                            kind: 'membrane',
+                            assemblyId: '1'
+                        }
+                    }
+                },
+                {
                     id: '6WJC',
                     info: 'ligand validation: Muscarinic acetylcholine receptor 1 - muscarinic toxin 7 complex: Focus + Density',
                     config: {
@@ -370,8 +387,8 @@
                             kind: 'motif',
                             assemblyId: '1',
                             targets: [
-                                { labelAsymId: 'A', labelSeqId: 61 },
-                                { labelAsymId: 'A', labelSeqId: 69 },
+                                { labelAsymId: 'A', labelSeqId: 61, operatorName: 'ASM_1' },
+                                { labelAsymId: 'A', labelSeqId: 69, operatorName: 'ASM_1' },
                                 { labelAsymId: 'A', labelSeqId: 87, operatorName: 'ASM_4' }
                             ],
                         }
@@ -385,8 +402,8 @@
                             kind: 'motif',
                             assemblyId: '1',
                             targets: [
-                                { labelAsymId: 'A', labelSeqId: 61 },
-                                { labelAsymId: 'A', labelSeqId: 69 },
+                                { labelAsymId: 'A', labelSeqId: 61, structOperId: '1' },
+                                { labelAsymId: 'A', labelSeqId: 69, structOperId: '1' },
                                 { labelAsymId: 'A', labelSeqId: 87, structOperId: '4' }
                             ],
                         }
@@ -420,13 +437,18 @@
                             ],
                         }
                     }
+                },
+                {
+                    id: 'AF-Q8W3K0-F1',
+                    url: 'https://alphafold.ebi.ac.uk/files/AF-Q8W3K0-F1-model_v1.cif',
+                    info: 'confidence coloring: Probable disease resistance protein At1g58602'
                 }
             ];
 
-            var examplesSelect = document.getElementById('examples');
-            for (var i = 0, il = examples.length; i < il; ++i) {
-                var e = examples[i]
-                var option = document.createElement('option')
+            const examplesSelect = document.getElementById('examples');
+            for (let i = 0, il = examples.length; i < il; ++i) {
+                const e = examples[i]
+                const option = document.createElement('option')
                 Object.assign(option, { text: '[' + e.id + '] ' + e.info, value: i })
                 examplesSelect.appendChild(option)
             }
@@ -454,46 +476,42 @@
             function motifs1() {
                 viewer.clear()
                     .then(function() {
-                        return viewer.loadPdbIds([{
-                            pdbId: '5CBG',
-                            config: {
-                                props: {
-                                    label: '5CBG',
-                                    kind: 'motif',
-                                    // assemblyId: '2', // library should be able to infer assemblyId of the query
-                                    targets: [
-                                        { labelAsymId: 'C', labelSeqId: 30, structOperId: '3' },
-                                        { labelAsymId: 'C', labelSeqId: 32, structOperId: '3' },
-                                        { labelAsymId: 'C', labelSeqId: 34, structOperId: '3' }
-                                    ],
-                                    // color: 13203230
+                        return viewer.loadPdbIds([
+                            {
+                                pdbId: '4CHA',
+                                config: {
+                                    props: {
+                                        kind: 'motif',
+                                        label: '4CHA',
+                                        targets: [
+                                            { labelAsymId: 'B', structOperId: '1', labelSeqId: 42 },
+                                            { labelAsymId: 'B', structOperId: '1', labelSeqId: 87 },
+                                            { labelAsymId: 'C', structOperId: '1', labelSeqId: 47 }
+                                        ]
+                                    }
+                                }
+                            }, {
+                                pdbId: '3RU4',
+                                config: {
+                                    props: {
+                                        kind: 'motif',
+                                        assemblyId: '1',
+                                        label: '3RU4 #2: 0.26 Å',
+                                        targets: [
+                                            { labelAsymId: 'D', structOperId: '2', labelSeqId: 42 },
+                                            { labelAsymId: 'D', structOperId: '2', labelSeqId: 87 },
+                                            { labelAsymId: 'E', structOperId: '2', labelSeqId: 46 }
+                                        ]
+                                    },
+                                    matrix: [
+                                        -0.049396686, -0.99700946, -0.059431925, 0.0,
+                                        -0.7568329, 0.076193266, -0.6491522, 0.0,
+                                        0.6517392, 0.012914069, -0.7583332, 0.0,
+                                        20.371853, 11.498471, 45.705563, 1.0
+                                    ]
                                 }
                             }
-                        }, {
-                            pdbId: '2W02',
-                            config: {
-                                props: {
-                                    label: '2W02 #1',
-                                    kind: 'motif',
-                                    assemblyId: '2',
-                                    targets: [
-                                        { labelAsymId: 'B', labelSeqId: 519 },
-                                        { labelAsymId: 'B', labelSeqId: 517 },
-                                        { labelAsymId: 'B', labelSeqId: 515 }
-                                    ],
-                                    // color: 4947916
-                                },
-                                matrix: [
-                                    0.7953831708253857, -0.6048923987758781, 0.03835097744411625, 0,
-                                    -0.23732979915044658, -0.2525976533016715, 0.9380133218572628, 0,
-                                    -0.5577097614377604, -0.7551818399893184, -0.344470913935246, 0,
-                                    154.77888998938096, 207.0215940587305, 25.17873980937774, 1
-                                ]
-                            }
-                        }]);
-                    })
-                    .then(function() {
-                        viewer.resetCamera(0)
+                        ]);
                     });
             }
 
@@ -537,6 +555,42 @@
                                 ]
                             }
                         }]);
+                    })
+                    .then(function() {
+                        viewer.resetCamera(0)
+                    });
+            }
+
+            function motifsAlphaFold() {
+                viewer.clear()
+                    .then(function() {
+                        return viewer.loadPdbId('1LAP', {
+                            props: {
+                                label: '1LAP',
+                                kind: 'motif',
+                                targets: [
+                                    { labelAsymId: 'A', labelSeqId: 332, structOperId: '1' },
+                                    { labelAsymId: 'A', labelSeqId: 334, structOperId: '1' },
+                                    { labelAsymId: 'A', labelSeqId: 255, structOperId: '1' },
+                                    { labelAsymId: 'A', labelSeqId: 273, structOperId: '1' },
+                                    { labelAsymId: 'A', labelSeqId: 250, structOperId: '1' }
+                                ],
+                            }
+                        });
+                    })
+                    .then(function() {
+                        const url = 'https://alphafold.ebi.ac.uk/files/AF-F1Q6S1-F1-model_v1.cif';
+                        const label = 'AF-F1Q6S1-F1 @ 0.23 RMSD';
+                        const targets = [
+                            // AF target must be devoid of struct_oper_id
+                            { labelAsymId: 'A', labelSeqId: 260 },
+                            { labelAsymId: 'A', labelSeqId: 265 },
+                            { labelAsymId: 'A', labelSeqId: 283 },
+                            { labelAsymId: 'A', labelSeqId: 342 },
+                            { labelAsymId: 'A', labelSeqId: 344 }
+                        ];
+                        const matrix = [-0.471, 0.856, 0.215, 0, 0.405, -0.007, 0.914, 0, 0.784, 0.518, -0.343, 0, 54.981, 65.575, 12.287, 1];
+                        return viewer.loadStructureFromUrl(url, 'mmcif', false, { props: { kind: 'motif', label, targets }, matrix });
                     })
                     .then(function() {
                         viewer.resetCamera(0)
