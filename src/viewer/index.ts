@@ -168,6 +168,7 @@ export class Viewer {
                 component: false,
                 volume: true,
                 custom: true,
+                // this must be set to true as the Mp4Controls depends on the canvas which will be undefined at init() time
                 mp4export: true
             }),
             detachedFromSierra: o.detachedFromSierra
