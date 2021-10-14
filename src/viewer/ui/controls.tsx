@@ -16,6 +16,7 @@ import { StructureComponentControls } from 'molstar/lib/mol-plugin-ui/structure/
 import { VolumeStreamingControls } from 'molstar/lib/mol-plugin-ui/structure/volume';
 import { SessionControls } from './session';
 import { StrucmotifSubmitControls } from './strucmotif';
+import { Mp4EncoderUI } from 'molstar/lib/extensions/mp4-export/ui';
 
 export class StructureTools extends PluginUIComponent {
     get customState() {
@@ -36,6 +37,7 @@ export class StructureTools extends PluginUIComponent {
             <StructureComponentControls initiallyCollapsed={collapsed.component} />
             <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />
             <CustomStructureControls initiallyCollapsed={collapsed.custom} />
+            <Mp4EncoderUI initiallyCollapsed={collapsed.mp4export}/>
         </>;
     }
 }

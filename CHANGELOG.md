@@ -18,6 +18,11 @@
   - The loading configuration includes an optional trajectory preset provider `TrajectoryHierarchyPresetProvider`
 - Remove `alignMotif` methods (& pecos-integration) as the strucmotif service now reports RMSD and transformations for all hits
 
+## [1.9.1] - 2021-10-14
+### Bug fixes
+- More robust 'chain-mode' check in feature preset
+- Don't expand MP4 export controls as part of the symmetry preset
+
 ## [1.9.0] - 2021-09-29
 ### Added
 - Integrate PDBe/AlphaFold confidence coloring theme

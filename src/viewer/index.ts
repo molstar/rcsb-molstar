@@ -33,7 +33,6 @@ import { encodeStructureData, downloadAsZipFile } from './helpers/export';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select } from './helpers/viewer';
 import { SelectBase, SelectRange, SelectTarget, Target } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
-import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
@@ -54,7 +53,6 @@ export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
-    'mp4-export': PluginSpec.Behavior(Mp4Export),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
     'af-confidence': PluginSpec.Behavior(AlphaFoldConfidenceScore)
 };
@@ -166,7 +164,9 @@ export class Viewer {
                 superposition: true,
                 component: false,
                 volume: true,
-                custom: true
+                custom: true,
+                // this must be set to true as the Mp4Controls depends on the canvas which will be undefined at init() time
+                mp4export: true
             }),
             detachedFromSierra: o.detachedFromSierra
         };
