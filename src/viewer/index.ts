@@ -34,7 +34,6 @@ import { encodeStructureData, downloadAsZipFile } from './helpers/export';
 import { ViewerMethods } from './helpers/viewer';
 import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
-import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
@@ -54,7 +53,6 @@ export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
-    'mp4-export': PluginSpec.Behavior(Mp4Export),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
     'af-confidence': PluginSpec.Behavior(AlphaFoldConfidenceScore)
 };
@@ -169,7 +167,8 @@ export class Viewer {
                 superposition: true,
                 component: false,
                 volume: true,
-                custom: true
+                custom: true,
+                mp4export: true
             }),
             detachedFromSierra: o.detachedFromSierra
         };

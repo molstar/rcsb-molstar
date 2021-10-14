@@ -40,6 +40,7 @@ export type CollapsedState = {
     component: boolean
     volume: boolean
     custom: boolean
+    mp4export: boolean
 }
 
 export interface ViewerState {
