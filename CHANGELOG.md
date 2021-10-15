@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.9.2] - 2021-10-15
+### Bug fixes
+- removed implicit 'chain-mode', must be explicitly requested by setting 'extendToChain' to true as part of the part
+
 ## [1.9.1] - 2021-10-14
 ### Bug fixes
 - More robust 'chain-mode' check in feature preset

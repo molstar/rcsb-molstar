@@ -258,8 +258,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         if ((p.kind === 'feature' || p.kind === 'feature-density') && structure?.obj) {
             let loci = targetToLoci(p.target, structure!.obj.data);
-            // if target is only defined by chain: then don't force first residue
-            const chainMode = Object.keys(p.target).length === 1 && !!p.target.label_asym_id;
+            // if requested: then don't force first residue
+            const chainMode = !!p.target.extendToChain;
             // HELP-16678: check for rare case where ligand is not present in requested assembly
             if (loci.elements.length === 0 && !!p.assemblyId) {
                 // switch to Model (a.k.a. show coordinates independent of assembly)
