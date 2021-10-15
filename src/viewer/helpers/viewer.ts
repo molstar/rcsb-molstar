@@ -44,6 +44,8 @@ export function getStructureRefWithModelId(structures: StructureRef[], target: {
 }
 
 export function select(plugin: PluginContext, targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
+    if (mode === 'hover' && modifier === 'set')
+        clearSelection(plugin, 'hover');
     (Array.isArray(targets) ? targets : [targets]).forEach((target, n)=>{
         const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
         if (!data) return;
