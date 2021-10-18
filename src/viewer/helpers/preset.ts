@@ -233,12 +233,13 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
-        } else if (p.kind === 'symmetry') {
-            if (!AssemblySymmetryDataProvider.get(structure!.obj!.data).value) {
+        } else if (p.kind === 'symmetry' && structure?.obj) {
+            const data = structure!.obj.data;
+            if (!AssemblySymmetryDataProvider.get(data).value) {
                 await plugin.runTask(Task.create('Assembly Symmetry', async runtime => {
                     const propCtx = { runtime, assetManager: plugin.managers.asset };
-                    await AssemblySymmetryDataProvider.attach(propCtx, structure!.obj!.data);
-                    await AssemblySymmetryProvider.attach(propCtx, structure!.obj!.data, { symmetryIndex: p.symmetryIndex });
+                    await AssemblySymmetryDataProvider.attach(propCtx, data);
+                    await AssemblySymmetryProvider.attach(propCtx, data, { symmetryIndex: p.symmetryIndex });
                 }));
             }
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset);
