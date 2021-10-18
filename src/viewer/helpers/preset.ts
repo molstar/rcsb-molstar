@@ -42,6 +42,11 @@ import {
     toRange
 } from './selection';
 import { RcsbSuperpositionRepresentationPreset } from './superpose/preset';
+import {
+    AssemblySymmetryDataProvider,
+    AssemblySymmetryProvider
+} from 'molstar/lib/extensions/rcsb/assembly-symmetry/prop';
+import { Task } from 'molstar/lib/mol-task';
 
 type BaseProps = {
     assemblyId?: string
@@ -229,7 +234,14 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
         } else if (p.kind === 'symmetry') {
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
+            if (!AssemblySymmetryDataProvider.get(structure!.obj!.data).value) {
+                await plugin.runTask(Task.create('Assembly Symmetry', async runtime => {
+                    const propCtx = { runtime, assetManager: plugin.managers.asset };
+                    await AssemblySymmetryDataProvider.attach(propCtx, structure!.obj!.data);
+                    await AssemblySymmetryProvider.attach(propCtx, structure!.obj!.data, { symmetryIndex: p.symmetryIndex });
+                }));
+            }
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset);
 
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
