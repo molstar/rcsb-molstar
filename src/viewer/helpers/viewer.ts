@@ -44,8 +44,8 @@ export function getStructureRefWithModelId(structures: StructureRef[], target: {
 }
 
 export function select(plugin: PluginContext, targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
-    if (mode === 'hover' && modifier === 'set')
-        clearSelection(plugin, 'hover');
+    if (modifier === 'set')
+        clearSelection(plugin, mode);
     (Array.isArray(targets) ? targets : [targets]).forEach((target, n)=>{
         const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
         if (!data) return;
@@ -56,7 +56,7 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
         if (mode === 'hover') {
             plugin.managers.interactivity.lociHighlights.highlight({ loci });
         } else if (mode === 'select') {
-            plugin.managers.structure.selection.fromLoci(n > 0 ? 'add' : modifier, loci);
+            plugin.managers.structure.selection.fromLoci('add', loci);
         }
     });
 }
