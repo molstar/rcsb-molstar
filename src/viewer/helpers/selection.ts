@@ -33,6 +33,12 @@ export type Target = {
      * the source CIF file.
      */
     readonly structOperId?: string
+    /**
+     * Extend selection to whole chain, by default only the first residue is selected. This is used by the
+     * oligoInteraction preset in rcsb-sierra, which should focus the whole oligo chain. Not wanted for the
+     * ligandInteraction preset, which would otherwise focus alternative conformations and symmetry mates.
+     */
+    readonly extendToChain?: boolean
 }
 
 export type SelectBase = {

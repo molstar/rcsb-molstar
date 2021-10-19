@@ -41,6 +41,11 @@ import {
     toRange
 } from './selection';
 import { RcsbSuperpositionRepresentationPreset } from './superpose/preset';
+import {
+    AssemblySymmetryDataProvider,
+    AssemblySymmetryProvider
+} from 'molstar/lib/extensions/rcsb/assembly-symmetry/prop';
+import { Task } from 'molstar/lib/mol-task';
 
 type BaseProps = {
     assemblyId?: string
@@ -228,8 +233,16 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
-        } else if (p.kind === 'symmetry') {
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset, { symmetryIndex: p.symmetryIndex });
+        } else if (p.kind === 'symmetry' && structure?.obj) {
+            const data = structure!.obj.data;
+            if (!AssemblySymmetryDataProvider.get(data).value) {
+                await plugin.runTask(Task.create('Assembly Symmetry', async runtime => {
+                    const propCtx = { runtime, assetManager: plugin.managers.asset };
+                    await AssemblySymmetryDataProvider.attach(propCtx, data);
+                    await AssemblySymmetryProvider.attach(propCtx, data, { symmetryIndex: p.symmetryIndex });
+                }));
+            }
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset);
 
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
@@ -258,8 +271,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         if ((p.kind === 'feature' || p.kind === 'feature-density') && structure?.obj) {
             let loci = targetToLoci(p.target, structure!.obj.data);
-            // if target is only defined by chain: then don't force first residue
-            const chainMode = Object.keys(p.target).length === 1 && !!p.target.labelAsymId;
+            // if requested: then don't force first residue
+            const chainMode = !!p.target.extendToChain;
             // HELP-16678: check for rare case where ligand is not present in requested assembly
             if (loci.elements.length === 0 && !!p.assemblyId) {
                 // switch to Model (a.k.a. show coordinates independent of assembly)
