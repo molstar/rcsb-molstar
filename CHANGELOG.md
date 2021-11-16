@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.9.6] - 2021-11-16
+### General
+- Try to fix packing issues
+
 ## [1.9.5] - 2021-11-16
 ### General
 - Mol* 2.3.7 (more WebGL fixes)
