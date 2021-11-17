@@ -18,6 +18,18 @@
   - The loading configuration includes an optional trajectory preset provider `TrajectoryHierarchyPresetProvider`
 - Remove `alignMotif` methods (& pecos-integration) as the strucmotif service now reports RMSD and transformations for all hits
 
+## [1.9.6] - 2021-11-16
+### General
+- Try to fix packing issues
+
+## [1.9.5] - 2021-11-16
+### General
+- Mol* 2.3.7 (more WebGL fixes)
+
+## [1.9.4] - 2021-11-02
+### General
+- Mol* 2.3.5 and other dependencies (iOS WebGL fixes)
+
 ## [1.9.3] - 2021-10-18
 ### Bug fixes
 - Rewire index parameter of symmetry preset
