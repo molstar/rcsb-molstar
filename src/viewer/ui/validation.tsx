@@ -14,8 +14,10 @@ import { Model } from 'molstar/lib/mol-model/structure/model';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
 
 interface ValidationReportState extends CollapsableState {
-    isInitialized: boolean
+    errorStates: Set<string>
 }
+
+const ValidationReportTag = 'validation-report';
 
 /**
  * A high-level component that gives access to the validation report preset.
@@ -23,10 +25,10 @@ interface ValidationReportState extends CollapsableState {
 export class ValidationReportControls extends CollapsableControls<{}, ValidationReportState> {
     protected defaultState() {
         return {
-            header: 'Validation Report',
+            header: 'Quality Assessment',
             isCollapsed: false,
             isHidden: true,
-            isInitialized: false,
+            errorStates: new Set<string>(),
             brand: { accent: 'gray' as const, svg: TuneSvg } // TODO better logo
         };
     }
@@ -35,6 +37,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         this.subscribe(this.plugin.managers.structure.hierarchy.behaviors.selection, () => {
             this.setState({
                 isHidden: !this.canEnable(),
+                errorStates: new Set<string>(),
                 description: StructureHierarchyManager.getSelectedStructuresDescription(this.plugin)
             });
         });
@@ -52,7 +55,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         return pivot.obj.data.models.length === 1 && ValidationReport.isApplicable(pivot.obj.data.models[0]);
     }
 
-    get noReport() {
+    get noValidationReport() {
         const structure = this.pivot.cell.obj?.data;
         if (!structure || structure.models.length !== 1) return true;
         const model = structure.models[0];
@@ -65,19 +68,28 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
             model.entryId.match(/^pdb_[0-9]{4}[1-9][a-z0-9]{3}$/i) !== null;
     }
 
-    requestPreset = () => {
-        ValidationReportGeometryQualityPreset.apply(this.pivot.cell, Object.create(null), this.plugin);
+    requestValidationReportPreset = async () => {
+        try {
+            await ValidationReportGeometryQualityPreset.apply(this.pivot.cell, Object.create(null), this.plugin);
+        } catch (err) {
+            this.setState(({ errorStates }) => {
+                const errors = new Set(errorStates);
+                errors.add(ValidationReportTag);
+                return { errorStates: errors };
+            });
+        }
     }
 
     get actions(): ActionMenu.Items {
-        const noReport = this.noReport;
         // TODO this could support other kinds of reports/validation like the AlphaFold confidence scores
+        const noValidationReport = this.noValidationReport;
+        const validationReportError = this.state.errorStates.has(ValidationReportTag);
         return [
             {
                 kind: 'item',
-                label: noReport ? 'No Report Available' : 'Visualize RCSB PDB Validation Report',
-                value: this.requestPreset,
-                disabled: noReport
+                label: validationReportError ? 'Failed to Obtain Validation Report' : (noValidationReport ? 'No Validation Report Available' : 'RCSB PDB Validation Report'),
+                value: this.requestValidationReportPreset,
+                disabled: noValidationReport || validationReportError
             },
         ];
     }
