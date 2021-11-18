@@ -41,6 +41,7 @@ export type CollapsedState = {
     volume: boolean
     custom: boolean
     mp4export: boolean
+    validationReport: boolean
 }
 
 export interface ViewerState {
@@ -49,10 +50,12 @@ export interface ViewerState {
     showSessionControls: boolean
     showStructureSourceControls: boolean
     showSuperpositionControls: boolean
+    showValidationReportControls: boolean
     modelLoader: ModelLoader
     collapsed: BehaviorSubject<CollapsedState>
     detachedFromSierra: boolean
 }
+
 export function ViewerState(plugin: PluginContext) {
     return plugin.customState as ViewerState;
 }
