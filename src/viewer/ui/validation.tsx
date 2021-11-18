@@ -72,6 +72,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         try {
             await ValidationReportGeometryQualityPreset.apply(this.pivot.cell, Object.create(null), this.plugin);
         } catch (err) {
+            // happens e.g. for 2W4S
             this.setState(({ errorStates }) => {
                 const errors = new Set(errorStates);
                 errors.add(ValidationReportTag);
