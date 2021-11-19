@@ -29,7 +29,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
             isCollapsed: false,
             isHidden: true,
             errorStates: new Set<string>(),
-            brand: { accent: 'gray' as const, svg: TuneSvg } // TODO better logo
+            brand: { accent: 'cyan' as const, svg: TuneSvg } // TODO better logo
         };
     }
 
