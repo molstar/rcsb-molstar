@@ -5,7 +5,6 @@
  */
 
 import { CollapsableControls, CollapsableState } from 'molstar/lib/mol-plugin-ui/base';
-import { TuneSvg } from 'molstar/lib/mol-plugin-ui/controls/icons';
 import { StructureHierarchyManager } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy';
 import { ValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/prop';
 import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
@@ -19,6 +18,14 @@ interface ValidationReportState extends CollapsableState {
 
 const ValidationReportTag = 'validation-report';
 
+const _QualityIcon = <svg width='50px' height='50px' viewBox='0 0 38 47'>
+    <g strokeWidth='4' fill='none'>
+        <path d='m19 4.8c-3.7 3.6-9 5.8-15 5.8v4.3c0 25 14 29 14 29s16-4.5 16-29v-4.3c-6 0-11-2.3-15-5.8z' stroke='#000' strokeLinecap='square' strokeMiterlimit='10'/>
+        <path d='m13 23 3.5 3.5 9.4-9.4' stroke='#000'/>
+    </g>
+</svg>;
+export function QualityIconSvg() { return _QualityIcon; }
+
 /**
  * A high-level component that gives access to the validation report preset.
  */
@@ -29,7 +36,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
             isCollapsed: false,
             isHidden: true,
             errorStates: new Set<string>(),
-            brand: { accent: 'cyan' as const, svg: TuneSvg } // TODO better logo
+            brand: { accent: 'cyan' as const, svg: QualityIconSvg }
         };
     }
 
