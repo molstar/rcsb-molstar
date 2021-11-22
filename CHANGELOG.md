@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [1.10.0] - 2021-11-??
+## [1.10.0] - 2021-11-22
 ### Added
 - Dedicated UI for quality assessment & validation reports
 
