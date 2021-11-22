@@ -42,10 +42,13 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
 
     componentDidMount() {
         this.subscribe(this.plugin.managers.structure.hierarchy.behaviors.selection, () => {
+            const { errorStates, description } = this.state;
+            const nextDescription = StructureHierarchyManager.getSelectedStructuresDescription(this.plugin);
             this.setState({
                 isHidden: !this.canEnable(),
-                errorStates: new Set<string>(),
-                description: StructureHierarchyManager.getSelectedStructuresDescription(this.plugin)
+                // if structure is unchanged then keep old error states
+                errorStates: nextDescription === description ? errorStates : new Set<string>(),
+                description: nextDescription
             });
         });
     }
