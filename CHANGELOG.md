@@ -18,6 +18,10 @@
   - The loading configuration includes an optional trajectory preset provider `TrajectoryHierarchyPresetProvider`
 - Remove `alignMotif` methods (& pecos-integration) as the strucmotif service now reports RMSD and transformations for all hits
 
+## [1.10.0] - 2021-11-22
+### Added
+- Dedicated UI for quality assessment & validation reports
+
 ## [1.9.6] - 2021-11-16
 ### General
 - Try to fix packing issues

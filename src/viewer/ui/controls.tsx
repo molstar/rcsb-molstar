@@ -17,6 +17,7 @@ import { VolumeStreamingControls } from 'molstar/lib/mol-plugin-ui/structure/vol
 import { SessionControls } from './session';
 import { StrucmotifSubmitControls } from './strucmotif';
 import { Mp4EncoderUI } from 'molstar/lib/extensions/mp4-export/ui';
+import { ValidationReportControls } from './validation';
 
 export class StructureTools extends PluginUIComponent {
     get customState() {
@@ -36,6 +37,7 @@ export class StructureTools extends PluginUIComponent {
             {this.customState.showSuperpositionControls && <StructureSuperpositionControls initiallyCollapsed={collapsed.superposition} />}
             <StructureComponentControls initiallyCollapsed={collapsed.component} />
             <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />
+            {this.customState.showValidationReportControls && <ValidationReportControls initiallyCollapsed={collapsed.validationReport} />}
             <CustomStructureControls initiallyCollapsed={collapsed.custom} />
             <Mp4EncoderUI initiallyCollapsed={collapsed.mp4export}/>
         </>;

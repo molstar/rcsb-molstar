@@ -64,6 +64,7 @@ const DefaultViewerProps = {
     showStructureSourceControls: true,
     showSuperpositionControls: true,
     showMembraneOrientationPreset: false,
+    showValidationReportControls: true,
     /**
      * Needed when running outside of sierra. If set to true, the strucmotif UI will use an absolute URL to sierra-prod.
      * Otherwise, the link will be relative on the current host.
@@ -156,6 +157,7 @@ export class Viewer {
             showSessionControls: o.showSessionControls,
             showStructureSourceControls: o.showStructureSourceControls,
             showSuperpositionControls: o.showSuperpositionControls,
+            showValidationReportControls: o.showValidationReportControls,
             modelLoader: new ModelLoader(this._plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
@@ -166,7 +168,8 @@ export class Viewer {
                 volume: true,
                 custom: true,
                 // this must be set to true as the Mp4Controls depends on the canvas which will be undefined at init() time
-                mp4export: true
+                mp4export: true,
+                validationReport: true
             }),
             detachedFromSierra: o.detachedFromSierra
         };
