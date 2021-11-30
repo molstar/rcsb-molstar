@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [1.10.1] - 2021-11-30
+### General
+- Update Mol* dependency
+
 ## [1.10.0] - 2021-11-22
 ### Added
 - Dedicated UI for quality assessment & validation reports
