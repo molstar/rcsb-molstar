@@ -209,15 +209,14 @@ export class Viewer {
     private prevExpanded: boolean;
 
     private toggleControls(): void {
-
         const currExpanded = this.plugin.layout.state.isExpanded;
         const expandedChanged = (this.prevExpanded !== currExpanded);
         if (!expandedChanged) return;
 
         if (currExpanded && !this.plugin.layout.state.showControls) {
-            this.plugin.layout.setProps({showControls: true});
+            this.plugin.layout.setProps({ showControls: true });
         } else if (!currExpanded && this.plugin.layout.state.showControls) {
-            this.plugin.layout.setProps({showControls: false});
+            this.plugin.layout.setProps({ showControls: false });
         }
         this.prevExpanded = this.plugin.layout.state.isExpanded;
     }
@@ -296,7 +295,7 @@ export class Viewer {
         return downloadAsZipFile(this.plugin, content);
     }
 
-    pluginCall(f: (plugin: PluginContext) => void){
+    pluginCall(f: (plugin: PluginContext) => void) {
         f(this.plugin);
     }
 
@@ -305,10 +304,10 @@ export class Viewer {
     }
 
     public setFocus(modelId: string, asymId: string, begin: number, end: number): void;
-    public setFocus(...args: any[]): void{
-        if(args.length === 4)
+    public setFocus(...args: any[]): void {
+        if (args.length === 4)
             ViewerMethods.setFocusFromRange(this.plugin, args[0], args[1], args[2], args[3]);
-        if(args.length === 2)
+        if (args.length === 2)
             ViewerMethods.setFocusFromSet(this.plugin, args[0], args[1]);
     }
 
@@ -320,18 +319,18 @@ export class Viewer {
     public select(selection: Array<{modelId: string; asymId: string; begin: number; end: number;}>, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(modelId: string, asymId: string, position: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
     public select(modelId: string, asymId: string, begin: number, end: number, mode: 'select'|'hover', modifier: 'add'|'set'): void;
-    public select(...args: any[]){
-        if(args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; position: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; position: number;}>)[0].position === 'number'){
-            if(args[2] === 'set')
+    public select(...args: any[]) {
+        if (args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; position: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; position: number;}>)[0].position === 'number') {
+            if (args[2] === 'set')
                 this.clearSelection('select');
             (args[0] as Array<{modelId: string; asymId: string; position: number;}>).forEach(r=>{
                 ViewerMethods.selectSegment(this.plugin, r.modelId, r.asymId, r.position, r.position, args[1], 'add');
             });
-        }else if(args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>)[0].begin === 'number'){
+        } else if (args.length === 3 && (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>).length > 0 && typeof (args[0] as Array<{modelId: string; asymId: string; begin: number; end: number;}>)[0].begin === 'number') {
             ViewerMethods.selectMultipleSegments(this.plugin, args[0], args[1], args[2]);
-        }else if(args.length === 5){
+        } else if (args.length === 5) {
             ViewerMethods.selectSegment(this.plugin, args[0], args[1], args[2], args[2], args[3], args[4]);
-        }else if(args.length === 6){
+        } else if (args.length === 6) {
             ViewerMethods.selectSegment(this.plugin, args[0], args[1], args[2], args[3], args[4], args[5]);
         }
     }
@@ -344,22 +343,22 @@ export class Viewer {
     public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; position: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
     public async createComponent(componentLabel: string, modelId: string, residues: Array<{asymId: string; begin: number; end: number;}>, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
     public async createComponent(componentLabel: string, modelId: string, asymId: string, begin: number, end: number, representationType: StructureRepresentationRegistry.BuiltIn): Promise<void>;
-    public async createComponent(...args: any[]): Promise<void>{
+    public async createComponent(...args: any[]): Promise<void> {
         const structureRef: StructureRef | undefined = ViewerMethods.getStructureRefWithModelId(this.plugin.managers.structure.hierarchy.current.structures, args[1]);
-        if(structureRef == null)
-            throw 'createComponent error: model not found';
+        if (structureRef == null)
+            throw Error('createComponent error: model not found');
         if (args.length === 4 && typeof args[2] === 'string') {
             await ViewerMethods.createComponentFromChain(this.plugin, args[0], structureRef, args[2], args[3]);
         } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].position === 'number') {
             await ViewerMethods.createComponentFromSet(this.plugin, args[0], structureRef, args[2], args[3]);
         } else if (args.length === 4 && args[2] instanceof Array && args[2].length > 0 && typeof args[2][0].begin === 'number') {
             await ViewerMethods.createComponentFromMultipleRange(this.plugin, args[0], structureRef, args[2], args[3]);
-        }else if (args.length === 6) {
+        } else if (args.length === 6) {
             await ViewerMethods.createComponentFromRange(this.plugin, args[0], structureRef, args[2], args[3], args[4], args[5]);
         }
     }
 
-    public removeComponent(componentLabel: string): void{
+    public removeComponent(componentLabel: string): void {
         ViewerMethods.removeComponent(this.plugin, componentLabel);
     }
 }
