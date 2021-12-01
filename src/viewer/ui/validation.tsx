@@ -89,7 +89,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
                 return { errorStates: errors };
             });
         }
-    }
+    };
 
     get actions(): ActionMenu.Items {
         // TODO this could support other kinds of reports/validation like the AlphaFold confidence scores
@@ -108,7 +108,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
     selectAction: ActionMenu.OnSelect = item => {
         if (!item) return;
         (item?.value as any)();
-    }
+    };
 
     renderControls() {
         return <ActionMenu items={this.actions} onSelect={this.selectAction} />;

@@ -11,7 +11,8 @@ import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder'
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { StructureSelectionQuery } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import {
-    rangeToTest, SelectBase,
+    rangeToTest,
+    SelectBase,
     SelectRange,
     SelectTarget,
     Target,
@@ -46,7 +47,7 @@ export function getStructureRefWithModelId(structures: StructureRef[], target: {
 export function select(plugin: PluginContext, targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
     if (modifier === 'set')
         clearSelection(plugin, mode);
-    (Array.isArray(targets) ? targets : [targets]).forEach((target, n)=>{
+    (Array.isArray(targets) ? targets : [targets]).forEach(target => {
         const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
         if (!data) return;
 
@@ -85,7 +86,7 @@ export async function createComponent(plugin: PluginContext, componentLabel: str
         if (!structureRef) throw Error('createComponent error: model not found');
 
         const residues = toResidues(target);
-        const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substr(2),
+        const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substring(2),
             MS.struct.generator.atomGroups(rangeToTest(target.labelAsymId, residues)));
         await plugin.managers.structure.component.add({
             selection: sel,

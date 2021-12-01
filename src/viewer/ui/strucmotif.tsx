@@ -222,7 +222,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         const url = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
         // console.log(url);
         window.open(url, '_blank');
-    }
+    };
 
     sortResidueIds(a: ResidueSelection, b: ResidueSelection): number {
         if (a.label_asym_id !== b.label_asym_id) {
@@ -249,7 +249,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
     selectAction: ActionMenu.OnSelect = item => {
         if (!item) return;
         (item?.value as any)();
-    }
+    };
 
     toggleExchanges = (idx: number) => this.setState({ action: (this.state.action === idx ? void 0 : idx) as ExchangeState });
 

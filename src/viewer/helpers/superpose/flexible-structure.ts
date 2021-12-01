@@ -17,7 +17,7 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
     from: SO.Molecule.Model,
     to: SO.Molecule.Structure,
     isDecorator: true,
-    params(a) {
+    params(_a) {
         return {
             targets: PD.Value<PropsetProps['targets']>([])
         };

@@ -20,7 +20,7 @@ export const AlphaFoldConfidenceScore = PluginBehavior.create<{ autoAttach: bool
         description: 'AlphaFold Confidence Score.'
     },
     ctor: class extends PluginBehavior.Handler<{ autoAttach: boolean, showTooltip: boolean }> {
-        private provider = AlphaFoldConfidenceProvider
+        private provider = AlphaFoldConfidenceProvider;
 
         private labelProvider = {
             label: (loci: Loci): string | undefined => {
@@ -40,7 +40,7 @@ export const AlphaFoldConfidenceScore = PluginBehavior.create<{ autoAttach: bool
                     default: return;
                 }
             }
-        }
+        };
 
         register(): void {
             this.ctx.customModelProperties.register(this.provider, this.params.autoAttach);

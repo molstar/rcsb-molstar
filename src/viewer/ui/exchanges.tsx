@@ -42,7 +42,7 @@ export class ExchangesControl extends React.Component<{ handler: Residue }> {
     onClickSwatch = (e: React.MouseEvent<HTMLButtonElement>) => {
         const tlc = e.currentTarget.getAttribute('data-id')!;
         this.props.handler.toggleExchange(tlc);
-    }
+    };
 
     swatch() {
         // TODO update of isSelected style is delayed - this seems to be a Chrome-related bug

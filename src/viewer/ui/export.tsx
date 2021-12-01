@@ -30,7 +30,7 @@ class CoordinatesExportControls extends PluginUIComponent {
     download = async () => {
         const content = encodeStructureData(this.plugin);
         await downloadAsZipFile(this.plugin, content);
-    }
+    };
 
     render() {
         return <>
