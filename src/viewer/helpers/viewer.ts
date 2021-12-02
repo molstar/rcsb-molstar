@@ -108,13 +108,16 @@ function toResidues(target: SelectBase | SelectTarget): number[] {
     return [];
 }
 
-export function removeComponent(plugin: PluginContext, componentLabel: string) {
+export async function removeComponent(plugin: PluginContext, componentLabel: string) {
+    const out: Promise<void>[] = [];
     plugin.managers.structure.hierarchy.currentComponentGroups.forEach(c => {
         for (const comp of c) {
             if (comp.cell.obj?.label === componentLabel) {
-                plugin.managers.structure.hierarchy.remove(c);
+                const o = plugin.managers.structure.hierarchy.remove(c);
+                if (o) out.push(o);
                 break;
             }
         }
     });
+    await Promise.all(out);
 }
