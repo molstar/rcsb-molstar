@@ -11,6 +11,8 @@ import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rc
 import { ActionMenu } from 'molstar/lib/mol-plugin-ui/controls/action-menu';
 import { Model } from 'molstar/lib/mol-model/structure/model';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
+import { AlphaFoldConfidence } from '../helpers/af-confidence/prop';
+import { AlphaFoldConfidenceColorThemeProvider } from '../helpers/af-confidence/color';
 
 interface ValidationReportState extends CollapsableState {
     errorStates: Set<string>
@@ -72,6 +74,13 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         return !model || !this.isFromPdbArchive(model);
     }
 
+    get alphaFoldData() {
+        const structure = this.pivot.cell.obj?.data;
+        if (!structure || structure.models.length !== 1) return false;
+        const model = structure.models[0];
+        return AlphaFoldConfidence.isApplicable(model);
+    }
+
     isFromPdbArchive(model: Model) {
         if (!MmcifFormat.is(model.sourceData)) return false;
         return model.entryId.match(/^[1-9][a-z0-9]{3}$/i) !== null ||
@@ -91,11 +100,14 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         }
     };
 
+    requestAlphaFoldConfidenceColoring = async () => {
+        await this.plugin.managers.structure.component.updateRepresentationsTheme(this.pivot.components, { color: AlphaFoldConfidenceColorThemeProvider.name as any });
+    };
+
     get actions(): ActionMenu.Items {
-        // TODO this could support other kinds of reports/validation like the AlphaFold confidence scores
         const noValidationReport = this.noValidationReport;
         const validationReportError = this.state.errorStates.has(ValidationReportTag);
-        return [
+        const out: ActionMenu.Items = [
             {
                 kind: 'item',
                 label: validationReportError ? 'Failed to Obtain Validation Report' : (noValidationReport ? 'No Validation Report Available' : 'RCSB PDB Validation Report'),
@@ -103,6 +115,16 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
                 disabled: noValidationReport || validationReportError
             },
         ];
+
+        if (this.alphaFoldData) {
+            out.push({
+                kind: 'item',
+                label: 'AlphaFold Confidence Scores',
+                value: this.requestAlphaFoldConfidenceColoring
+            });
+        }
+
+        return out;
     }
 
     selectAction: ActionMenu.OnSelect = item => {
