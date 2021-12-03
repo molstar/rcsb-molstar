@@ -129,9 +129,13 @@ function createScoreMapFromCif(modelData: Model, residueData: Table<typeof Alpha
         return 'Very low';
     };
 
+    const entityMap = new Map<string, string>();
     for (let i = 0; i < _rowCount; i++) {
         const confidenceScore = metric_value.value(i);
-        const idx = modelData.atomicHierarchy.index.findResidue('1', label_asym_id.value(i), label_seq_id.value(i));
+        const labelAsymId = label_asym_id.value(i);
+        if (!entityMap.has(labelAsymId)) entityMap.set(labelAsymId, (modelData.atomicHierarchy.index.findEntity(labelAsymId) + 1).toString());
+        const entityId = entityMap.get(labelAsymId)!;
+        const idx = modelData.atomicHierarchy.index.findResidue(entityId, labelAsymId, label_seq_id.value(i));
         const confidenceCategory = toCategory(confidenceScore);
 
         ret.set(idx, [confidenceScore, confidenceCategory]);
