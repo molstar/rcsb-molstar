@@ -63,8 +63,10 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         const { selection } = this.plugin.managers.structure.hierarchy;
         if (selection.structures.length !== 1) return false;
         const pivot = this.pivot.cell;
-        if (!pivot.obj) return false;
-        return pivot.obj.data.models.length === 1 && ValidationReport.isApplicable(pivot.obj.data.models[0]);
+        if (!pivot.obj || pivot.obj.data.models.length !== 1) return false;
+        const model = pivot.obj.data.models[0];
+        // all supported options must be registered here
+        return ValidationReport.isApplicable(model) || AlphaFoldConfidence.isApplicable(model);
     }
 
     get noValidationReport() {
