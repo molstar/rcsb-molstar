@@ -6,7 +6,7 @@ RCSB PDB implementation of [Mol* (/'mol-star/)](https://github.com/molstar/molst
 Try it [here](https://rcsb.org/3d-view/).
 
 PDBe also maintains a flavor of Mol* called [PDBe Molstar](https://github.com/PDBeurope/pdbe-molstar).
-Documentation of the parent Mol* project can be found [here](https://molstar.org/docs/). See `index.html` for examples.
+Documentation of the parent Mol* project can be found [here](https://molstar.org/docs/). See [index.html](https://github.com/rcsb/rcsb-molstar/blob/master/src/viewer/index.html) for examples.
 
 ## Functionality
 Provides custom features used in the Mol* viewer on [rcsb.org](https://www.rcsb.org/3d-view):
