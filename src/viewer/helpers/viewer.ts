@@ -47,10 +47,10 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
     if (modifier === 'set')
         clearSelection(plugin, mode);
     (Array.isArray(targets) ? targets : [targets]).forEach((target, n)=>{
-        const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
-        if (!data) return;
+        const structure = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+        if (!structure) return;
 
-        const loci = targetToLoci(target, data);
+        const loci = targetToLoci(target, structure);
         if (!loci) return;
 
         if (mode === 'hover') {
@@ -86,7 +86,7 @@ export async function createComponent(plugin: PluginContext, componentLabel: str
 
         const residues = toResidues(target);
         const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substr(2),
-            MS.struct.generator.atomGroups(rangeToTest(target.labelAsymId, residues)));
+            MS.struct.generator.atomGroups(rangeToTest(target.labelAsymId, residues, target.operatorName)));
         await plugin.managers.structure.component.add({
             selection: sel,
             options: { checkExisting: false, label: componentLabel },

@@ -44,6 +44,7 @@ export type Target = {
 export type SelectBase = {
     readonly modelId: string
     readonly labelAsymId: string
+    readonly operatorName?: string
 }
 export type SelectSingle = {
     readonly labelSeqId: number
@@ -186,14 +187,18 @@ const labelFromProps = (entryId: string, labelAsymId?: string, range?: number[])
         (range && range.length > 1 ? `-${range[range.length - 1]}` : '');
 };
 
-export function rangeToTest(asymId: string, residues: number[]) {
+export function rangeToTest(asymId: string, residues: number[], operatorName?: string) {
+    const chainTests: Expression[] = [MS.core.rel.eq([MS.ammp('label_asym_id'), asymId])];
+    if(operatorName)
+        chainTests.push(MS.core.rel.eq([operatorName, MS.acp('operatorName')]));
+
     if (residues.length > 0) {
         return {
-            'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), asymId]),
+            'chain-test': MS.core.logic.and(chainTests),
             'residue-test': MS.core.set.has([MS.set(...residues), MS.ammp('label_seq_id')])
         };
     } else {
-        return { 'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), asymId]) };
+        return { 'chain-test': MS.core.logic.and(chainTests) };
     }
 }
 
