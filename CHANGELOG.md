@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.0.1]
+### Bug fixes
+- fix typo in pLDDT behavior name
+
 ## [2.0.0]
 ### Breaking changes
 - `loadStructureFromData()` is not async anymore

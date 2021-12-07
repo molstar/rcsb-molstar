@@ -37,7 +37,7 @@ import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spe
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
-import { PLLDTConfidenceScore } from './helpers/plddt-confidence/behavior';
+import { PLDDTConfidenceScore } from './helpers/plddt-confidence/behavior';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
 
@@ -54,7 +54,7 @@ const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
-    'plddt-confidence': PluginSpec.Behavior(PLLDTConfidenceScore)
+    'plddt-confidence': PluginSpec.Behavior(PLDDTConfidenceScore)
 };
 
 const DefaultViewerProps = {

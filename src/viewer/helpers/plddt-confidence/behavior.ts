@@ -12,7 +12,7 @@ import { StructureElement } from 'molstar/lib/mol-model/structure';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { PluginBehavior } from 'molstar/lib/mol-plugin/behavior/behavior';
 
-export const PLLDTConfidenceScore = PluginBehavior.create<{ autoAttach: boolean, showTooltip: boolean }>({
+export const PLDDTConfidenceScore = PluginBehavior.create<{ autoAttach: boolean, showTooltip: boolean }>({
     name: 'plddt-confidence-prop',
     category: 'custom-props',
     display: {
