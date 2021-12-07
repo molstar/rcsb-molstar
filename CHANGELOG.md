@@ -19,7 +19,7 @@
 - Remove `alignMotif` methods (& pecos-integration) as the strucmotif service now reports RMSD and transformations for all hits
 
 ### Bug fixes
-- Support multiple chains in AlphaFold confidence coloring
+- Support multiple chains in pLDDT confidence coloring
 
 ## [1.10.1] - 2021-11-30
 ### General
