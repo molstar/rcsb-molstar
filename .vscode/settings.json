@@ -5,5 +5,5 @@
         "*.frag.ts": "glsl",
         "*.vert.ts": "glsl",
         "*.gql.ts": "graphql"
-    },
+    }
 }

@@ -11,6 +11,8 @@ import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rc
 import { ActionMenu } from 'molstar/lib/mol-plugin-ui/controls/action-menu';
 import { Model } from 'molstar/lib/mol-model/structure/model';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
+import { AlphaFoldConfidence } from '../helpers/af-confidence/prop';
+import { AlphaFoldConfidenceColorThemeProvider } from '../helpers/af-confidence/color';
 
 interface ValidationReportState extends CollapsableState {
     errorStates: Set<string>
@@ -61,8 +63,10 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         const { selection } = this.plugin.managers.structure.hierarchy;
         if (selection.structures.length !== 1) return false;
         const pivot = this.pivot.cell;
-        if (!pivot.obj) return false;
-        return pivot.obj.data.models.length === 1 && ValidationReport.isApplicable(pivot.obj.data.models[0]);
+        if (!pivot.obj || pivot.obj.data.models.length !== 1) return false;
+        const model = pivot.obj.data.models[0];
+        // all supported options must be registered here
+        return ValidationReport.isApplicable(model) || AlphaFoldConfidence.isApplicable(model);
     }
 
     get noValidationReport() {
@@ -70,6 +74,13 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         if (!structure || structure.models.length !== 1) return true;
         const model = structure.models[0];
         return !model || !this.isFromPdbArchive(model);
+    }
+
+    get alphaFoldData() {
+        const structure = this.pivot.cell.obj?.data;
+        if (!structure || structure.models.length !== 1) return false;
+        const model = structure.models[0];
+        return AlphaFoldConfidence.isApplicable(model);
     }
 
     isFromPdbArchive(model: Model) {
@@ -89,13 +100,16 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
                 return { errorStates: errors };
             });
         }
-    }
+    };
+
+    requestAlphaFoldConfidenceColoring = async () => {
+        await this.plugin.managers.structure.component.updateRepresentationsTheme(this.pivot.components, { color: AlphaFoldConfidenceColorThemeProvider.name as any });
+    };
 
     get actions(): ActionMenu.Items {
-        // TODO this could support other kinds of reports/validation like the AlphaFold confidence scores
         const noValidationReport = this.noValidationReport;
         const validationReportError = this.state.errorStates.has(ValidationReportTag);
-        return [
+        const out: ActionMenu.Items = [
             {
                 kind: 'item',
                 label: validationReportError ? 'Failed to Obtain Validation Report' : (noValidationReport ? 'No Validation Report Available' : 'RCSB PDB Validation Report'),
@@ -103,12 +117,22 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
                 disabled: noValidationReport || validationReportError
             },
         ];
+
+        if (this.alphaFoldData) {
+            out.push({
+                kind: 'item',
+                label: 'AlphaFold Confidence Scores',
+                value: this.requestAlphaFoldConfidenceColoring
+            });
+        }
+
+        return out;
     }
 
     selectAction: ActionMenu.OnSelect = item => {
         if (!item) return;
         (item?.value as any)();
-    }
+    };
 
     renderControls() {
         return <ActionMenu items={this.actions} onSelect={this.selectAction} />;

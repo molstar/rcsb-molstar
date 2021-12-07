@@ -348,7 +348,7 @@ function determineAssemblyId(traj: any, p: MotifProps) {
             g.split(',').forEach(e => {
                 const dashIndex = e.indexOf('-');
                 if (dashIndex > 0) {
-                    const from = parseInt(e.substring(0, dashIndex)), to = parseInt(e.substr(dashIndex + 1));
+                    const from = parseInt(e.substring(0, dashIndex)), to = parseInt(e.substring(dashIndex + 1));
                     for (let i = from; i <= to; i++) group[group.length] = i.toString();
                 } else {
                     group[group.length] = e.trim();

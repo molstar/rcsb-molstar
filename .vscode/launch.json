@@ -1,14 +1,11 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
             "type": "chrome",
             "request": "launch",
             "name": "Launch RCSB PDB Mol* Viewer",
-            "url": "http://localhost:1335/build/dist/structure-viewer/index.html?pdbId=4zjx&assemblyId=1",
+            "url": "http://localhost:1335/build/dist/structure/index.html?pdbId=4zjx&assemblyId=1",
             "sourceMaps": true,
             "webRoot": "${workspaceFolder}"
         }

@@ -297,8 +297,8 @@ export class Viewer {
         await createComponent(this._plugin, label, targets, representationType);
     }
 
-    removeComponent(componentLabel: string): void {
-        removeComponent(this._plugin, componentLabel);
+    async removeComponent(componentLabel: string) {
+        await removeComponent(this._plugin, componentLabel);
     }
 }
 

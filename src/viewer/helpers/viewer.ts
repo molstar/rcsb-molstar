@@ -11,7 +11,8 @@ import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder'
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { StructureSelectionQuery } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import {
-    rangeToTest, SelectBase,
+    rangeToTest,
+    SelectBase,
     SelectRange,
     SelectTarget,
     Target,
@@ -85,7 +86,7 @@ export async function createComponent(plugin: PluginContext, componentLabel: str
         if (!structureRef) throw Error('createComponent error: model not found');
 
         const residues = toResidues(target);
-        const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substr(2),
+        const sel = StructureSelectionQuery('innerQuery_' + Math.random().toString(36).substring(2),
             MS.struct.generator.atomGroups(rangeToTest(target.labelAsymId, residues, target.operatorName)));
         await plugin.managers.structure.component.add({
             selection: sel,
@@ -107,13 +108,16 @@ function toResidues(target: SelectBase | SelectTarget): number[] {
     return [];
 }
 
-export function removeComponent(plugin: PluginContext, componentLabel: string) {
+export async function removeComponent(plugin: PluginContext, componentLabel: string) {
+    const out: Promise<void>[] = [];
     plugin.managers.structure.hierarchy.currentComponentGroups.forEach(c => {
         for (const comp of c) {
             if (comp.cell.obj?.label === componentLabel) {
-                plugin.managers.structure.hierarchy.remove(c);
+                const o = plugin.managers.structure.hierarchy.remove(c);
+                if (o) out.push(o);
                 break;
             }
         }
     });
+    await Promise.all(out);
 }
