@@ -189,7 +189,7 @@ const labelFromProps = (entryId: string, labelAsymId?: string, range?: number[])
 
 export function rangeToTest(asymId: string, residues: number[], operatorName?: string) {
     const chainTests: Expression[] = [MS.core.rel.eq([MS.ammp('label_asym_id'), asymId])];
-    if(operatorName)
+    if (operatorName)
         chainTests.push(MS.core.rel.eq([operatorName, MS.acp('operatorName')]));
 
     if (residues.length > 0) {
