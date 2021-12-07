@@ -8,6 +8,10 @@ Try it [here](https://rcsb.org/3d-view/).
 PDBe also maintains a flavor of Mol* called [PDBe Molstar](https://github.com/PDBeurope/pdbe-molstar).
 Documentation of the parent Mol* project can be found [here](https://molstar.org/docs/). See [index.html](https://github.com/rcsb/rcsb-molstar/blob/master/src/viewer/index.html) for examples.
 
+When using Mol*, please cite:
+
+David Sehnal, Sebastian Bittrich, Mandar Deshpande, Radka Svobodová, Karel Berka, Václav Bazgier, Sameer Velankar, Stephen K Burley, Jaroslav Koča, Alexander S Rose: [Mol* Viewer: modern web app for 3D visualization and analysis of large biomolecular structures](https://doi.org/10.1093/nar/gkab314), *Nucleic Acids Research*, 2021; https://doi.org/10.1093/nar/gkab314.
+
 ## Functionality
 Provides custom features used in the Mol* viewer on [rcsb.org](https://www.rcsb.org/3d-view):
 - visualization of structure alignments
@@ -54,3 +58,10 @@ and navigate to `build/dist/viewer/`
 ## Release
     npm version 1.X.0 # provide valid semver string
     npm publish
+
+## Funding
+Funding sources include but are not limited to:
+* [RCSB PDB](https://www.rcsb.org) funding by a grant [DBI-1338415; PI: SK Burley] from the NSF, the NIH, and the US DoE
+* [PDBe, EMBL-EBI](https://pdbe.org)
+* [CEITEC](https://www.ceitec.eu/)
+* [EntosAI](https://www.entos.ai)
