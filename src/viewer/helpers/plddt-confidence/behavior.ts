@@ -5,22 +5,22 @@
  */
 
 import { OrderedSet } from 'molstar/lib/mol-data/int';
-import { AlphaFoldConfidence, AlphaFoldConfidenceProvider } from './prop';
-import { AlphaFoldConfidenceColorThemeProvider } from './color';
+import { PLDDTConfidence, PLDDTConfidenceProvider } from './prop';
+import { PLDDTConfidenceColorThemeProvider } from './color';
 import { Loci } from 'molstar/lib/mol-model/loci';
 import { StructureElement } from 'molstar/lib/mol-model/structure';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { PluginBehavior } from 'molstar/lib/mol-plugin/behavior/behavior';
 
-export const AlphaFoldConfidenceScore = PluginBehavior.create<{ autoAttach: boolean, showTooltip: boolean }>({
-    name: 'af-confidence-prop',
+export const PLLDTConfidenceScore = PluginBehavior.create<{ autoAttach: boolean, showTooltip: boolean }>({
+    name: 'plddt-confidence-prop',
     category: 'custom-props',
     display: {
-        name: 'AlphaFold Confidence Score',
-        description: 'AlphaFold Confidence Score.'
+        name: 'pLDDT Confidence Score',
+        description: 'pLDDT Confidence Score.'
     },
     ctor: class extends PluginBehavior.Handler<{ autoAttach: boolean, showTooltip: boolean }> {
-        private provider = AlphaFoldConfidenceProvider;
+        private provider = PLDDTConfidenceProvider;
 
         private labelProvider = {
             label: (loci: Loci): string | undefined => {
@@ -31,10 +31,10 @@ export const AlphaFoldConfidenceScore = PluginBehavior.create<{ autoAttach: bool
                         if (loci.elements.length === 0) return;
                         const e = loci.elements[0];
                         const u = e.unit;
-                        if (!u.model.customProperties.hasReference(AlphaFoldConfidenceProvider.descriptor)) return;
+                        if (!u.model.customProperties.hasReference(PLDDTConfidenceProvider.descriptor)) return;
 
                         const se = StructureElement.Location.create(loci.structure, u, u.elements[OrderedSet.getAt(e.indices, 0)]);
-                        const confidenceScore = AlphaFoldConfidence.getConfidenceScore(se);
+                        const confidenceScore = PLDDTConfidence.getConfidenceScore(se);
                         return confidenceScore ? `Confidence score: ${confidenceScore[0]} <small>( ${confidenceScore[1]} )</small>` : `No confidence score`;
 
                     default: return;
@@ -46,7 +46,7 @@ export const AlphaFoldConfidenceScore = PluginBehavior.create<{ autoAttach: bool
             this.ctx.customModelProperties.register(this.provider, this.params.autoAttach);
             this.ctx.managers.lociLabels.addProvider(this.labelProvider);
 
-            this.ctx.representation.structure.themes.colorThemeRegistry.add(AlphaFoldConfidenceColorThemeProvider);
+            this.ctx.representation.structure.themes.colorThemeRegistry.add(PLDDTConfidenceColorThemeProvider);
         }
 
         update(p: { autoAttach: boolean, showTooltip: boolean }) {
@@ -58,9 +58,9 @@ export const AlphaFoldConfidenceScore = PluginBehavior.create<{ autoAttach: bool
         }
 
         unregister() {
-            this.ctx.customModelProperties.unregister(AlphaFoldConfidenceProvider.descriptor.name);
+            this.ctx.customModelProperties.unregister(PLDDTConfidenceProvider.descriptor.name);
             this.ctx.managers.lociLabels.removeProvider(this.labelProvider);
-            this.ctx.representation.structure.themes.colorThemeRegistry.remove(AlphaFoldConfidenceColorThemeProvider);
+            this.ctx.representation.structure.themes.colorThemeRegistry.remove(PLDDTConfidenceColorThemeProvider);
         }
     },
     params: () => ({

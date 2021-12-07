@@ -5,7 +5,7 @@
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
 
-import { AlphaFoldConfidence, AlphaFoldConfidenceProvider } from './prop';
+import { PLDDTConfidence, PLDDTConfidenceProvider } from './prop';
 import { Location } from 'molstar/lib/mol-model/location';
 import { StructureElement } from 'molstar/lib/mol-model/structure';
 import { ColorTheme, LocationColor } from 'molstar/lib/mol-theme/color';
@@ -26,8 +26,8 @@ const ConfidenceColors: { [k: string]: Color } = {
 
 const ConfidenceColorLegend = TableLegend(Object.entries(ConfidenceColors));
 
-export function getAlphaFoldConfidenceColorThemeParams(ctx: ThemeDataContext) {
-    const categories = AlphaFoldConfidence.getCategories(ctx.structure);
+export function getPLDDTConfidenceColorThemeParams(ctx: ThemeDataContext) {
+    const categories = PLDDTConfidence.getCategories(ctx.structure);
     if (categories.length === 0) {
         return {
             type: PD.MappedStatic('score', {
@@ -45,14 +45,14 @@ export function getAlphaFoldConfidenceColorThemeParams(ctx: ThemeDataContext) {
         })
     };
 }
-export type AlphaFoldConfidenceColorThemeParams = ReturnType<typeof getAlphaFoldConfidenceColorThemeParams>
+export type PLDDTConfidenceColorThemeParams = ReturnType<typeof getPLDDTConfidenceColorThemeParams>
 
-export function AlphaFoldConfidenceColorTheme(ctx: ThemeDataContext, props: PD.Values<AlphaFoldConfidenceColorThemeParams>): ColorTheme<AlphaFoldConfidenceColorThemeParams> {
+export function PLDDTConfidenceColorTheme(ctx: ThemeDataContext, props: PD.Values<PLDDTConfidenceColorThemeParams>): ColorTheme<PLDDTConfidenceColorThemeParams> {
     let color: LocationColor = () => DefaultColor;
 
-    if (ctx.structure && ctx.structure.models.length > 0 && ctx.structure.models[0].customProperties.has(AlphaFoldConfidenceProvider.descriptor)) {
+    if (ctx.structure && ctx.structure.models.length > 0 && ctx.structure.models[0].customProperties.has(PLDDTConfidenceProvider.descriptor)) {
         const getColor = (location: StructureElement.Location): Color => {
-            const score: string = AlphaFoldConfidence.getConfidenceScore(location)[1];
+            const score: string = PLDDTConfidence.getConfidenceScore(location)[1];
 
             if (props.type.name !== 'score') {
                 const categoryProp = props.type.params.kind;
@@ -71,25 +71,25 @@ export function AlphaFoldConfidenceColorTheme(ctx: ThemeDataContext, props: PD.V
     }
 
     return {
-        factory: AlphaFoldConfidenceColorTheme,
+        factory: PLDDTConfidenceColorTheme,
         granularity: 'group',
         color,
         props,
-        description: 'Assigns residue colors according to the AlphaFold Confidence score.',
+        description: 'Assigns residue colors according to the pLDDT Confidence score.',
         legend: ConfidenceColorLegend
     };
 }
 
-export const AlphaFoldConfidenceColorThemeProvider: ColorTheme.Provider<AlphaFoldConfidenceColorThemeParams, 'af-confidence'> = {
-    name: 'af-confidence',
-    label: 'AlphaFold Confidence',
+export const PLDDTConfidenceColorThemeProvider: ColorTheme.Provider<PLDDTConfidenceColorThemeParams, 'plddt-confidence'> = {
+    name: 'plddt-confidence',
+    label: 'pLDDT Confidence',
     category: ColorTheme.Category.Validation,
-    factory: AlphaFoldConfidenceColorTheme,
-    getParams: getAlphaFoldConfidenceColorThemeParams,
-    defaultValues: PD.getDefaultValues(getAlphaFoldConfidenceColorThemeParams({})),
-    isApplicable: (ctx: ThemeDataContext) => AlphaFoldConfidence.isApplicable(ctx.structure?.models[0]),
+    factory: PLDDTConfidenceColorTheme,
+    getParams: getPLDDTConfidenceColorThemeParams,
+    defaultValues: PD.getDefaultValues(getPLDDTConfidenceColorThemeParams({})),
+    isApplicable: (ctx: ThemeDataContext) => PLDDTConfidence.isApplicable(ctx.structure?.models[0]),
     ensureCustomProperties: {
-        attach: (ctx: CustomProperty.Context, data: ThemeDataContext) => data.structure ? AlphaFoldConfidenceProvider.attach(ctx, data.structure.models[0], void 0, true) : Promise.resolve(),
-        detach: (data) => data.structure && AlphaFoldConfidenceProvider.ref(data.structure.models[0], false)
+        attach: (ctx: CustomProperty.Context, data: ThemeDataContext) => data.structure ? PLDDTConfidenceProvider.attach(ctx, data.structure.models[0], void 0, true) : Promise.resolve(),
+        detach: (data) => data.structure && PLDDTConfidenceProvider.ref(data.structure.models[0], false)
     }
 };

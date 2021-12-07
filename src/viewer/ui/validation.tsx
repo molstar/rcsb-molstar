@@ -11,8 +11,8 @@ import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rc
 import { ActionMenu } from 'molstar/lib/mol-plugin-ui/controls/action-menu';
 import { Model } from 'molstar/lib/mol-model/structure/model';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
-import { AlphaFoldConfidence } from '../helpers/af-confidence/prop';
-import { AlphaFoldConfidenceColorThemeProvider } from '../helpers/af-confidence/color';
+import { PLDDTConfidence } from '../helpers/plddt-confidence/prop';
+import { PLDDTConfidenceColorThemeProvider } from '../helpers/plddt-confidence/color';
 
 interface ValidationReportState extends CollapsableState {
     errorStates: Set<string>
@@ -66,7 +66,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         if (!pivot.obj || pivot.obj.data.models.length !== 1) return false;
         const model = pivot.obj.data.models[0];
         // all supported options must be registered here
-        return ValidationReport.isApplicable(model) || AlphaFoldConfidence.isApplicable(model);
+        return ValidationReport.isApplicable(model) || PLDDTConfidence.isApplicable(model);
     }
 
     get noValidationReport() {
@@ -76,11 +76,11 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         return !model || !this.isFromPdbArchive(model);
     }
 
-    get alphaFoldData() {
+    get pLDDTData() {
         const structure = this.pivot.cell.obj?.data;
         if (!structure || structure.models.length !== 1) return false;
         const model = structure.models[0];
-        return AlphaFoldConfidence.isApplicable(model);
+        return PLDDTConfidence.isApplicable(model);
     }
 
     isFromPdbArchive(model: Model) {
@@ -102,8 +102,8 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         }
     };
 
-    requestAlphaFoldConfidenceColoring = async () => {
-        await this.plugin.managers.structure.component.updateRepresentationsTheme(this.pivot.components, { color: AlphaFoldConfidenceColorThemeProvider.name as any });
+    requestPLDDTConfidenceColoring = async () => {
+        await this.plugin.managers.structure.component.updateRepresentationsTheme(this.pivot.components, { color: PLDDTConfidenceColorThemeProvider.name as any });
     };
 
     get actions(): ActionMenu.Items {
@@ -118,11 +118,11 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
             },
         ];
 
-        if (this.alphaFoldData) {
+        if (this.pLDDTData) {
             out.push({
                 kind: 'item',
-                label: 'AlphaFold Confidence Scores',
-                value: this.requestAlphaFoldConfidenceColoring
+                label: 'pLDDT Confidence Scores',
+                value: this.requestPLDDTConfidenceColoring
             });
         }
 
