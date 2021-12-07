@@ -2,11 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [2.0.1]
+## [2.0.1] - 2021-12-07
 ### Bug fixes
 - fix typo in pLDDT behavior name
 
-## [2.0.0]
+## [2.0.0] - 2021-12-07
 ### Breaking changes
 - `loadStructureFromData()` is not async anymore
 - Replaced `getPlugin()` by `plugin()` getter
