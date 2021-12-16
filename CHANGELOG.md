@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.0.2] - 2021-12-16
+### General
+- Update Mol* dependency
+
 ## [2.0.1] - 2021-12-07
 ### Bug fixes
 - fix typo in pLDDT behavior name
