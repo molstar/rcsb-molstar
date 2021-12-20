@@ -40,6 +40,7 @@ import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extension
 import { PLDDTConfidenceScore } from './helpers/plddt-confidence/behavior';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
+import { AnimateStateSnapshots } from 'molstar/lib/mol-plugin-state/animation/built-in/state-snapshots';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -119,7 +120,7 @@ export class Viewer {
                 ...defaultSpec.behaviors,
                 ...o.extensions.map(e => Extensions[e]),
             ],
-            animations: [...defaultSpec.animations || []],
+            animations: [...defaultSpec.animations?.filter(a => a.name !== AnimateStateSnapshots.name) || []],
             layout: {
                 initial: {
                     isExpanded: o.layoutIsExpanded,
