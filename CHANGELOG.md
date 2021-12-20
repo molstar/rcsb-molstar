@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.0.3] - 2021-12-20
+### General
+- Hide unusable Animate State Snapshots option
+
 ## [2.0.2] - 2021-12-16
 ### General
 - Update Mol* dependency
