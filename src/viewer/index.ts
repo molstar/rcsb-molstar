@@ -42,6 +42,7 @@ import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
 import { AnimateStateSnapshots } from 'molstar/lib/mol-plugin-state/animation/built-in/state-snapshots';
 import { PluginFeatureDetection } from 'molstar/lib/mol-plugin/features';
+import { PresetStructureRepresentations } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -101,7 +102,6 @@ const DefaultViewerProps = {
 };
 export type ViewerProps = typeof DefaultViewerProps
 
-
 export class Viewer {
     private readonly _plugin: PluginUIContext;
     private readonly modelUrlProviders: ModelUrlProvider[];
@@ -147,6 +147,7 @@ export class Viewer {
                 [PluginConfig.VolumeStreaming.DefaultServer, o.volumeStreamingServer],
                 [PluginConfig.Download.DefaultPdbProvider, 'rcsb'],
                 [PluginConfig.Download.DefaultEmdbProvider, 'rcsb'],
+                [PluginConfig.Structure.DefaultRepresentationPreset, PresetStructureRepresentations.auto.id],
                 // wboit & webgl1 checks are needed to work properly on recent Safari versions
                 [PluginConfig.General.EnableWboit, PluginFeatureDetection.wboit],
                 [PluginConfig.General.PreferWebGl1, PluginFeatureDetection.preferWebGl1]

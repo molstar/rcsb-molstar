@@ -6,6 +6,9 @@
 ### General
 - Update Mol* dependency
 
+### Bug fixes
+- Show downloaded structures with default/auto representation
+
 ## [2.0.3] - 2021-12-20
 ### General
 - Hide unusable Animate State Snapshots option
