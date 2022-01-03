@@ -41,6 +41,7 @@ import { PLDDTConfidenceScore } from './helpers/plddt-confidence/behavior';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
 import { AnimateStateSnapshots } from 'molstar/lib/mol-plugin-state/animation/built-in/state-snapshots';
+import { PluginFeatureDetection } from 'molstar/lib/mol-plugin/features';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -145,7 +146,10 @@ export class Viewer {
                 [PluginConfig.Viewport.ShowAnimation, false],
                 [PluginConfig.VolumeStreaming.DefaultServer, o.volumeStreamingServer],
                 [PluginConfig.Download.DefaultPdbProvider, 'rcsb'],
-                [PluginConfig.Download.DefaultEmdbProvider, 'rcsb']
+                [PluginConfig.Download.DefaultEmdbProvider, 'rcsb'],
+                // wboit & webgl1 checks are needed to work properly on recent Safari versions
+                [PluginConfig.General.EnableWboit, PluginFeatureDetection.wboit],
+                [PluginConfig.General.PreferWebGl1, PluginFeatureDetection.preferWebGl1]
             ]
         };
 
