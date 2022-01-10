@@ -11,8 +11,9 @@ import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rc
 import { ActionMenu } from 'molstar/lib/mol-plugin-ui/controls/action-menu';
 import { Model } from 'molstar/lib/mol-model/structure/model';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
-import { PLDDTConfidence } from '../helpers/plddt-confidence/prop';
-import { PLDDTConfidenceColorThemeProvider } from '../helpers/plddt-confidence/color';
+import { QualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
+import { PLDDTConfidenceColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/plddt';
+import { QmeanScoreColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/qmean';
 
 interface ValidationReportState extends CollapsableState {
     errorStates: Set<string>
@@ -66,7 +67,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         if (!pivot.obj || pivot.obj.data.models.length !== 1) return false;
         const model = pivot.obj.data.models[0];
         // all supported options must be registered here
-        return ValidationReport.isApplicable(model) || PLDDTConfidence.isApplicable(model);
+        return ValidationReport.isApplicable(model) || QualityAssessment.isApplicable(model, 'pLDDT') || QualityAssessment.isApplicable(model, 'qmean');
     }
 
     get noValidationReport() {
@@ -80,7 +81,14 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         const structure = this.pivot.cell.obj?.data;
         if (!structure || structure.models.length !== 1) return false;
         const model = structure.models[0];
-        return PLDDTConfidence.isApplicable(model);
+        return QualityAssessment.isApplicable(model, 'pLDDT');
+    }
+
+    get qmeanData() {
+        const structure = this.pivot.cell.obj?.data;
+        if (!structure || structure.models.length !== 1) return false;
+        const model = structure.models[0];
+        return QualityAssessment.isApplicable(model, 'qmean');
     }
 
     isFromPdbArchive(model: Model) {
@@ -106,6 +114,10 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         await this.plugin.managers.structure.component.updateRepresentationsTheme(this.pivot.components, { color: PLDDTConfidenceColorThemeProvider.name as any });
     };
 
+    requestQmeanConfidenceColoring = async () => {
+        await this.plugin.managers.structure.component.updateRepresentationsTheme(this.pivot.components, { color: QmeanScoreColorThemeProvider.name as any });
+    };
+
     get actions(): ActionMenu.Items {
         const noValidationReport = this.noValidationReport;
         const validationReportError = this.state.errorStates.has(ValidationReportTag);
@@ -123,6 +135,13 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
                 kind: 'item',
                 label: 'pLDDT Confidence Scores',
                 value: this.requestPLDDTConfidenceColoring
+            });
+        }
+        if (this.qmeanData) {
+            out.push({
+                kind: 'item',
+                label: 'QMEAN Confidence Scores',
+                value: this.requestQmeanConfidenceColoring
             });
         }
 
