@@ -37,12 +37,12 @@ import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spe
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { ANVILMembraneOrientation, MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { MembraneOrientationRepresentationProvider } from 'molstar/lib/extensions/anvil/representation';
-import { PLDDTConfidenceScore } from './helpers/plddt-confidence/behavior';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
 import { AnimateStateSnapshots } from 'molstar/lib/mol-plugin-state/animation/built-in/state-snapshots';
 import { PluginFeatureDetection } from 'molstar/lib/mol-plugin/features';
 import { PresetStructureRepresentations } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
+import { MAQualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/behavior';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -57,7 +57,7 @@ const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
-    'plddt-confidence': PluginSpec.Behavior(PLDDTConfidenceScore)
+    'ma-quality-assessment': PluginSpec.Behavior(MAQualityAssessment),
 };
 
 const DefaultViewerProps = {
