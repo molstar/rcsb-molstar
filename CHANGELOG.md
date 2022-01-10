@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.0.6] - 2022-01-10
+### Breaking Internal Change
+- Remove `PLDDTConfidenceScore` in favor of impl from parent project
+
 ## [2.0.5] - 2022-01-10
 ### General
 - Update Mol* dependency
