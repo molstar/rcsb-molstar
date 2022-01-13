@@ -2,13 +2,13 @@
     "name": "@rcsb/rcsb-molstar",
     "version": "2.0.6",
     "description": "RCSB PDB apps and props based on Mol*.",
-    "homepage": "https://github.com/rcsb/rcsb-molstar#readme",
+    "homepage": "https://github.com/molstar/rcsb-molstar#readme",
     "repository": {
         "type": "git",
-        "url": "https://github.com/rcsb/rcsb-molstar.git"
+        "url": "https://github.com/molstar/rcsb-molstar.git"
     },
     "bugs": {
-        "url": "https://github.com/rcsb/rcsb-molstar/issues"
+        "url": "https://github.com/molstar/rcsb-molstar/issues"
     },
     "scripts": {
         "test": "npm run lint",

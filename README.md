@@ -1,12 +1,12 @@
 [![npm version](https://badge.fury.io/js/%40rcsb%2Frcsb-molstar.svg)](https://www.npmjs.com/package/@rcsb/rcsb-molstar)
-[![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/rcsb/rcsb-molstar/blob/master/CHANGELOG.md)
+[![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/molstar/rcsb-molstar/blob/master/CHANGELOG.md)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](./LICENSE)
 
 RCSB PDB implementation of [Mol* (/'mol-star/)](https://github.com/molstar/molstar).
 Try it [here](https://rcsb.org/3d-view/).
 
 PDBe also maintains a flavor of Mol* called [PDBe Molstar](https://github.com/PDBeurope/pdbe-molstar).
-Documentation of the parent Mol* project can be found [here](https://molstar.org/docs/). See [index.html](https://github.com/rcsb/rcsb-molstar/blob/master/src/viewer/index.html) for examples.
+Documentation of the parent Mol* project can be found [here](https://molstar.org/docs/). See [index.html](https://github.com/molstar/rcsb-molstar/blob/master/src/viewer/index.html) for examples.
 
 When using Mol*, please cite:
 
