@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.0.8] - 2022-01-18
+### General
+- Update Mol* & some other dependencies
+
 ## [2.0.7] - 2022-01-13
 ### General
 - Update links to new Mol* organization
