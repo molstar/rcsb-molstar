@@ -43,6 +43,7 @@ import { AnimateStateSnapshots } from 'molstar/lib/mol-plugin-state/animation/bu
 import { PluginFeatureDetection } from 'molstar/lib/mol-plugin/features';
 import { PresetStructureRepresentations } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
 import { MAQualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/behavior';
+// import { ModelExport } from 'molstar/lib/extensions/model-export';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -58,6 +59,7 @@ const Extensions = {
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
     'ma-quality-assessment': PluginSpec.Behavior(MAQualityAssessment),
+    // 'model-export': PluginSpec.Behavior(ModelExport), // TODO enable
 };
 
 const DefaultViewerProps = {
