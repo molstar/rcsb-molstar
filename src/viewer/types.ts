@@ -46,7 +46,6 @@ export type CollapsedState = {
 
 export interface ViewerState {
     showImportControls: boolean
-    showExportControls: boolean
     showSessionControls: boolean
     showStructureSourceControls: boolean
     showSuperpositionControls: boolean

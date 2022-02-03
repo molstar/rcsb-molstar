@@ -2,6 +2,14 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.0.10] - 2022-02-03
+### General
+- Mol* 3.0.2
+
+### Breaking Internal Change
+- Remove `ExportControls` et al. in favor of impl from parent project
+- `viewer#exportLoadedStructures` now returns single structures directly (rather than as a ZIP file)
+
 ## [2.0.9] - 2022-01-24
 ### General
 - Update to Mol* 3.0.0 

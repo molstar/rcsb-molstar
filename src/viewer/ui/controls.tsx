@@ -8,7 +8,6 @@ import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
 import { ViewerState } from '../types';
 import { CustomStructureControls } from 'molstar/lib/mol-plugin-ui/controls';
 import { ImportControls } from './import';
-import { ExportControls } from './export';
 import { StructureSourceControls } from 'molstar/lib/mol-plugin-ui/structure/source';
 import { StructureMeasurementsControls } from 'molstar/lib/mol-plugin-ui/structure/measurements';
 import { StructureSuperpositionControls } from 'molstar/lib/mol-plugin-ui/structure/superposition';
@@ -48,7 +47,6 @@ export class ControlsWrapper extends PluginUIComponent {
     render() {
         return <div className='msp-scrollable-container'>
             {ViewerState(this.plugin).showImportControls && <ImportControls />}
-            {ViewerState(this.plugin).showExportControls && <ExportControls />}
             {ViewerState(this.plugin).showSessionControls && <SessionControls />}
             <StructureTools />
         </div>;

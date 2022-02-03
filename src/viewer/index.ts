@@ -29,7 +29,6 @@ import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/tr
 import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
-import { encodeStructureData, downloadAsZipFile } from './helpers/export';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select } from './helpers/viewer';
 import { SelectBase, SelectRange, SelectTarget, Target } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
@@ -43,7 +42,8 @@ import { AnimateStateSnapshots } from 'molstar/lib/mol-plugin-state/animation/bu
 import { PluginFeatureDetection } from 'molstar/lib/mol-plugin/features';
 import { PresetStructureRepresentations } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
 import { MAQualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/behavior';
-// import { ModelExport } from 'molstar/lib/extensions/model-export';
+import { ModelExport } from 'molstar/lib/extensions/model-export';
+import { exportHierarchy } from 'molstar/lib/extensions/model-export/export';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -59,12 +59,11 @@ const Extensions = {
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
     'ma-quality-assessment': PluginSpec.Behavior(MAQualityAssessment),
-    // 'model-export': PluginSpec.Behavior(ModelExport), // TODO enable
+    'model-export': PluginSpec.Behavior(ModelExport),
 };
 
 const DefaultViewerProps = {
     showImportControls: false,
-    showExportControls: false,
     showSessionControls: false,
     showStructureSourceControls: true,
     showSuperpositionControls: true,
@@ -161,7 +160,6 @@ export class Viewer {
 
         (this._plugin.customState as ViewerState) = {
             showImportControls: o.showImportControls,
-            showExportControls: o.showExportControls,
             showSessionControls: o.showSessionControls,
             showStructureSourceControls: o.showStructureSourceControls,
             showSuperpositionControls: o.showSuperpositionControls,
@@ -280,9 +278,8 @@ export class Viewer {
         this._plugin.layout.events.updated.next(void 0);
     }
 
-    exportLoadedStructures() {
-        const content = encodeStructureData(this._plugin);
-        return downloadAsZipFile(this._plugin, content);
+    exportLoadedStructures(options?: { format?: 'cif' | 'bcif' }) {
+        return exportHierarchy(this.plugin, options);
     }
 
     setFocus(target: SelectRange) {
