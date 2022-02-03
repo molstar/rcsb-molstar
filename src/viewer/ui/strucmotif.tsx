@@ -29,7 +29,7 @@ import { ViewerState } from '../types';
 const ABSOLUTE_ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
 const RELATIVE_ADVANCED_SEARCH_URL = '/search?query=';
 const RETURN_TYPE = '&return_type=assembly';
-const MIN_MOTIF_SIZE = 3;
+const MIN_MOTIF_SIZE = 2;
 const MAX_MOTIF_SIZE = 10;
 export const MAX_EXCHANGES = 4;
 const MAX_MOTIF_EXTENT = 15;
