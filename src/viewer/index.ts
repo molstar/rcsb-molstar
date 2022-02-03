@@ -44,6 +44,7 @@ import { PresetStructureRepresentations } from 'molstar/lib/mol-plugin-state/bui
 import { MAQualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/behavior';
 import { ModelExport } from 'molstar/lib/extensions/model-export';
 import { exportHierarchy } from 'molstar/lib/extensions/model-export/export';
+import { GeometryExport } from 'molstar/lib/extensions/geo-export';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -60,6 +61,7 @@ const Extensions = {
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
     'ma-quality-assessment': PluginSpec.Behavior(MAQualityAssessment),
     'model-export': PluginSpec.Behavior(ModelExport),
+    'geo-export': PluginSpec.Behavior(GeometryExport),
 };
 
 const DefaultViewerProps = {

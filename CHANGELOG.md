@@ -2,13 +2,16 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [2.0.10] - 2022-02-03
-### General
-- Mol* 3.0.2
+## [2.1.0] - 2022-02-03
+### Added
+- exposed GeometryExport functionality
 
 ### Breaking Internal Change
 - Remove `ExportControls` et al. in favor of impl from parent project
 - `viewer#exportLoadedStructures` now returns single structures directly (rather than as a ZIP file)
+
+### General
+- Mol* 3.0.2
 
 ## [2.0.9] - 2022-01-24
 ### General
