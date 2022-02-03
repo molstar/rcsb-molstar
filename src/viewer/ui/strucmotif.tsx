@@ -217,7 +217,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
             if (!contact) {
                 const { residueId } = coordinates[i];
-                alert(`Residue ${residueId.label_seq_id} | ${residueId.label_asym_id} | ${residueId.struct_oper_id} needs to be less than 15 \u212B from another residue - Consider adding more residues to connect far-apart residues.`);
+                alert(`Residue ${residueId.label_seq_id} | ${residueId.label_asym_id} | ${residueId.struct_oper_id} needs to be less than ${MAX_MOTIF_EXTENT} \u212B from another residue - Consider adding more residues to connect far-apart residues.`);
                 return;
             }
         }
