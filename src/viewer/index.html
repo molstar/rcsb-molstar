@@ -57,12 +57,11 @@
             // create an instance of the plugin
             const viewer = new rcsbMolstar.Viewer('viewer', {
                 showImportControls: !pdbId,
-                showExportControls: true,
                 showSessionControls: !pdbId,
                 layoutShowLog: !pdbId,
                 layoutShowControls: !isEmbedded,
                 showMembraneOrientationPreset: true,
-                detachedFromSierra: true // needed when running without sierra
+                detachedFromSierra: true, // needed when running without sierra
             })
 
             // load pdbId or url
