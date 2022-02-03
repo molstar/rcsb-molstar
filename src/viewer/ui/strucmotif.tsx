@@ -100,6 +100,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         // keep track of seen pdbIds, space-groups, and NCS operators - motifs can only have a single value
         const pdbId: Set<string> = new Set();
         const sg: Set<number> = new Set();
+        const hkl: Set<string> = new Set();
         const ncs: Set<number> = new Set();
         const residueIds: ResidueSelection[] = [];
         const exchanges: Exchange[] = [];
@@ -138,6 +139,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             const { structure, elements } = l.loci;
             pdbId.add(structure.model.entry);
             sg.add(StructureProperties.unit.spgrOp(location));
+            hkl.add(StructureProperties.unit.hkl(location).join('-'));
             ncs.add(StructureProperties.unit.struct_ncs_oper_id(location));
 
             const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
@@ -179,6 +181,10 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         }
         if (sg.size > 1) {
             alert('Motifs can only appear in a single space-group!');
+            return;
+        }
+        if (hkl.size > 1) {
+            alert('All motif residues must have matching hkl operators!');
             return;
         }
         if (ncs.size > 1) {

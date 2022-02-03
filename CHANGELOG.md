@@ -14,7 +14,7 @@
 - Mol* 3.0.2
 
 ### Bug fixes
-- RO-2605: check for single space-group & NCS operator
+- RO-2605: check for single space-group, hkl, & NCS operator
 
 ## [2.0.9] - 2022-01-24
 ### General
