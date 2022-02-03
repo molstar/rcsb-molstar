@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## Unreleased
+### General
+- RO-2766: Allow strucmotif of 2 residues
+
 ## [2.1.0] - 2022-02-03
 ### Added
 - Expose GeometryExport functionality
