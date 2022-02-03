@@ -97,7 +97,10 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
     submitSearch = () => {
         const { label_atom_id, x, y, z } = StructureProperties.atom;
+        // keep track of seen pdbIds, space-groups, and NCS operators - motifs can only have a single value
         const pdbId: Set<string> = new Set();
+        const sg: Set<number> = new Set();
+        const ncs: Set<number> = new Set();
         const residueIds: ResidueSelection[] = [];
         const exchanges: Exchange[] = [];
         const coordinates: { coords: Vec3, residueId: ResidueSelection }[] = [];
@@ -134,6 +137,8 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             const l = loci[i];
             const { structure, elements } = l.loci;
             pdbId.add(structure.model.entry);
+            sg.add(StructureProperties.unit.spgrOp(location));
+            ncs.add(StructureProperties.unit.struct_ncs_oper_id(location));
 
             const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
             const struct_oper_id = join(struct_oper_list_ids);
@@ -145,7 +150,6 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             }
 
             // handle pure residue-info
-            // TODO honor NCS operators: StructureProperties.unit.struct_ncs_oper_id(location);
             const residueId = {
                 label_asym_id: StructureProperties.chain.label_asym_id(location),
                 // can be empty array if model is selected
@@ -171,6 +175,14 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
         if (pdbId.size > 1) {
             alert('Motifs can only be extracted from a single model!');
+            return;
+        }
+        if (sg.size > 1) {
+            alert('Motifs can only appear in a single space-group!');
+            return;
+        }
+        if (ncs.size > 1) {
+            alert('All motif residues must have matching NCS operators!');
             return;
         }
         if (residueIds.length > MAX_MOTIF_SIZE) {
