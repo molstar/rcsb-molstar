@@ -4,7 +4,7 @@
 
 ## [2.1.0] - 2022-02-03
 ### Added
-- exposed GeometryExport functionality
+- Expose GeometryExport functionality
 
 ### Breaking Internal Change
 - Remove `ExportControls` et al. in favor of impl from parent project
