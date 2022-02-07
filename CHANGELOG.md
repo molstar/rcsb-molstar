@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.1.1] - 2022-02-07
+### General
+- Mol* 3.1.0 (Quick Styles panel, default representation tweaks)
+- RO-2968: better error message when density data can't be fetched
+
 ## [2.1.0] - 2022-02-03
 ### Added
 - Expose GeometryExport functionality
