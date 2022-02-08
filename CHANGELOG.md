@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## Unreleased
+## [2.1.2] - 2022-02-08
 ### General
 - RO-2766: Allow strucmotif of 2 residues
 
@@ -23,7 +23,7 @@
 - Mol* 3.0.2
 
 ### Bug fixes
-- RO-2605: check for single space-group, hkl, & NCS operator
+- RO-2605: check for single space-group, hkl, & NCS operator before submitting strucmotif queries
 
 ## [2.0.9] - 2022-01-24
 ### General
