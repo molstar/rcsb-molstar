@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## Unreleased
+### General
+- RO-2766: Allow strucmotif of 2 residues
+
 ## [2.1.1] - 2022-02-07
 ### General
 - Mol* 3.1.0 (Quick Styles panel, default representation tweaks)
