@@ -10,7 +10,7 @@
 import { BehaviorSubject } from 'rxjs';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
-import { ViewerState as ViewerState, CollapsedState, ModelUrlProvider } from './types';
+import { ViewerState, CollapsedState, ModelUrlProvider } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
@@ -45,6 +45,7 @@ import { MAQualityAssessment } from 'molstar/lib/extensions/model-archive/qualit
 import { ModelExport } from 'molstar/lib/extensions/model-export';
 import { exportHierarchy } from 'molstar/lib/extensions/model-export/export';
 import { GeometryExport } from 'molstar/lib/extensions/geo-export';
+import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -61,6 +62,7 @@ const Extensions = {
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
     'ma-quality-assessment': PluginSpec.Behavior(MAQualityAssessment),
     'model-export': PluginSpec.Behavior(ModelExport),
+    'mp4-export': PluginSpec.Behavior(Mp4Export),
     'geo-export': PluginSpec.Behavior(GeometryExport),
 };
 
@@ -68,9 +70,15 @@ const DefaultViewerProps = {
     showImportControls: false,
     showSessionControls: false,
     showStructureSourceControls: true,
+    showMeasurementsControls: true,
+    showStrucmotifSubmitControls: true,
     showSuperpositionControls: true,
-    showMembraneOrientationPreset: false,
+    showQuickStylesControls: false,
+    showStructureComponentControls: true,
+    showVolumeStreamingControls: true,
     showValidationReportControls: true,
+
+    showMembraneOrientationPreset: false,
     /**
      * Needed when running outside of sierra. If set to true, the strucmotif UI will use an absolute URL to sierra-prod.
      * Otherwise, the link will be relative on the current host.
@@ -164,20 +172,24 @@ export class Viewer {
             showImportControls: o.showImportControls,
             showSessionControls: o.showSessionControls,
             showStructureSourceControls: o.showStructureSourceControls,
+            showMeasurementsControls: o.showMeasurementsControls,
+            showStrucmotifSubmitControls: o.showStrucmotifSubmitControls,
             showSuperpositionControls: o.showSuperpositionControls,
+            showQuickStylesControls: o.showQuickStylesControls,
+            showStructureComponentControls: o.showStructureComponentControls,
+            showVolumeStreamingControls: o.showVolumeStreamingControls,
             showValidationReportControls: o.showValidationReportControls,
             modelLoader: new ModelLoader(this._plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
-                strucmotifSubmit: true,
                 measurements: true,
+                strucmotifSubmit: true,
                 superposition: true,
+                quickStyles: false,
                 component: false,
                 volume: true,
+                validationReport: true,
                 custom: true,
-                // this must be set to true as the Mp4Controls depends on the canvas which will be undefined at init() time
-                mp4export: true,
-                validationReport: true
             }),
             detachedFromSierra: o.detachedFromSierra
         };

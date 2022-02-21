@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## Unreleased
+### Added
+- Expose Quick Styles functionality
+- More fine-grained options for UI controls
+
 ## [2.1.2] - 2022-02-08
 ### General
 - RO-2766: Allow strucmotif of 2 residues

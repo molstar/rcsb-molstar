@@ -15,8 +15,8 @@ import { StructureComponentControls } from 'molstar/lib/mol-plugin-ui/structure/
 import { VolumeStreamingControls } from 'molstar/lib/mol-plugin-ui/structure/volume';
 import { SessionControls } from './session';
 import { StrucmotifSubmitControls } from './strucmotif';
-import { Mp4EncoderUI } from 'molstar/lib/extensions/mp4-export/ui';
 import { ValidationReportControls } from './validation';
+import { StructureQuickStylesControls } from 'molstar/lib/mol-plugin-ui/structure/quick-styles';
 
 export class StructureTools extends PluginUIComponent {
     get customState() {
@@ -31,14 +31,14 @@ export class StructureTools extends PluginUIComponent {
         const collapsed = this.customState.collapsed.value;
         return <>
             {this.customState.showStructureSourceControls && <StructureSourceControls />}
-            <StructureMeasurementsControls initiallyCollapsed={collapsed.measurements} />
-            <StrucmotifSubmitControls initiallyCollapsed={collapsed.strucmotifSubmit} />
+            {this.customState.showMeasurementsControls && <StructureMeasurementsControls initiallyCollapsed={collapsed.measurements} />}
+            {this.customState.showStrucmotifSubmitControls && <StrucmotifSubmitControls initiallyCollapsed={collapsed.strucmotifSubmit} />}
             {this.customState.showSuperpositionControls && <StructureSuperpositionControls initiallyCollapsed={collapsed.superposition} />}
-            <StructureComponentControls initiallyCollapsed={collapsed.component} />
-            <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />
+            {this.customState.showQuickStylesControls && <StructureQuickStylesControls initiallyCollapsed={collapsed.quickStyles} />}
+            {this.customState.showStructureComponentControls && <StructureComponentControls initiallyCollapsed={collapsed.component} />}
+            {this.customState.showVolumeStreamingControls && <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />}
             {this.customState.showValidationReportControls && <ValidationReportControls initiallyCollapsed={collapsed.validationReport} />}
             <CustomStructureControls initiallyCollapsed={collapsed.custom} />
-            <Mp4EncoderUI initiallyCollapsed={collapsed.mp4export}/>
         </>;
     }
 }

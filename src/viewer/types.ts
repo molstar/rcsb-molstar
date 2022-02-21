@@ -34,23 +34,30 @@ export interface ParseParams extends SharedParams {
 
 export type CollapsedState = {
     selection: boolean
-    strucmotifSubmit: boolean
     measurements: boolean
+    strucmotifSubmit: boolean
     superposition: boolean
+    quickStyles: boolean
     component: boolean
     volume: boolean
-    custom: boolean
-    mp4export: boolean
     validationReport: boolean
+    custom: boolean
 }
 
 export interface ViewerState {
     showImportControls: boolean
     showSessionControls: boolean
     showStructureSourceControls: boolean
+    showMeasurementsControls: boolean
+    showStrucmotifSubmitControls: boolean
     showSuperpositionControls: boolean
+    showQuickStylesControls: boolean
+    showStructureComponentControls: boolean
+    showVolumeStreamingControls: boolean
     showValidationReportControls: boolean
+
     modelLoader: ModelLoader
+
     collapsed: BehaviorSubject<CollapsedState>
     detachedFromSierra: boolean
 }
