@@ -46,6 +46,7 @@ import { ModelExport } from 'molstar/lib/extensions/model-export';
 import { exportHierarchy } from 'molstar/lib/extensions/model-export/export';
 import { GeometryExport } from 'molstar/lib/extensions/geo-export';
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
+import { PartialCanvas3DProps } from 'molstar/lib/mol-canvas3d/canvas3d';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -111,7 +112,7 @@ const DefaultViewerProps = {
     backgroundColor: ColorNames.white,
     showWelcomeToast: true
 };
-export type ViewerProps = typeof DefaultViewerProps
+export type ViewerProps = typeof DefaultViewerProps & { canvas3d: PartialCanvas3DProps }
 
 export class Viewer {
     private readonly _plugin: PluginUIContext;
@@ -139,6 +140,10 @@ export class Viewer {
                     showControls: o.layoutShowControls,
                     controlsDisplay: o.layoutControlsDisplay,
                 },
+            },
+            canvas3d: {
+                ...defaultSpec.canvas3d,
+                ...o.canvas3d
             },
             components: {
                 ...defaultSpec.components,

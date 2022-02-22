@@ -2,10 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## Unreleased
+## [2.2.0] - 2022-02-22
 ### Added
 - Expose Quick Styles functionality
 - More fine-grained options for UI controls
+- Expose Canvas3DProps
 
 ## [2.1.2] - 2022-02-08
 ### General
