@@ -2,6 +2,12 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.2.1] - 2022-02-28
+### Bug fixes
+- RO-3063: parse v3 EMDB header XML properly
+- Mol* 3.3.1 (performance improvements)
+
+
 ## [2.2.0] - 2022-02-22
 ### Added
 - Expose Quick Styles functionality
