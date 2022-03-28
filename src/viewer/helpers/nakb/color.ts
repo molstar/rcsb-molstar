@@ -22,6 +22,7 @@ import { DistinctColorsParams } from 'molstar/lib/mol-util/color/distinct';
 import { MoleculeType } from 'molstar/lib/mol-model/structure/model/types';
 import { getElementMoleculeType } from 'molstar/lib/mol-model/structure/util';
 import { residueNameColor, ResidueNameColors } from 'molstar/lib/mol-theme/color/residue-name';
+import { getAdjustedColorMap } from 'molstar/lib/mol-util/color/color';
 
 const DefaultColor = Color(0xCCCCCC);
 const Description = 'Color nucleic residues by their name, color everything else by its `label_entity_id` value.';
@@ -32,6 +33,8 @@ export type NakbColorThemeParams = typeof NakbColorThemeParams
 export function getNakbColorThemeParams(_ctx: ThemeDataContext) {
     return PD.clone(NakbColorThemeParams);
 }
+
+const residueColorMap = getAdjustedColorMap(ResidueNameColors, 0, 1);
 
 const paletteProps = PD.getDefaultValues({
     palette: PD.MappedStatic('colors', {
@@ -72,10 +75,10 @@ function isNucleic(location: StructureElement.Location): boolean {
 function residueColor(location: StructureElement.Location): Color {
     if (Unit.isAtomic(location.unit)) {
         const compId = getAtomicCompId(location.unit, location.element);
-        return residueNameColor(ResidueNameColors, compId);
+        return residueNameColor(residueColorMap, compId);
     } else {
         const compId = getCoarseCompId(location.unit, location.element);
-        if (compId) return residueNameColor(ResidueNameColors, compId);
+        if (compId) return residueNameColor(residueColorMap, compId);
     }
     return DefaultColor;
 }
