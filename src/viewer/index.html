@@ -61,6 +61,7 @@
                 layoutShowLog: !pdbId,
                 layoutShowControls: !isEmbedded,
                 showMembraneOrientationPreset: true,
+                showNakbColorTheme: true,
                 detachedFromSierra: true, // needed when running without sierra
             })
 
@@ -624,7 +625,16 @@
                 },
                 {
                     id: '5MRX',
-                    info: 'RNA sarcin-ricin loop',
+                    info: 'NAKB: RNA sarcin-ricin loop',
+                    config: {
+                        props: {
+                            kind: 'nakb'
+                        }
+                    }
+                },
+                {
+                    id: '1G2F',
+                    info: 'NAKB: structure of a Cys2His2 zinc finger/TATA box complex',
                     config: {
                         props: {
                             kind: 'nakb'

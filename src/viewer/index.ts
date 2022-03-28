@@ -29,6 +29,7 @@ import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/tr
 import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
+import { NakbColorThemeProvider } from './helpers/nakb/color';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select } from './helpers/viewer';
 import { SelectBase, SelectRange, SelectTarget, Target } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
@@ -80,6 +81,7 @@ const DefaultViewerProps = {
     showValidationReportControls: true,
 
     showMembraneOrientationPreset: false,
+    showNakbColorTheme: false,
     /**
      * Needed when running outside of sierra. If set to true, the strucmotif UI will use an absolute URL to sierra-prod.
      * Otherwise, the link will be relative on the current host.
@@ -213,6 +215,7 @@ export class Viewer {
                 const renderer = this._plugin.canvas3d!.props.renderer;
                 await PluginCommands.Canvas3D.SetSettings(this._plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
                 this._plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
+                if (o.showNakbColorTheme) this._plugin.representation.structure.themes.colorThemeRegistry.add(NakbColorThemeProvider);
 
                 if (o.showWelcomeToast) {
                     await PluginCommands.Toast.Show(this._plugin, {
