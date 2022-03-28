@@ -112,8 +112,12 @@ export type MotifProps = {
     color?: number
 } & BaseProps
 
+export type NakbProps = {
+    kind: 'nakb'
+} & BaseProps
+
 export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps |
-MembraneProps | FeatureDensityProps | MotifProps | EmptyProps;
+MembraneProps | FeatureDensityProps | MotifProps | NakbProps | EmptyProps;
 
 const RcsbParams = () => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -265,6 +269,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 // fall back to default representation to show something
                 representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
             }
+        } if (p.kind === 'nakb') {
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'polymer-cartoon', { theme: { globalName: 'residue-name', focus: { name: 'residue-name' } } });
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
