@@ -270,7 +270,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
             }
         } if (p.kind === 'nakb') {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'polymer-cartoon', { theme: { globalName: 'residue-name', focus: { name: 'residue-name' } } });
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', { theme: { globalName: 'residue-name', focus: { name: 'residue-name' } } });
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
         }
