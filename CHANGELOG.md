@@ -2,11 +2,18 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.3.0] - 2022-04-04
+### Added
+- NAKB preset (nucleic acids colored by residue-name, everything else by entity-id)
+
+### Bug fixes
+- RO-3186: fix detection of disulfide bridges
+- RO-3194: fix density maps for entries with half-maps
+
 ## [2.2.1] - 2022-02-28
 ### Bug fixes
 - RO-3063: parse v3 EMDB header XML properly
 - Mol* 3.3.1 (performance improvements)
-
 
 ## [2.2.0] - 2022-02-22
 ### Added
