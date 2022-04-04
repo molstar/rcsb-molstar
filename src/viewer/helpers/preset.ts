@@ -269,7 +269,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 // fall back to default representation to show something
                 representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
             }
-        } if (p.kind === 'nakb') {
+        } else if (p.kind === 'nakb') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, 'auto', { theme: { globalName: 'nakb', focus: { name: 'nakb' } } });
         } else {
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
