@@ -46,10 +46,12 @@ import {
     AssemblySymmetryProvider
 } from 'molstar/lib/extensions/rcsb/assembly-symmetry/prop';
 import { Task } from 'molstar/lib/mol-task';
+import { PLDDTConfidenceColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/plddt';
 
 type BaseProps = {
     assemblyId?: string
     modelIndex?: number
+    plddt?: 'off' | 'single-chain' | 'on'
 }
 
 type ColorProp = {
@@ -167,6 +169,11 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             }
         }
 
+        // default to pLDDT coloring when category present && single chain
+        const presetParams = Object.create(null);
+        if (checkPlddtColorTheme(structure, p.plddt ?? 'single-chain')) {
+            Object.assign(presetParams, { theme: { globalName: 'plddt-confidence', focus: { name: 'plddt-confidence' } } });
+        }
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
         if (p.kind === 'prop-set') {
@@ -210,13 +217,13 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 selectionExpressions = selectionExpressions.concat(createSelectionExpressions(entryId));
             }
 
-            const params = {
+            const additions = {
                 ignoreHydrogens: CommonParams.ignoreHydrogens.defaultValue,
                 quality: CommonParams.quality.defaultValue,
                 theme: { globalName: 'superpose', focus: { name: 'superpose' } },
                 selectionExpressions: selectionExpressions
             };
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, { ...presetParams, ...additions });
         } else if (p.kind === 'motif' && structure?.obj) {
             // let's force ASM_1 for motifs (as we use this contract in the rest of the stack)
             // TODO should ASM_1 be the default, seems like we'd run into problems when selecting ligands that are e.g. ambiguous with asym_id & seq_id alone?
@@ -229,14 +236,14 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 selectionExpressions = selectionExpressions.map(e => { return { ...e, color: p.color }; });
             }
 
-            const params = {
+            const additions = {
                 ignoreHydrogens: true,
                 quality: CommonParams.quality.defaultValue,
                 selectionExpressions: selectionExpressions
             };
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, params);
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, { ...presetParams, ...additions });
         } else if (p.kind === 'validation') {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, ValidationReportGeometryQualityPreset);
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, ValidationReportGeometryQualityPreset, presetParams);
         } else if (p.kind === 'symmetry' && structure?.obj) {
             const data = structure!.obj.data;
             if (!AssemblySymmetryDataProvider.get(data).value) {
@@ -246,7 +253,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     await AssemblySymmetryProvider.attach(propCtx, data, { symmetryIndex: p.symmetryIndex });
                 }));
             }
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset);
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, AssemblySymmetryPreset, presetParams);
 
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
@@ -256,7 +263,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             console.warn('Using empty representation');
         } else if (p.kind === 'membrane') {
             try {
-                representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, MembraneOrientationPreset);
+                representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, MembraneOrientationPreset, presetParams);
 
                 // reset the camera because the membranes render 1st and the structure might not be fully visible
                 requestAnimationFrame(() => plugin.canvas3d?.requestCameraReset());
@@ -267,12 +274,12 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 console.error(error);
 
                 // fall back to default representation to show something
-                representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
+                representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
             }
         } else if (p.kind === 'nakb') {
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, 'auto', { theme: { globalName: 'nakb', focus: { name: 'nakb' } } });
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, 'auto', { ...presetParams, theme: { globalName: 'nakb', focus: { name: 'nakb' } } });
         } else {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto');
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
         }
 
         if ((p.kind === 'feature' || p.kind === 'feature-density') && structure?.obj) {
@@ -325,6 +332,13 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         };
     }
 });
+
+function checkPlddtColorTheme(structure: StructureObject | undefined, plddt: 'on' | 'single-chain' | 'off') {
+    if (!structure?.cell) return false;
+    if (plddt === 'off') return false;
+    if (plddt === 'single-chain' && structure.data?.polymerUnitCount !== 1) return false;
+    return PLDDTConfidenceColorThemeProvider.isApplicable({ structure: structure.data });
+}
 
 function determineAssemblyId(traj: any, p: MotifProps) {
     // nothing to do if assembly is known
