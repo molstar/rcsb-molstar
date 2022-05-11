@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [Unreleased]
+### Added
+- auto-apply pLDDT confidence coloring on single chains
+
 ## [2.3.0] - 2022-04-04
 ### Added
 - NAKB preset (nucleic acids colored by residue-name, everything else by entity-id)
