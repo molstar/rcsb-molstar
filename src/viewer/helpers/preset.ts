@@ -334,7 +334,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 });
 
 function checkPlddtColorTheme(structure: StructureObject | undefined, plddt: 'on' | 'single-chain' | 'off') {
-    if (!structure?.cell) return false;
+    if (!structure?.data) return false;
     if (plddt === 'off') return false;
     if (plddt === 'single-chain' && structure.data?.polymerUnitCount !== 1) return false;
     return PLDDTConfidenceColorThemeProvider.isApplicable({ structure: structure.data });
