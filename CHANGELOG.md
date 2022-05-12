@@ -2,9 +2,9 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [Unreleased]
+## [2.4.0] - 2022-05-12
 ### Added
-- auto-apply pLDDT confidence coloring on single chains
+- Auto-apply pLDDT confidence coloring for single chains
 
 ## [2.3.0] - 2022-04-04
 ### Added

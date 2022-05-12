@@ -1,6 +1,6 @@
 {
     "name": "@rcsb/rcsb-molstar",
-    "version": "2.4.0-dev.1",
+    "version": "2.3.0",
     "description": "RCSB PDB apps and props based on Mol*.",
     "homepage": "https://github.com/molstar/rcsb-molstar#readme",
     "repository": {
@@ -61,7 +61,7 @@
     },
     "dependencies": {
         "@types/react": "^18.0.9",
-        "@types/react-dom": "^18.0.3",
+        "@types/react-dom": "^18.0.4",
         "molstar": "^3.8.0",
         "react": "^18.1.0",
         "react-dom": "^18.1.0",
