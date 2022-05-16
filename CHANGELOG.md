@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.4.1] - 2022-05-16
+### Bug fixes
+- Mol* 3.8.1 (fix Polymer Chain Instance coloring)
+
 ## [2.4.0] - 2022-05-12
 ### Added
 - Auto-apply pLDDT confidence coloring for single chains
