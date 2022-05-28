@@ -3,7 +3,7 @@ import { RootStructureDefinition } from 'molstar/lib/mol-plugin-state/helpers/ro
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { Task } from 'molstar/lib/mol-task';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
-import { PropsetProps } from '../preset';
+import { AlignmentProps } from '../preset';
 import { StructureQueryHelper } from 'molstar/lib/mol-plugin-state/helpers/structure-query';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { StructureSelection, Structure } from 'molstar/lib/mol-model/structure';
@@ -19,7 +19,7 @@ const FlexibleStructureFromModel = PluginStateTransform.BuiltIn({
     isDecorator: true,
     params(_a) {
         return {
-            targets: PD.Value<PropsetProps['targets']>([])
+            targets: PD.Value<AlignmentProps['targets']>([])
         };
     }
 })({
