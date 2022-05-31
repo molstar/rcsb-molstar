@@ -42,10 +42,11 @@ export class ExchangesControl extends React.Component<{ handler: Residue }> {
     onClickSwatch = (e: React.MouseEvent<HTMLButtonElement>) => {
         const tlc = e.currentTarget.getAttribute('data-id')!;
         this.props.handler.toggleExchange(tlc);
+        // this makes Chrome pick up CSS change
+        e.currentTarget.blur();
     };
 
     swatch() {
-        // TODO update of isSelected style is delayed - this seems to be a Chrome-related bug
         return <div className='msp-combined-color-swatch'>
             {DefaultExchanges.map(e => {
                 const isSelected = this.props.handler.hasExchange(e[0]);

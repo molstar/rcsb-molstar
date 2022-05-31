@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.4.2] - 2022-06-01
+### Bug fixes
+- Strucmotif UI: call `blur()` to update CSS style properly
+
 ## [2.4.1] - 2022-05-16
 ### Bug fixes
 - Mol* 3.8.1 (fix Polymer Chain Instance coloring)
