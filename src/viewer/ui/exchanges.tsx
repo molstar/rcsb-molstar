@@ -7,7 +7,7 @@ import * as React from 'react';
 import { Button } from 'molstar/lib/mol-plugin-ui/controls/common';
 import { MAX_EXCHANGES, Residue } from './strucmotif';
 
-export const DefaultExchanges = [
+export const DefaultExchanges: Map<string, string> = new Map([
     ['ALA', 'Alanine'],
     ['CYS', 'Cysteine'],
     ['ASP', 'Aspartic Acid'],
@@ -28,15 +28,15 @@ export const DefaultExchanges = [
     ['VAL', 'Valine'],
     ['TRP', 'Tryptophan'],
     ['TYR', 'Tyrosine'],
-    ['A', 'Adenosine'],
-    ['C', 'Cytidine'],
     ['DA', 'Deoxyadenosine'],
     ['DC', 'Deoxycytidine'],
     ['DG', 'Deoxyguanosine'],
-    ['G', ',Guanosine'],
-    ['T', 'Thymidine'],
-    ['U', 'Uridine']
-];
+    ['DT', 'Deoxythymidine'],
+    ['A', 'Adenosine'],
+    ['C', 'Cytidine'],
+    ['G', 'Guanosine'],
+    ['U', 'Uridine'],
+]);
 
 export class ExchangesControl extends React.Component<{ handler: Residue }> {
     onClickSwatch = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -47,16 +47,19 @@ export class ExchangesControl extends React.Component<{ handler: Residue }> {
     };
 
     swatch() {
-        return <div className='msp-combined-color-swatch'>
-            {DefaultExchanges.map(e => {
-                const isSelected = this.props.handler.hasExchange(e[0]);
-                const className = isSelected ? 'msp-control-current' : '';
-                const isDisabled = this.props.handler.exchanges.size >= MAX_EXCHANGES && !isSelected;
+        const out: JSX.Element[] = [];
+        DefaultExchanges.forEach((v, k) => {
+            const isSelected = this.props.handler.hasExchange(k);
+            const className = isSelected ? 'msp-control-current' : '';
+            const isDisabled = this.props.handler.exchanges.size >= MAX_EXCHANGES && !isSelected;
 
-                return <Button key={e[0]} title={e[1]} inline data-id={e[0]} onClick={this.onClickSwatch} style={{ padding: 0, fontSize: '13px' }} className={className} disabled={isDisabled}>
-                    {e[0] && isSelected ? <b>{e[0]}</b> : e[0]}
-                </Button>;
-            })}
+            out[out.length] = <Button key={k} title={v} inline data-id={k} onClick={this.onClickSwatch} style={{ padding: 0, fontSize: '13px' }} className={className} disabled={isDisabled}>
+                {k && isSelected ? <b>{k}</b> : k}
+            </Button>;
+        });
+
+        return <div className='msp-combined-color-swatch'>
+            { out }
         </div>;
     }
 

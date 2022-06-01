@@ -19,7 +19,7 @@ import { StructureSelectionHistoryEntry } from 'molstar/lib/mol-plugin-state/man
 import { StructureElement, StructureProperties } from 'molstar/lib/mol-model/structure/structure';
 import { ToggleSelectionModeButton } from 'molstar/lib/mol-plugin-ui/structure/selection';
 import { OrderedSet } from 'molstar/lib/mol-data/int';
-import { ExchangesControl } from './exchanges';
+import { DefaultExchanges, ExchangesControl } from './exchanges';
 import { Vec3 } from 'molstar/lib/mol-math/linear-algebra/3d/vec3';
 import { Structure } from 'molstar/lib/mol-model/structure/structure/structure';
 import { Unit } from 'molstar/lib/mol-model/structure/structure/unit';
@@ -231,10 +231,10 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                     residue_ids: residueIds.sort((a, b) => this.sortResidueIds(a, b))
                 },
                 rmsd_cutoff: 2,
-                atom_pairing_scheme: 'ALL',
-                exchanges: exchanges
+                atom_pairing_scheme: 'ALL'
             }
         };
+        if (exchanges.length) Object.assign(query.parameters, { exchanges });
         // console.log(query);
         const sierraUrl = (this.plugin.customState as ViewerState).detachedFromSierra ? ABSOLUTE_ADVANCED_SEARCH_URL : RELATIVE_ADVANCED_SEARCH_URL;
         const url = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
@@ -357,7 +357,12 @@ export class Residue {
         const structure = entry.loci.structure;
         const e = entry.loci.elements[0];
         StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
-        this.exchanges.add(StructureProperties.atom.label_comp_id(location));
+
+        const comp = StructureProperties.atom.label_comp_id(location);
+        if (DefaultExchanges.has(comp)) {
+            this.exchanges.add(comp);
+            return;
+        }
     }
 
     toggleExchange(val: string): void {

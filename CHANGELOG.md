@@ -2,7 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [2.4.2] - 2022-06-01
+## [2.5.0] - 2022-06-??
+### Added
+- Strucmotif UI: improve handling of modified & non-standard components
+
 ### Bug fixes
 - Strucmotif UI: call `blur()` to update CSS style properly
 
