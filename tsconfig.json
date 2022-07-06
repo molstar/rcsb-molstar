@@ -19,6 +19,7 @@
         "lib": [ "es6", "dom", "esnext.asynciterable", "es2016" ],
         "outDir": "build/src",
         "rootDir": "src",
+        "resolveJsonModule": true,
     },
     "include": [ "src/**/*" ]
 }

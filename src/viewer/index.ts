@@ -48,6 +48,7 @@ import { exportHierarchy } from 'molstar/lib/extensions/model-export/export';
 import { GeometryExport } from 'molstar/lib/extensions/geo-export';
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { PartialCanvas3DProps } from 'molstar/lib/mol-canvas3d/canvas3d';
+import { RSCCScore } from './helpers/rscc/behavior';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -61,6 +62,7 @@ export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
+    'rscc': PluginSpec.Behavior(RSCCScore),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
     'ma-quality-assessment': PluginSpec.Behavior(MAQualityAssessment),
     'model-export': PluginSpec.Behavior(ModelExport),

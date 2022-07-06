@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## Unreleased
+### Added
+- RSCC coloring & validation option
+
 ## [2.4.2] - 2022-06-01
 ### Bug fixes
 - Strucmotif UI: call `blur()` to update CSS style properly
