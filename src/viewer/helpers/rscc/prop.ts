@@ -120,5 +120,5 @@ const DefaultBaseUrl = 'https://data.rcsb.org/graphql';
 async function fetchResolution(ctx: ThemeDataContext, model: Model, serverUrl: string): Promise<number> {
     const client = new GraphQLClient(serverUrl, ctx.assetManager);
     const result = await client.request(SyncRuntimeContext, resolution_gql, { entry_id: model.entryId });
-    return result.data.entry.refine[0].ls_d_res_high;
+    return result.data.entry.rcsb_entry_info.resolution_combined;
 }
