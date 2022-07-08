@@ -8,7 +8,7 @@ import { CollapsableControls, CollapsableState } from 'molstar/lib/mol-plugin-ui
 import { StructureHierarchyManager } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy';
 import { ValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/prop';
 import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
-import { ValidationReportRSCCPreset } from '../helpers/rscc/behavior';
+import { RSCCPreset } from '../helpers/rscc/behavior';
 import { ActionMenu } from 'molstar/lib/mol-plugin-ui/controls/action-menu';
 import { Model } from 'molstar/lib/mol-model/structure/model';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
@@ -120,7 +120,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
 
     requestRSCCPreset = async () => {
         try {
-            await ValidationReportRSCCPreset.apply(this.pivot.cell, Object.create(null), this.plugin);
+            await RSCCPreset.apply(this.pivot.cell, Object.create(null), this.plugin);
         } catch (err) {
             // happens e.g. for 4HHB
             this.setState(({ errorStates }) => {
@@ -155,7 +155,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         if (this.rsccData) {
             out.push({
                 kind: 'item',
-                label: rsccReportError || validationReportError ? 'Failed to Obtain RSCC Values' : (noValidationReport ? 'No RSCC Values Available' : 'Real Space Correlation Coefficient (RSCC)'),
+                label: rsccReportError || validationReportError ? 'Failed to Obtain RSCC Values' : (noValidationReport ? 'No RSCC Values Available' : 'Real-Space Correlation Coefficient (RSCC)'),
                 value: this.requestRSCCPreset,
                 disabled: noValidationReport || validationReportError || rsccReportError
             });

@@ -8,10 +8,9 @@ import {
     PresetStructureRepresentations,
     StructureRepresentationPresetProvider
 } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
-import { ValidationReport, ValidationReportProvider } from 'molstar/lib/extensions/rcsb/validation-report/prop';
+import { ValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/prop';
 import { Model } from 'molstar/lib/mol-model/structure/model';
 import { StateObjectRef } from 'molstar/lib/mol-state';
-import { Task } from 'molstar/lib/mol-task';
 import { RSCCColorThemeProvider } from './color';
 import { PluginBehavior } from 'molstar/lib/mol-plugin/behavior/behavior';
 import { RSCC, RSCCProvider } from './prop';
@@ -20,7 +19,7 @@ import { StructureElement } from 'molstar/lib/mol-model/structure/structure';
 import { OrderedSet } from 'molstar/lib/mol-data/int';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 
-export const ValidationReportRSCCPreset = StructureRepresentationPresetProvider({
+export const RSCCPreset = StructureRepresentationPresetProvider({
     id: 'preset-structure-representation-rcsb-validation-report-rscc',
     display: {
         name: 'Validation Report (RSCC)', group: 'Annotation',
@@ -34,12 +33,6 @@ export const ValidationReportRSCCPreset = StructureRepresentationPresetProvider(
         const structureCell = StateObjectRef.resolveAndCheck(plugin.state.data, ref);
         const structure = structureCell?.obj?.data;
         if (!structureCell || !structure) return {};
-
-        await plugin.runTask(Task.create('Validation Report', async runtime => {
-            await ValidationReportProvider.attach({ runtime, assetManager: plugin.managers.asset }, structure.models[0]);
-        }));
-
-        if (!ValidationReportProvider.get(structure.models[0]).value?.rscc || ValidationReportProvider.get(structure.models[0]).value?.rscc.size === 0) throw Error('No RSCC available');
 
         const colorTheme = RSCCColorThemeProvider.name as any;
         return PresetStructureRepresentations.auto.apply(ref, { ...params, theme: { globalName: colorTheme, focus: { name: colorTheme } } }, plugin);
@@ -81,6 +74,7 @@ export const RSCCScore = PluginBehavior.create<{ autoAttach: boolean, showToolti
             this.ctx.managers.lociLabels.addProvider(this.labelProvider);
 
             this.ctx.representation.structure.themes.colorThemeRegistry.add(RSCCColorThemeProvider);
+            this.ctx.builders.structure.representation.registerPreset(RSCCPreset);
         }
 
         update(p: { autoAttach: boolean, showTooltip: boolean }) {
@@ -92,9 +86,10 @@ export const RSCCScore = PluginBehavior.create<{ autoAttach: boolean, showToolti
         }
 
         unregister() {
-            this.ctx.customModelProperties.unregister(RSCCProvider.descriptor.name);
+            this.ctx.customModelProperties.unregister(this.provider.descriptor.name);
             this.ctx.managers.lociLabels.removeProvider(this.labelProvider);
             this.ctx.representation.structure.themes.colorThemeRegistry.remove(RSCCColorThemeProvider);
+            this.ctx.builders.structure.representation.unregisterPreset(RSCCPreset);
         }
     },
     params: () => ({

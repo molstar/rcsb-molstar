@@ -21,8 +21,6 @@ export type RSCC = PropertyWrapper<{
 }>
 
 export namespace RSCC {
-    import createInfo = PropertyWrapper.createInfo;
-
     export function getScore(e: StructureElement.Location): [number, string] {
         if (!Unit.isAtomic(e.unit)) return [-1, 'No Score'];
         const prop = RSCCProvider.get(e.unit.model).value;
@@ -44,7 +42,7 @@ export namespace RSCC {
     }
 
     export async function obtain(ctx: CustomProperty.Context, model: Model, props: RSCCProps): Promise<CustomProperty.Data<any>> {
-        return { value: { info: createInfo(), data: await _obtain(ctx, model, props) } };
+        return { value: { info: PropertyWrapper.createInfo(), data: await _obtain(ctx, model, props) } };
     }
 
     async function _obtain(ctx: CustomProperty.Context, model: Model, _props: RSCCProps): Promise<RSCC['data'] | undefined> {
@@ -111,6 +109,9 @@ export const RSCCProvider: CustomModelProperty.Provider<RSCCParams, RSCC> = Cust
     getParams: () => RSCCParams,
     isApplicable: (data: Model) => RSCC.isApplicable(data),
     obtain: async (ctx: CustomProperty.Context, data: Model, props: Partial<RSCCProps>) => {
+        await ValidationReportProvider.attach(ctx, data);
+        if (!ValidationReportProvider.get(data).value?.rscc || ValidationReportProvider.get(data).value?.rscc.size === 0) throw Error('No RSCC available');
+
         const p = { ...PD.getDefaultValues(RSCCParams), ...props };
         return await RSCC.obtain(ctx, data, p);
     }
