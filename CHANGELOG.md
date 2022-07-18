@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## Unreleased
+## [2.5.0] - 2022-07-18
 ### Added
 - RSCC coloring & validation option
 
