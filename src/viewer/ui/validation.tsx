@@ -122,7 +122,6 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         try {
             await RSCCPreset.apply(this.pivot.cell, Object.create(null), this.plugin);
         } catch (err) {
-            console.log(err);
             // happens e.g. for 4HHB
             this.setState(({ errorStates }) => {
                 const errors = new Set(errorStates);

@@ -8,7 +8,7 @@ import {
     PresetStructureRepresentations,
     StructureRepresentationPresetProvider
 } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
-import { ValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/prop';
+import { ValidationReport, ValidationReportProvider } from 'molstar/lib/extensions/rcsb/validation-report/prop';
 import { Model } from 'molstar/lib/mol-model/structure/model';
 import { StateObjectRef } from 'molstar/lib/mol-state';
 import { RSCCColorThemeProvider } from './color';
@@ -18,11 +18,12 @@ import { Loci } from 'molstar/lib/mol-model/loci';
 import { StructureElement } from 'molstar/lib/mol-model/structure/structure';
 import { OrderedSet } from 'molstar/lib/mol-data/int';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
+import { Task } from 'molstar/lib/mol-task';
 
 export const RSCCPreset = StructureRepresentationPresetProvider({
     id: 'preset-structure-representation-rcsb-validation-report-rscc',
     display: {
-        name: 'Validation Report (RSCC)', group: 'Annotation',
+        name: 'Validation Report (Experimental Support)', group: 'Annotation',
         description: 'Color structure based on real-space correlation coefficients. Data from wwPDB Validation Report, obtained via RCSB PDB.'
     },
     isApplicable(a) {
@@ -33,6 +34,12 @@ export const RSCCPreset = StructureRepresentationPresetProvider({
         const structureCell = StateObjectRef.resolveAndCheck(plugin.state.data, ref);
         const structure = structureCell?.obj?.data;
         if (!structureCell || !structure) return {};
+
+        const data = structure.models[0];
+        await plugin.runTask(Task.create('Validation Report', async runtime => {
+            await ValidationReportProvider.attach({ runtime, assetManager: plugin.managers.asset }, data);
+        }));
+        if (!ValidationReportProvider.get(data).value?.rscc || ValidationReportProvider.get(data).value?.rscc.size === 0) throw Error('No RSCC available');
 
         const colorTheme = RSCCColorThemeProvider.name as any;
         return PresetStructureRepresentations.auto.apply(ref, { ...params, theme: { globalName: colorTheme, focus: { name: colorTheme } } }, plugin);

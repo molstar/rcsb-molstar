@@ -90,7 +90,7 @@ export function RSCCColorTheme(ctx: ThemeDataContext, props: PD.Values<RSCCColor
 
 export const RSCCColorThemeProvider: ColorTheme.Provider<RSCCColorThemeParams, 'rscc'> = {
     name: 'rscc',
-    label: 'Real-space correlation coefficient',
+    label: 'Experimental Support Confidence',
     category: ColorTheme.Category.Validation,
     factory: RSCCColorTheme,
     getParams: getRSCCColorThemeParams,
