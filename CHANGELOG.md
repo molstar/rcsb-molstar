@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.5.1] - 2022-07-19
+### Bug fixes
+- Rename presets/themes for RSCC coloring
+- Improve handling of missing RSCC values
+
 ## [2.5.0] - 2022-07-18
 ### Added
 - RSCC coloring & validation option
