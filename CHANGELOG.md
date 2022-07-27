@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## Unreleased
+### Bug fixes
+- Avoid deprecated React API
+
 ## [2.5.2] - 2022-07-21
 ### Bug fixes
 - Fix outgoing strucmotif query URL
