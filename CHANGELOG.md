@@ -2,10 +2,32 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [2.5.0] - 2022-06-??
-### Added
+Unreleased
 - Strucmotif UI: improve handling of modified & non-standard components
 
+## [2.5.4] - 2022-07-28
+### Bug fixes
+- Avoid deprecated React API
+- Rename 'RCSB PDB Validation Report' to 'Validation Report'
+
+## [2.5.3] - 2022-07-24
+### Bug fixes
+- Pecos related changes
+
+## [2.5.2] - 2022-07-21
+### Bug fixes
+- Fix outgoing strucmotif query URL
+
+## [2.5.1] - 2022-07-19
+### Bug fixes
+- Rename presets/themes for RSCC coloring
+- Improve handling of missing RSCC values
+
+## [2.5.0] - 2022-07-18
+### Added
+- RSCC coloring & validation option
+
+## [2.4.2] - 2022-07-08
 ### Bug fixes
 - Strucmotif UI: call `blur()` to update CSS style properly
 

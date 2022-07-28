@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2021-2022 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
@@ -8,18 +8,21 @@ import { CollapsableControls, CollapsableState } from 'molstar/lib/mol-plugin-ui
 import { StructureHierarchyManager } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy';
 import { ValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/prop';
 import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
+import { RSCCPreset } from '../helpers/rscc/behavior';
 import { ActionMenu } from 'molstar/lib/mol-plugin-ui/controls/action-menu';
 import { Model } from 'molstar/lib/mol-model/structure/model';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
 import { QualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
 import { PLDDTConfidenceColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/plddt';
 import { QmeanScoreColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/qmean';
+import { RSCC } from '../helpers/rscc/prop';
 
 interface ValidationReportState extends CollapsableState {
     errorStates: Set<string>
 }
 
 const ValidationReportTag = 'validation-report';
+const RSCCReportTag = 'rscc';
 
 const _QualityIcon = <svg width='50px' height='50px' viewBox='0 0 38 47'>
     <g strokeWidth='4' fill='none'>
@@ -77,6 +80,11 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         return !model || !this.isFromPdbArchive(model);
     }
 
+    get rsccData() {
+        const structure = this.pivot.cell.obj?.data;
+        return RSCC.isApplicable({ structure });
+    }
+
     get pLDDTData() {
         const structure = this.pivot.cell.obj?.data;
         if (!structure || structure.models.length !== 1) return false;
@@ -110,6 +118,19 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         }
     };
 
+    requestRSCCPreset = async () => {
+        try {
+            await RSCCPreset.apply(this.pivot.cell, Object.create(null), this.plugin);
+        } catch (err) {
+            // happens e.g. for 4HHB
+            this.setState(({ errorStates }) => {
+                const errors = new Set(errorStates);
+                errors.add(RSCCReportTag);
+                return { errorStates: errors };
+            });
+        }
+    };
+
     requestPLDDTConfidenceColoring = async () => {
         await this.plugin.managers.structure.component.updateRepresentationsTheme(this.pivot.components, { color: PLDDTConfidenceColorThemeProvider.name as any });
     };
@@ -121,15 +142,24 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
     get actions(): ActionMenu.Items {
         const noValidationReport = this.noValidationReport;
         const validationReportError = this.state.errorStates.has(ValidationReportTag);
+        const rsccReportError = this.state.errorStates.has(RSCCReportTag);
         const out: ActionMenu.Items = [
             {
                 kind: 'item',
-                label: validationReportError ? 'Failed to Obtain Validation Report' : (noValidationReport ? 'No Validation Report Available' : 'RCSB PDB Validation Report'),
+                label: validationReportError ? 'Failed to Obtain Validation Report' : (noValidationReport ? 'No Validation Report Available' : 'Validation Report'),
                 value: this.requestValidationReportPreset,
                 disabled: noValidationReport || validationReportError
             },
         ];
 
+        if (this.rsccData) {
+            out.push({
+                kind: 'item',
+                label: rsccReportError || validationReportError ? 'Failed to Obtain RSCC Values' : (noValidationReport ? 'No RSCC Values Available' : 'Experimental Support Confidence'),
+                value: this.requestRSCCPreset,
+                disabled: noValidationReport || validationReportError || rsccReportError
+            });
+        }
         if (this.pLDDTData) {
             out.push({
                 kind: 'item',

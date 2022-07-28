@@ -54,18 +54,17 @@ type BaseProps = {
     plddt?: 'off' | 'single-chain' | 'on'
 }
 
-type ColorProp = {
-    name: 'color',
-    value: number,
-    targets: Target[]
-};
+export { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
 
-export type PropsetProps = {
-    kind: 'prop-set',
+export type AlignmentProps = {
+    kind: 'alignment',
     targets?: (Target & {
         matrix?: Mat4
     })[],
-    representation: ColorProp[]
+    colors: {
+        value: number,
+        targets: Target[]
+    }[]
 } & BaseProps
 
 export type EmptyProps = {
@@ -118,7 +117,7 @@ export type NakbProps = {
     kind: 'nakb'
 } & BaseProps
 
-export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | PropsetProps |
+export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | AlignmentProps |
 MembraneProps | FeatureDensityProps | MotifProps | NakbProps | EmptyProps;
 
 const RcsbParams = () => ({
@@ -158,7 +157,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         let unitcell: StateObjectSelector | undefined = undefined;
         // If flexible transformation is allowed, we may need to create a single structure component
         // from transformed substructures
-        const allowsFlexTransform = p.kind === 'prop-set';
+        const allowsFlexTransform = p.kind === 'alignment';
         if (!allowsFlexTransform) {
             structure = await builder.createStructure(modelProperties || model, structureParams);
             structureProperties = await builder.insertStructureProperties(structure);
@@ -176,7 +175,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         }
         let representation: StructureRepresentationPresetProvider.Result | undefined = undefined;
 
-        if (p.kind === 'prop-set') {
+        if (p.kind === 'alignment') {
             // This creates a single structure from selections/transformations as specified
             const _structure = plugin.state.data.build().to(modelProperties)
                 .apply(FlexibleStructureFromModel, { targets: p.targets });
@@ -188,19 +187,16 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
             // adding coloring lookup scheme
             structure.data!.inheritedPropertyData.colors = Object.create(null);
-            for (const repr of p.representation) {
-                if (repr.name === 'color') {
-                    const colorValue = repr.value;
-                    const targets = repr.targets;
-                    for (const target of targets) {
-                        if (!target.labelAsymId) continue;
-
-                        if (!structure.data!.inheritedPropertyData.colors[target.labelAsymId])
-                            structure.data!.inheritedPropertyData.colors[target.labelAsymId] = new Map();
-                        const residues: number[] = (target.labelSeqRange) ? toRange(target.labelSeqRange.beg, target.labelSeqRange.end) : [];
-                        for (const num of residues) {
-                            structure.data!.inheritedPropertyData.colors[target.labelAsymId].set(num, colorValue);
-                        }
+            for (const c of p.colors) {
+                const colorValue = c.value;
+                const targets = c.targets;
+                for (const target of targets) {
+                    if (!target.labelAsymId) continue;
+                    if (!structure.data!.inheritedPropertyData.colors[target.labelAsymId])
+                        structure.data!.inheritedPropertyData.colors[target.labelAsymId] = new Map();
+                    const residues: number[] = (target.labelSeqRange) ? toRange(target.labelSeqRange.beg, target.labelSeqRange.end) : [];
+                    for (const num of residues) {
+                        structure.data!.inheritedPropertyData.colors[target.labelAsymId].set(num, colorValue);
                     }
                 }
             }

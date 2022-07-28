@@ -15,7 +15,6 @@ import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 
 import { ModelLoader } from './helpers/model';
 import { PresetProps } from './helpers/preset';
@@ -48,6 +47,8 @@ import { exportHierarchy } from 'molstar/lib/extensions/model-export/export';
 import { GeometryExport } from 'molstar/lib/extensions/geo-export';
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { PartialCanvas3DProps } from 'molstar/lib/mol-canvas3d/canvas3d';
+import { RSCCScore } from './helpers/rscc/behavior';
+import { createRoot } from 'react-dom/client';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -61,6 +62,7 @@ export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 const Extensions = {
     'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
+    'rscc': PluginSpec.Behavior(RSCCScore),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
     'ma-quality-assessment': PluginSpec.Behavior(MAQualityAssessment),
     'model-export': PluginSpec.Behavior(ModelExport),
@@ -145,7 +147,12 @@ export class Viewer {
             },
             canvas3d: {
                 ...defaultSpec.canvas3d,
-                ...o.canvas3d
+                ...o.canvas3d,
+                renderer: {
+                    ...defaultSpec.canvas3d?.renderer,
+                    ...o.canvas3d?.renderer,
+                    backgroundColor: o.backgroundColor
+                }
             },
             components: {
                 ...defaultSpec.components,
@@ -210,10 +217,9 @@ export class Viewer {
                     this._plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
                 }
 
-                ReactDOM.render(React.createElement(Plugin, { plugin: this._plugin }), element);
+                const root = createRoot(element);
+                root.render(React.createElement(Plugin, { plugin: this._plugin }));
 
-                const renderer = this._plugin.canvas3d!.props.renderer;
-                await PluginCommands.Canvas3D.SetSettings(this._plugin, { settings: { renderer: { ...renderer, backgroundColor: o.backgroundColor } } });
                 this._plugin.representation.structure.themes.colorThemeRegistry.add(SuperposeColorThemeProvider);
                 if (o.showNakbColorTheme) this._plugin.representation.structure.themes.colorThemeRegistry.add(NakbColorThemeProvider);
 
