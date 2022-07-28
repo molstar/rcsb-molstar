@@ -2,9 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## Unreleased
+## [2.5.3] - 2022-07-28
 ### Bug fixes
 - Avoid deprecated React API
+- Rename 'RCSB PDB Validation Report' to 'Validation Report'
 
 ## [2.5.2] - 2022-07-21
 ### Bug fixes

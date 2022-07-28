@@ -146,7 +146,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         const out: ActionMenu.Items = [
             {
                 kind: 'item',
-                label: validationReportError ? 'Failed to Obtain Validation Report' : (noValidationReport ? 'No Validation Report Available' : 'RCSB PDB Validation Report'),
+                label: validationReportError ? 'Failed to Obtain Validation Report' : (noValidationReport ? 'No Validation Report Available' : 'Validation Report'),
                 value: this.requestValidationReportPreset,
                 disabled: noValidationReport || validationReportError
             },
