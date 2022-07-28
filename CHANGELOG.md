@@ -2,7 +2,8 @@
 
 [Semantic Versioning](https://semver.org/)
 
-Unreleased
+## [2.5.5] - 2022-07-28
+### Bug fixes
 - Strucmotif UI: improve handling of modified & non-standard components
 
 ## [2.5.4] - 2022-07-28
