@@ -17,6 +17,7 @@
 
 ## [2.5.3] - 2022-07-24
 ### Bug fixes
+- [Breaking Change] renamed `prop-set` preset to `alignment`, renamed `representation` to `colors`
 - Pecos related changes
 
 ## [2.5.2] - 2022-07-21
