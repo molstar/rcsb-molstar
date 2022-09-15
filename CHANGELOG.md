@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.5.6] - 2022-09-15
+### Bug fixes
+- Make outgoing strucmotif query URL context-aware
+
 ## [2.5.5] - 2022-07-28
 ### Bug fixes
 - Strucmotif UI: improve handling of modified & non-standard components

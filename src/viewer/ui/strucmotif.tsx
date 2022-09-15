@@ -28,7 +28,9 @@ import { ViewerState } from '../types';
 
 const ABSOLUTE_ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
 const RELATIVE_ADVANCED_SEARCH_URL = '/search?query=';
-const RETURN_TYPE = '&return_type=assembly&include_csm=true';
+const RETURN_TYPE = '&return_type=assembly';
+const CSM_REGEX = /^[A-Z0-9]+_[A-Z0-9]{6,}$/i;
+const CSM_TAG = '&include_csm=true';
 const MIN_MOTIF_SIZE = 2;
 const MAX_MOTIF_SIZE = 10;
 export const MAX_EXCHANGES = 4;
@@ -222,12 +224,13 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             }
         }
 
+        const entry_id = pdbId.values().next().value as string;
         const query = {
             type: 'terminal',
             service: 'strucmotif',
             parameters: {
                 value: {
-                    entry_id: pdbId.values().next().value as string,
+                    entry_id,
                     residue_ids: residueIds.sort((a, b) => this.sortResidueIds(a, b))
                 },
                 rmsd_cutoff: 2,
@@ -237,7 +240,8 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         if (exchanges.length) Object.assign(query.parameters, { exchanges });
         // console.log(query);
         const sierraUrl = (this.plugin.customState as ViewerState).detachedFromSierra ? ABSOLUTE_ADVANCED_SEARCH_URL : RELATIVE_ADVANCED_SEARCH_URL;
-        const url = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
+        const csmTag = CSM_REGEX.test(entry_id) ? CSM_TAG : '';
+        const url = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE + csmTag;
         // console.log(url);
         window.open(url, '_blank');
     };

@@ -174,7 +174,7 @@ export class Viewer {
                 [PluginConfig.Download.DefaultEmdbProvider, 'rcsb'],
                 [PluginConfig.Structure.DefaultRepresentationPreset, PresetStructureRepresentations.auto.id],
                 // wboit & webgl1 checks are needed to work properly on recent Safari versions
-                [PluginConfig.General.EnableWboit, PluginFeatureDetection.wboit],
+                [PluginConfig.General.EnableWboit, PluginFeatureDetection.preferWebGl1],
                 [PluginConfig.General.PreferWebGl1, PluginFeatureDetection.preferWebGl1]
             ]
         };
