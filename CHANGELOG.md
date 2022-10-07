@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.5.7] - 2022-10-07
+### General
+- Bump dependencies
+
 ## [2.5.6] - 2022-09-15
 ### Bug fixes
 - Make outgoing strucmotif query URL context-aware

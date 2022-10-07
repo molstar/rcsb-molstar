@@ -32,7 +32,7 @@ export class ModelLoader {
     private async handleTrajectory<P = {}>(data: any, format: BuiltInTrajectoryFormat, props?: PresetProps, matrix?: Mat4, reprProvider?: TrajectoryHierarchyPresetProvider<P>, params?: P) {
         const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format);
         if (reprProvider) {
-            await this.plugin.builders.structure.hierarchy.applyPreset(trajectory, reprProvider, { ...params });
+            await this.plugin.builders.structure.hierarchy.applyPreset(trajectory, reprProvider, { ...params } as P);
         } else {
             const selector = await this.plugin.builders.structure.hierarchy.applyPreset(trajectory, RcsbPreset, {
                 preset: props || { kind: 'standard', assemblyId: '' }
