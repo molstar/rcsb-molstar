@@ -139,6 +139,13 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         for (let i = 0; i < Math.min(MAX_MOTIF_SIZE, loci.length); i++) {
             const l = loci[i];
             const { structure, elements } = l.loci;
+
+            // only first element and only first index will be considered (ignoring multiple residues)
+            if (!determineBackboneAtom(structure, elements[0])) {
+                alert(`No CA or C4' atom for ${StructureProperties.residue.label_seq_id(location)} | ${StructureProperties.chain.label_asym_id(location)} | ${join(StructureProperties.unit.pdbx_struct_oper_list_ids(location))}`);
+                return;
+            }
+
             pdbId.add(structure.model.entry);
             sg.add(StructureProperties.unit.spgrOp(location));
             hkl.add(StructureProperties.unit.hkl(location).join('-'));
@@ -146,12 +153,6 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
 
             const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
             const struct_oper_id = join(struct_oper_list_ids);
-
-            // only first element and only first index will be considered (ignoring multiple residues)
-            if (!determineBackboneAtom(structure, elements[0])) {
-                alert(`No CA or C4' atom for ${StructureProperties.residue.label_seq_id(location)} | ${StructureProperties.chain.label_asym_id(location)} | ${struct_oper_id}`);
-                return;
-            }
 
             // handle pure residue-info
             const residueId = {

@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.5.9] - 2023-01-03
+### General
+- Update dependencies
+- Fix handling of struct_oper_ids when extracting structure motifs
+
 ## [2.5.8] - 2022-10-19
 ### General
 - Bump dependencies to Mol* 3.23.0 (switch to 'auto' mode for EM density maps)
