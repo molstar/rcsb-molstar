@@ -201,7 +201,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 }
             }
 
-            // At this we have a structure that contains only the transformed substructres,
+            // At this we have a structure that contains only the transformed substructures,
             // creating structure selections to have multiple components per each flexible part
             const entryId = model.data!.entryId;
             let selectionExpressions: SelectionExpression[] = [];
