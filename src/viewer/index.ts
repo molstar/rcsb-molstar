@@ -49,6 +49,7 @@ import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { PartialCanvas3DProps } from 'molstar/lib/mol-canvas3d/canvas3d';
 import { RSCCScore } from './helpers/rscc/behavior';
 import { createRoot } from 'react-dom/client';
+import { AssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/prop';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -80,6 +81,7 @@ const DefaultViewerProps = {
     showQuickStylesControls: false,
     showStructureComponentControls: true,
     showVolumeStreamingControls: true,
+    showAssemblySymmetryControls: true,
     showValidationReportControls: true,
 
     showMembraneOrientationPreset: false,
@@ -192,6 +194,7 @@ export class Viewer {
             showQuickStylesControls: o.showQuickStylesControls,
             showStructureComponentControls: o.showStructureComponentControls,
             showVolumeStreamingControls: o.showVolumeStreamingControls,
+            showAssemblySymmetryControls: o.showAssemblySymmetryControls,
             showValidationReportControls: o.showValidationReportControls,
             modelLoader: new ModelLoader(this._plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
@@ -202,6 +205,7 @@ export class Viewer {
                 quickStyles: false,
                 component: false,
                 volume: true,
+                assemblySymmetry: true,
                 validationReport: true,
                 custom: true,
             }),
@@ -216,6 +220,8 @@ export class Viewer {
                     this._plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
                     this._plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
                 }
+                // normally, this would be part of CustomStructureControls -- we want to manage its collapsed state individually though
+                this._plugin.customStructureControls.delete(AssemblySymmetry.Tag.Representation);
 
                 const root = createRoot(element);
                 root.render(React.createElement(Plugin, { plugin: this._plugin }));

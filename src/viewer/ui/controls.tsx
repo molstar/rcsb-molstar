@@ -17,6 +17,7 @@ import { SessionControls } from './session';
 import { StrucmotifSubmitControls } from './strucmotif';
 import { ValidationReportControls } from './validation';
 import { StructureQuickStylesControls } from 'molstar/lib/mol-plugin-ui/structure/quick-styles';
+import { AssemblySymmetryControls } from 'molstar/lib/extensions/rcsb/assembly-symmetry/ui';
 
 export class StructureTools extends PluginUIComponent {
     get customState() {
@@ -38,6 +39,7 @@ export class StructureTools extends PluginUIComponent {
             {this.customState.showStructureComponentControls && <StructureComponentControls initiallyCollapsed={collapsed.component} />}
             {this.customState.showVolumeStreamingControls && <VolumeStreamingControls header='Density' initiallyCollapsed={collapsed.volume} />}
             {this.customState.showValidationReportControls && <ValidationReportControls initiallyCollapsed={collapsed.validationReport} />}
+            {this.customState.showAssemblySymmetryControls && <AssemblySymmetryControls initiallyCollapsed={collapsed.assemblySymmetry} />}
             <CustomStructureControls initiallyCollapsed={collapsed.custom} />
         </>;
     }

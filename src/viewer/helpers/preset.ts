@@ -253,7 +253,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
             ViewerState(plugin).collapsed.next({
                 ...ViewerState(plugin).collapsed.value,
-                custom: false
+                assemblySymmetry: false
             });
         } else if (p.kind === 'empty') {
             console.warn('Using empty representation');

@@ -40,6 +40,7 @@ export type CollapsedState = {
     quickStyles: boolean
     component: boolean
     volume: boolean
+    assemblySymmetry: boolean
     validationReport: boolean
     custom: boolean
 }
@@ -54,6 +55,7 @@ export interface ViewerState {
     showQuickStylesControls: boolean
     showStructureComponentControls: boolean
     showVolumeStreamingControls: boolean
+    showAssemblySymmetryControls: boolean
     showValidationReportControls: boolean
 
     modelLoader: ModelLoader
