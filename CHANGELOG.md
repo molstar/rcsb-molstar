@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [2.5.7] - 2023-01-26
+## [2.5.10] - 2023-01-26
 ### Bug fixes
 - Improve handling of `collapsed` state for assembly symmetry UI
 
