@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.5.11] - 2023-02-03
+### Improvement
+- Return trajectory-provider object in loading methods
+
 ## [2.5.10] - 2023-01-26
 ### Bug fixes
 - Improve handling of `collapsed` state for assembly symmetry UI
