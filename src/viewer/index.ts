@@ -277,26 +277,27 @@ export class Viewer {
         return PluginCommands.State.RemoveObject(this._plugin, { state, ref: state.tree.root.ref });
     }
 
-    async loadPdbId<P>(pdbId: string, config?: { props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P }) {
+    async loadPdbId<P, S>(pdbId: string, config?: { props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P }) {
         for (const provider of this.modelUrlProviders) {
             try {
                 const p = provider(pdbId);
-                await this.customState.modelLoader.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
-                break;
+                return await this.customState.modelLoader.load<P, S>({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
             } catch (e) {
                 console.warn(`loading '${pdbId}' failed with '${e}', trying next model-loader-provider`);
             }
         }
     }
 
-    async loadPdbIds<P>(args: { pdbId: string, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P} }[]) {
+    async loadPdbIds<P, S>(args: { pdbId: string, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P} }[]) {
+        const out = [];
         for (const { pdbId, config } of args) {
-            await this.loadPdbId(pdbId, config);
+            out.push(await this.loadPdbId(pdbId, config));
         }
         this.resetCamera(0);
+        return out;
     }
 
-    loadStructureFromUrl<P>(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}) {
+    loadStructureFromUrl<P, S>(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P}) {
         return this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
     }
 
@@ -304,7 +305,7 @@ export class Viewer {
         return PluginCommands.State.Snapshots.OpenUrl(this._plugin, { url, type });
     }
 
-    loadStructureFromData<P>(data: string | number[], format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps & { dataLabel?: string }; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider, params?: P}) {
+    loadStructureFromData<P, S>(data: string | number[], format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps & { dataLabel?: string }; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P}) {
         return this.customState.modelLoader.parse({ data, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
     }
 
