@@ -37,7 +37,7 @@ export class ModelLoader {
         matrix?: Mat4,
         reprProvider?: TrajectoryHierarchyPresetProvider<P, S>,
         params?: P
-    ): Promise<S|ReturnType<typeof RcsbPreset.apply>|undefined> {
+    ): Promise<S | ReturnType<typeof RcsbPreset.apply> | undefined> {
         const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format);
         if (reprProvider) {
             return this.plugin.builders.structure.hierarchy.applyPreset(trajectory, reprProvider, params);
