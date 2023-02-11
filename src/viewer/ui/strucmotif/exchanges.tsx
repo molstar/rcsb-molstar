@@ -5,7 +5,8 @@
  */
 import * as React from 'react';
 import { Button } from 'molstar/lib/mol-plugin-ui/controls/common';
-import { MAX_EXCHANGES, Residue } from './strucmotif';
+import { Residue } from '../strucmotif';
+import { MAX_EXCHANGES } from './validation';
 
 export const DefaultExchanges: Map<string, string> = new Map([
     ['ALA', 'Alanine'],
