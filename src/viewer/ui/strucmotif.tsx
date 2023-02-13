@@ -140,7 +140,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         const queryUrl = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE + csmTag;
         console.log(queryUrl);
 
-        // window.open(queryUrl, '_blank');
+        window.open(queryUrl, '_blank');
     };
 
     sortResidueIds(a: ResidueSelection, b: ResidueSelection): number {
