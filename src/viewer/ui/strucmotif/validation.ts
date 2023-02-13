@@ -34,6 +34,8 @@ export function determineBackboneAtom(structure: Structure, location: StructureE
 }
 
 export function validate(ctx: StrucmotifCtx) {
+    if (ctx.residueIds.length < MIN_MOTIF_SIZE) return false;
+
     if (ctx.pdbId.size > 1) {
         alert('Motifs can only be extracted from a single model!');
         return false;
