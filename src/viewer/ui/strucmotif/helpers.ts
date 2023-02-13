@@ -41,7 +41,7 @@ export function createCtx(plugin: PluginContext, structure: Structure, residueMa
         dataSource: void 0,
         format: void 0,
         url: void 0
-    }
+    };
 }
 export type StrucmotifCtx = ReturnType<typeof createCtx>;
 
@@ -122,18 +122,18 @@ export async function uploadStructure(ctx: StrucmotifCtx) {
     formData.append('format', 'bcif');
     const name = entryId.replace(/\W/g, '') || 'unknown';
     formData.append('name', name);
-    const file = new File([to_mmCIF(name, structure, true, {copyAllCategories: true})], name + '.bcif');
+    const file = new File([to_mmCIF(name, structure, true, { copyAllCategories: true })], name + '.bcif');
     formData.append('file', file);
 
     try {
-        const res = await fetch(FILE_STORAGE_PUT_URL, {method: 'POST', body: formData});
+        const res = await fetch(FILE_STORAGE_PUT_URL, { method: 'POST', body: formData });
         if (!res.ok || res.status !== 200) {
             plugin.log.warn('File Upload Failed!');
             return void 0;
         }
 
         const { key } = await res.json();
-        const url = FILE_STORAGE_GET_URL + key
+        const url = FILE_STORAGE_GET_URL + key;
         plugin.log.info(`Uploaded File is at: ${url}`);
         return url;
     } catch (e) {
