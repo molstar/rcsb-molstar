@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [version] - date
+### Bug fixes
+- Change transformation matrix for alignment example
+
 ## [2.5.11] - 2023-02-03
 ### Improvement
 - Return trajectory-provider object in loading methods
