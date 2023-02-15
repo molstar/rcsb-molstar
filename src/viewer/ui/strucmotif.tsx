@@ -134,11 +134,11 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         }
 
         if (ctx.exchanges.length) Object.assign(query.parameters, { exchanges: ctx.exchanges });
-        console.log(query);
+        // console.log(query);
         const sierraUrl = (this.plugin.customState as ViewerState).detachedFromSierra ? ABSOLUTE_ADVANCED_SEARCH_URL : RELATIVE_ADVANCED_SEARCH_URL;
         const csmTag = dataSource !== 'identifier' || CSM_REGEX.test(entryId) ? CSM_TAG : '';
         const queryUrl = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE + csmTag;
-        console.log(queryUrl);
+        // console.log(queryUrl);
 
         window.open(queryUrl, '_blank');
     };

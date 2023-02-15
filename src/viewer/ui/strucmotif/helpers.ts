@@ -117,10 +117,11 @@ function join(opers: any[]) {
 
 export async function uploadStructure(ctx: StrucmotifCtx) {
     const { entryId, plugin, structure } = ctx;
+    const name = entryId.replace(/\W/g, '') || 'unknown';
+    plugin.log.info(`Uploading BinaryCIF Representation of ${name} to RCSB Cloud`);
 
     const formData = new FormData();
     formData.append('format', 'bcif');
-    const name = entryId.replace(/\W/g, '') || 'unknown';
     formData.append('name', name);
     const file = new File([to_mmCIF(name, structure, true, { copyAllCategories: true })], name + '.bcif');
     formData.append('file', file);
