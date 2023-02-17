@@ -35,8 +35,6 @@ import {
 const ABSOLUTE_ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
 const RELATIVE_ADVANCED_SEARCH_URL = '/search?query=';
 const RETURN_TYPE = '&return_type=assembly';
-const CSM_REGEX = /^[A-Z0-9]+_[A-Z0-9]{6,}$/i;
-const CSM_TAG = '&include_csm=true';
 
 /**
  * The top-level component that exposes the strucmotif search.
@@ -136,8 +134,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
         if (ctx.exchanges.length) Object.assign(query.parameters, { exchanges: ctx.exchanges });
         // console.log(query);
         const sierraUrl = (this.plugin.customState as ViewerState).detachedFromSierra ? ABSOLUTE_ADVANCED_SEARCH_URL : RELATIVE_ADVANCED_SEARCH_URL;
-        const csmTag = dataSource !== 'identifier' || CSM_REGEX.test(entryId) ? CSM_TAG : '';
-        const queryUrl = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE + csmTag;
+        const queryUrl = sierraUrl + encodeURIComponent(JSON.stringify(query)) + RETURN_TYPE;
         // console.log(queryUrl);
 
         window.open(queryUrl, '_blank');
