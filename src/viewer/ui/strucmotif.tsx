@@ -120,6 +120,10 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
             case 'url':
                 if (format === 'pdb') {
                     const uploadUrl = await uploadStructure(ctx);
+                    if (!uploadUrl) {
+                        alert('File upload failed!');
+                        return;
+                    }
                     Object.assign(query.parameters.value, { url: uploadUrl, format: 'bcif' });
                 } else {
                     Object.assign(query.parameters.value, { url, format });
@@ -127,6 +131,11 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
                 break;
             case 'file':
                 const uploadUrl = await uploadStructure(ctx);
+                alert('Motifs can only be extracted from a single model!');
+                if (!uploadUrl) {
+                    alert('File upload failed!');
+                    return;
+                }
                 Object.assign(query.parameters.value, { url: uploadUrl, format: 'bcif' });
                 break;
         }
