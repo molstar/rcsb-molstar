@@ -2,7 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [version] - date
+## [2.6.0] - 2023-03-15
+### Added
+- Upload non-archive structures when searching structure motifs (RO-2771)
+
 ### Bug fixes
 - Change transformation matrix for alignment example
 
