@@ -25,6 +25,7 @@ interface SharedParams {
 export interface LoadParams extends SharedParams {
     /** A File object or URL representing a structure file  */
     fileOrUrl: File | string
+    label?: string
 }
 
 export interface ParseParams extends SharedParams {

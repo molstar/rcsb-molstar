@@ -15,11 +15,11 @@ import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/
 
 export class ModelLoader {
     async load<P = {}, S={}>(load: LoadParams, props?: PresetProps, matrix?: Mat4, reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P) {
-        const { fileOrUrl, format, isBinary } = load;
+        const { fileOrUrl, format, isBinary, label } = load;
 
         const data = fileOrUrl instanceof File
-            ? (await this.plugin.builders.data.readFile({ file: Asset.File(fileOrUrl), isBinary })).data
-            : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary });
+            ? (await this.plugin.builders.data.readFile({ file: Asset.File(fileOrUrl), isBinary, label })).data
+            : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary, label });
 
         return await this.handleTrajectory<P, S>(data, format, props, matrix, reprProvider, params);
     }
