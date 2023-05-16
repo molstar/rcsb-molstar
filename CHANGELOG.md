@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.6.1] - 2023-05-16
+### General
+- Update dependencies
+
 ## [2.6.0] - 2023-03-15
 ### Added
 - Upload non-archive structures when searching structure motifs (RO-2771)
