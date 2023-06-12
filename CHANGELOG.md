@@ -2,6 +2,13 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.6.2] - 2023-06-12
+### General
+- Update dependencies
+
+### Bug fixes
+- Make sure density channels are conditionally hidden (RO-3706)
+
 ## [2.6.1] - 2023-05-16
 ### General
 - Update dependencies
