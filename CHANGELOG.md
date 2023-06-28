@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.7.0] - 2023-06-28
+### Added
+- Allow setting a structure label when loading from URL
+
 ## [2.6.2] - 2023-06-12
 ### General
 - Update dependencies
