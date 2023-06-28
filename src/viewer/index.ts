@@ -297,7 +297,7 @@ export class Viewer {
         return out;
     }
 
-    loadStructureFromUrl<P, S>(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P}) {
+    loadStructureFromUrl<P, S>(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps & { structureLabel?: string }; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P}) {
         return this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
     }
 

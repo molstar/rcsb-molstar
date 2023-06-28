@@ -12,25 +12,31 @@ import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
 import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
+import { StateObjectRef } from 'molstar/lib/mol-state';
+import { ModelExport } from 'molstar/lib/extensions/model-export/export';
 
 export class ModelLoader {
-    async load<P = {}, S={}>(load: LoadParams, props?: PresetProps, matrix?: Mat4, reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P) {
-        const { fileOrUrl, format, isBinary, label } = load;
+    async load<P = any, S = {}>(load: LoadParams, props?: PresetProps & { structureLabel?: string }, matrix?: Mat4, reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P) {
+        const { fileOrUrl, format, isBinary } = load;
 
         const data = fileOrUrl instanceof File
-            ? (await this.plugin.builders.data.readFile({ file: Asset.File(fileOrUrl), isBinary, label })).data
-            : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary, label });
+            ? (await this.plugin.builders.data.readFile({ file: Asset.File(fileOrUrl), isBinary, label: props?.structureLabel })).data
+            : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary, label: props?.structureLabel });
 
-        return await this.handleTrajectory<P, S>(data, format, props, matrix, reprProvider, params);
+        const hierarchy = await this.handleTrajectory<P, S>(data, format, props, matrix, reprProvider, params) as any;
+        const structureCell = StateObjectRef.resolveAndCheck(this.plugin.state.data, hierarchy.structure);
+        ModelExport.setStructureName(structureCell?.obj?.data, props?.structureLabel || '');
+
+        return hierarchy;
     }
 
-    async parse<P = {}, S={}>(parse: ParseParams, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4, reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P) {
+    async parse<P = any, S = {}>(parse: ParseParams, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4, reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P) {
         const { data, format } = parse;
         const _data = await this.plugin.builders.data.rawData({ data, label: props?.dataLabel });
         return await this.handleTrajectory(_data, format, props, matrix, reprProvider, params);
     }
 
-    private async handleTrajectory<P = {}, S = {}>(
+    private async handleTrajectory<P = any, S = {}>(
         data: any,
         format: BuiltInTrajectoryFormat,
         props?: PresetProps,
