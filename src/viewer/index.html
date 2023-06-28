@@ -97,7 +97,7 @@
             <button style="padding: 3px;" onclick="motifsAlphaFold()">Motifs AF</button>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-            <button style="padding: 3px" onclick="propset()">Propset</button>
+            <button style="padding: 3px" onclick="alignment()">Alignment</button>
         </div>
         <script>
 
@@ -808,7 +808,7 @@
                     });
             }
 
-            function propset() {
+            function alignment() {
                 viewer.clear()
                     .then(function () {
                         return viewer.loadPdbIds([{
