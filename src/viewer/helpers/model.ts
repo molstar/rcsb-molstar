@@ -16,16 +16,16 @@ import { StateObjectRef } from 'molstar/lib/mol-state';
 import { ModelExport } from 'molstar/lib/extensions/model-export/export';
 
 export class ModelLoader {
-    async load<P = any, S = {}>(load: LoadParams, props?: PresetProps & { structureLabel?: string }, matrix?: Mat4, reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P) {
+    async load<P = any, S = {}>(load: LoadParams, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4, reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P) {
         const { fileOrUrl, format, isBinary } = load;
 
         const data = fileOrUrl instanceof File
-            ? (await this.plugin.builders.data.readFile({ file: Asset.File(fileOrUrl), isBinary, label: props?.structureLabel })).data
-            : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary, label: props?.structureLabel });
+            ? (await this.plugin.builders.data.readFile({ file: Asset.File(fileOrUrl), isBinary, label: props?.dataLabel })).data
+            : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary, label: props?.dataLabel });
 
         const hierarchy = await this.handleTrajectory<P, S>(data, format, props, matrix, reprProvider, params) as any;
         const structureCell = StateObjectRef.resolveAndCheck(this.plugin.state.data, hierarchy.structure);
-        ModelExport.setStructureName(structureCell?.obj?.data, props?.structureLabel || '');
+        ModelExport.setStructureName(structureCell?.obj?.data, props?.dataLabel || '');
 
         return hierarchy;
     }
