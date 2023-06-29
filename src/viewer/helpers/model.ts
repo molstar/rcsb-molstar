@@ -24,8 +24,6 @@ export class ModelLoader {
             : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary, label: props?.dataLabel });
 
         const hierarchy = await this.handleTrajectory<P, S>(data, format, props, matrix, reprProvider, params) as any;
-        const structureCell = StateObjectRef.resolveAndCheck(this.plugin.state.data, hierarchy.structure);
-        ModelExport.setStructureName(structureCell?.obj?.data, props?.dataLabel || '');
 
         return hierarchy;
     }
@@ -39,7 +37,7 @@ export class ModelLoader {
     private async handleTrajectory<P = any, S = {}>(
         data: any,
         format: BuiltInTrajectoryFormat,
-        props?: PresetProps,
+        props?: PresetProps & { dataLabel?: string },
         matrix?: Mat4,
         reprProvider?: TrajectoryHierarchyPresetProvider<P, S>,
         params?: P
@@ -63,6 +61,10 @@ export class ModelLoader {
                     .insert(StateTransforms.Model.TransformStructureConformation, params);
                 await this.plugin.runTask(this.plugin.state.data.updateTree(b));
             }
+
+            const structureCell = StateObjectRef.resolveAndCheck(this.plugin.state.data, selector?.structure);
+            structureCell?.obj?.data && ModelExport.setStructureName(structureCell?.obj?.data, props?.dataLabel || '');
+
             return selector;
         }
 
