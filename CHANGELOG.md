@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.7.1] - 2023-06-28
+### Improvement
+- Delegate the responsibility for setting structure label to representation provider, when available
+
 ## [2.7.0] - 2023-06-28
 ### Added
 - Allow setting a structure label when loading from URL
