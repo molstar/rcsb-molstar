@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.7.2] - 2023-07-25
+### Bug fixes
+- Fix detection of CCD files
+
 ## [2.7.1] - 2023-06-28
 ### Improvement
 - Delegate the responsibility for setting structure label to representation provider, when available
