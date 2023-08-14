@@ -15,7 +15,7 @@ import { StrucmotifCtx } from './helpers';
 export const MIN_MOTIF_SIZE = 2;
 export const MAX_MOTIF_SIZE = 10;
 export const MAX_EXCHANGES = 4;
-const MAX_MOTIF_EXTENT = 15;
+const MAX_MOTIF_EXTENT = 20;
 const MAX_MOTIF_EXTENT_SQUARED = MAX_MOTIF_EXTENT * MAX_MOTIF_EXTENT;
 
 export function determineBackboneAtom(structure: Structure, location: StructureElement.Location, element: { unit: Unit; indices: OrderedSet<UnitIndex> }) {
@@ -65,7 +65,7 @@ export function validate(ctx: StrucmotifCtx) {
 
 function validateAtomDistances(ctx: StrucmotifCtx) {
     const { coordinates } = ctx;
-    // warn if >15 A
+    // warn if >20 A
     const a = Vec3();
     const b = Vec3();
 

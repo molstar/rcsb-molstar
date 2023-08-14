@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.7.3] - 2023-08-14
+### Added
+- Relaxed strucmotif distance requirement from 15 to 20 A
+
 ## [2.7.2] - 2023-07-25
 ### Bug fixes
 - Fix detection of CCD files
