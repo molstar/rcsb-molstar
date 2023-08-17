@@ -23,9 +23,7 @@ export class ModelLoader {
             ? (await this.plugin.builders.data.readFile({ file: Asset.File(fileOrUrl), isBinary, label: props?.dataLabel })).data
             : await this.plugin.builders.data.download({ url: fileOrUrl, isBinary, label: props?.dataLabel });
 
-        const hierarchy = await this.handleTrajectory<P, S>(data, format, props, matrix, reprProvider, params) as any;
-
-        return hierarchy;
+        return await this.handleTrajectory<P, S>(data, format, props, matrix, reprProvider, params) as any;
     }
 
     async parse<P = any, S = {}>(parse: ParseParams, props?: PresetProps & { dataLabel?: string }, matrix?: Mat4, reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P) {
@@ -65,9 +63,16 @@ export class ModelLoader {
             const structureCell = StateObjectRef.resolveAndCheck(this.plugin.state.data, selector?.structure);
             structureCell?.obj?.data && ModelExport.setStructureName(structureCell?.obj?.data, props?.dataLabel || '');
 
+            // TODO is this the best place for this functionality?
+            if (props?.kind === 'motif') {
+                const group = this.plugin.managers.structure.hierarchy.currentComponentGroups[0];
+                this.plugin.managers.camera.focusSpheres(group, e => e.cell.obj?.data.boundary.sphere, { durationMs: 0 });
+            } else {
+                this.plugin.managers.camera.reset(undefined, 0);
+            }
+
             return selector;
         }
-
     }
 
     constructor(private plugin: PluginContext) {

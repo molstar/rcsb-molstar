@@ -60,7 +60,8 @@ export type SelectionExpression = {
     label: string
     expression: Expression
     isHidden?: boolean,
-    color?: number
+    color?: number,
+    alpha?: number
 };
 
 /**
@@ -200,6 +201,13 @@ export function rangeToTest(asymId: string, residues: number[], operatorName?: s
     } else {
         return { 'chain-test': MS.core.logic.and(chainTests) };
     }
+}
+
+export function targetsToLoci(targets: Target[], structure: Structure): StructureElement.Loci {
+    const expression = targetsToExpression(targets);
+    const query = compile<StructureSelection>(expression);
+    const selection = query(new QueryContext(structure));
+    return StructureSelection.toLociWithSourceUnits(selection);
 }
 
 export function targetToLoci(target: Target, structure: Structure): StructureElement.Loci {
