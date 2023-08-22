@@ -300,6 +300,7 @@ export class Viewer {
         for (const { pdbId, config } of args) {
             out.push(await this.loadPdbId(pdbId, config));
         }
+        if (!this.plugin.spec.canvas3d?.camera?.manualReset) this.resetCamera(0);
         return out;
     }
 
