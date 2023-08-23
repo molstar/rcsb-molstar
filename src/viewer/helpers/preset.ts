@@ -72,8 +72,8 @@ export type EmptyProps = {
 } & BaseProps
 
 type ValidationProps = {
-    kind: 'validation',
-    colorTheme?: string,
+    kind: 'validation'
+    colorTheme?: string
     showClashes?: boolean
 } & BaseProps
 
@@ -82,14 +82,13 @@ type StandardProps = {
 } & BaseProps
 
 type SymmetryProps = {
-    kind: 'symmetry',
+    kind: 'symmetry'
     symmetryIndex?: number
 } & BaseProps
 
 type FeatureProps = {
     kind: 'feature',
-    target: Target,
-    alpha: number
+    target: Target
 } & BaseProps
 
 type DensityProps = {

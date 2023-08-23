@@ -203,13 +203,6 @@ export function rangeToTest(asymId: string, residues: number[], operatorName?: s
     }
 }
 
-export function targetsToLoci(targets: Target[], structure: Structure): StructureElement.Loci {
-    const expression = targetsToExpression(targets);
-    const query = compile<StructureSelection>(expression);
-    const selection = query(new QueryContext(structure));
-    return StructureSelection.toLociWithSourceUnits(selection);
-}
-
 export function targetToLoci(target: Target, structure: Structure): StructureElement.Loci {
     const expression = targetToExpression(target);
     const query = compile<StructureSelection>(expression);
