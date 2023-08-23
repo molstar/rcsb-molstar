@@ -116,6 +116,8 @@ const DefaultViewerProps = {
     volumeStreamingServer: 'https://maps.rcsb.org/',
 
     backgroundColor: ColorNames.white,
+    manualReset: false, // switch to 'true' for 'motif' preset
+    pickingAlphaThreshold: 0.5, // lower to 0.2 to accommodate 'motif' preset
     showWelcomeToast: true
 };
 export type ViewerProps = typeof DefaultViewerProps & { canvas3d: PartialCanvas3DProps }
@@ -153,7 +155,12 @@ export class Viewer {
                 renderer: {
                     ...defaultSpec.canvas3d?.renderer,
                     ...o.canvas3d?.renderer,
-                    backgroundColor: o.backgroundColor
+                    backgroundColor: o.backgroundColor,
+                    pickingAlphaThreshold: o.pickingAlphaThreshold
+                },
+                camera: {
+                    // desirable for alignment view so that the display doesn't "jump around" as more structures get loaded
+                    manualReset: o.manualReset
                 }
             },
             components: {
@@ -293,7 +300,7 @@ export class Viewer {
         for (const { pdbId, config } of args) {
             out.push(await this.loadPdbId(pdbId, config));
         }
-        this.resetCamera(0);
+        if (!this.plugin.spec.canvas3d?.camera?.manualReset) this.resetCamera(0);
         return out;
     }
 

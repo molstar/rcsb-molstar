@@ -60,7 +60,8 @@ export type SelectionExpression = {
     label: string
     expression: Expression
     isHidden?: boolean,
-    color?: number
+    color?: number,
+    alpha?: number
 };
 
 /**

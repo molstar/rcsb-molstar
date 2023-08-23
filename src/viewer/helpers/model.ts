@@ -65,6 +65,12 @@ export class ModelLoader {
             const structureCell = StateObjectRef.resolveAndCheck(this.plugin.state.data, selector?.structure);
             structureCell?.obj?.data && ModelExport.setStructureName(structureCell?.obj?.data, props?.dataLabel || '');
 
+            // TODO is this the best place for this functionality?
+            if (props?.kind === 'motif') {
+                const group = this.plugin.managers.structure.hierarchy.currentComponentGroups[0];
+                this.plugin.managers.camera.focusSpheres(group, e => e.cell.obj?.data.boundary.sphere, { durationMs: 0 });
+            }
+
             return selector;
         }
 

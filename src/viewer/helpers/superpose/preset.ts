@@ -43,6 +43,9 @@ export const RcsbSuperpositionRepresentationPreset = StructureRepresentationPres
             if (expr.type === 'cartoon') {
                 Object.assign(typeProps, { ...cartoonProps });
             }
+            if (typeof expr?.alpha !== 'undefined') {
+                Object.assign(typeProps, { alpha: expr.alpha });
+            }
 
             const reprProps = {
                 type: expr.type,

@@ -63,6 +63,8 @@
                 showMembraneOrientationPreset: true,
                 showNakbColorTheme: true,
                 detachedFromSierra: true, // needed when running without sierra
+                pickingAlphaThreshold: 0.2,
+                manualReset: true
             })
 
             // load pdbId or url
@@ -766,9 +768,6 @@
                                 ]
                             }
                         }]);
-                    })
-                    .then(function() {
-                        viewer.resetCamera(0)
                     });
             }
 
@@ -790,8 +789,8 @@
                         });
                     })
                     .then(function() {
-                        const url = 'https://alphafold.ebi.ac.uk/files/AF-F1Q6S1-F1-model_v4.cif';
-                        const label = 'AF-F1Q6S1-F1 @ 0.23 RMSD';
+                        const url = 'https://models.rcsb.org/af_aff1q6s1f1.bcif';
+                        const label = 'AF_AFF1Q6S1F1 @ 0.23 RMSD';
                         const targets = [
                             // AF target must be devoid of struct_oper_id
                             { labelAsymId: 'A', labelSeqId: 260 },
@@ -801,10 +800,7 @@
                             { labelAsymId: 'A', labelSeqId: 344 }
                         ];
                         const matrix = [-0.471, 0.856, 0.215, 0, 0.405, -0.007, 0.914, 0, 0.784, 0.518, -0.343, 0, 54.981, 65.575, 12.287, 1];
-                        return viewer.loadStructureFromUrl(url, 'mmcif', false, { props: { kind: 'motif', label, targets }, matrix });
-                    })
-                    .then(function() {
-                        viewer.resetCamera(0)
+                        return viewer.loadStructureFromUrl(url, 'mmcif', true, { props: { kind: 'motif', label, targets }, matrix });
                     });
             }
 

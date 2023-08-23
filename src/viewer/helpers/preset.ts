@@ -225,8 +225,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             // TODO should ASM_1 be the default, seems like we'd run into problems when selecting ligands that are e.g. ambiguous with asym_id & seq_id alone?
             const targets = normalizeTargets(p.targets, structure!.obj.data);
             let selectionExpressions = createSelectionExpressions(p.label || model.data!.entryId, targets);
-            const globalExpressions = createSelectionExpressions(p.label || model.data!.entryId); // global reps, to be hidden
-            selectionExpressions = selectionExpressions.concat(globalExpressions.map(e => { return { ...e, isHidden: true }; }));
+            const globalExpressions = createSelectionExpressions(p.label || model.data!.entryId);
+            selectionExpressions = selectionExpressions.concat(globalExpressions.map(e => { return { ...e, alpha: 0.21 }; }));
 
             if (p.color) {
                 selectionExpressions = selectionExpressions.map(e => { return { ...e, color: p.color }; });
@@ -278,6 +278,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
         }
 
+        // TODO align with 'motif'?
         if ((p.kind === 'feature' || p.kind === 'feature-density') && structure?.obj) {
             let loci = targetToLoci(p.target, structure!.obj.data);
             // if requested: then don't force first residue
