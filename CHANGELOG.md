@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.7.4] - 2023-08-23
+### Added
+- Motif preset: Show global structure
+
 ## [2.7.3] - 2023-08-14
 ### Added
 - Relaxed strucmotif distance requirement from 15 to 20 A
