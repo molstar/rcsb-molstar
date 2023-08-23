@@ -87,7 +87,7 @@ type SymmetryProps = {
 } & BaseProps
 
 type FeatureProps = {
-    kind: 'feature',
+    kind: 'feature'
     target: Target
 } & BaseProps
 
