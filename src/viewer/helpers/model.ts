@@ -67,8 +67,6 @@ export class ModelLoader {
             if (props?.kind === 'motif') {
                 const group = this.plugin.managers.structure.hierarchy.currentComponentGroups[0];
                 this.plugin.managers.camera.focusSpheres(group, e => e.cell.obj?.data.boundary.sphere, { durationMs: 0 });
-            } else {
-                this.plugin.managers.camera.reset(undefined, 0);
             }
 
             return selector;
