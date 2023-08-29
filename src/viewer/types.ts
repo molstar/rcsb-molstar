@@ -15,6 +15,12 @@ export type ModelUrlProvider = (pdbId: string) => {
     isBinary: boolean
 }
 
+export type LigandUrlProvider = (id: string) => {
+    url: string,
+    format: BuiltInTrajectoryFormat,
+    isBinary: boolean
+}
+
 interface SharedParams {
     /** A supported file format extension string */
     format: BuiltInTrajectoryFormat,
@@ -63,6 +69,18 @@ export interface ViewerState {
 
     collapsed: BehaviorSubject<CollapsedState>
     detachedFromSierra: boolean
+}
+
+export interface LigandViewerState {
+    showMeasurementsControls: boolean
+    showStructureComponentControls: boolean
+    ignoreHydrogens: boolean
+    showLabels: boolean
+    shownCoordinateType: 'ideal' | 'model' | 'both'
+
+    modelLoader: ModelLoader
+
+    collapsed: BehaviorSubject<CollapsedState>
 }
 
 export function ViewerState(plugin: PluginContext) {

@@ -10,7 +10,7 @@
 import { BehaviorSubject } from 'rxjs';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
-import { ViewerState, CollapsedState, ModelUrlProvider } from './types';
+import { ViewerState, CollapsedState, ModelUrlProvider, LigandUrlProvider, LigandViewerState } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
@@ -50,6 +50,9 @@ import { PartialCanvas3DProps } from 'molstar/lib/mol-canvas3d/canvas3d';
 import { RSCCScore } from './helpers/rscc/behavior';
 import { createRoot } from 'react-dom/client';
 import { AssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/prop';
+import { wwPDBChemicalComponentDictionary } from 'molstar/lib/extensions/wwpdb/ccd/behavior';
+import { ChemicalCompontentTrajectoryHierarchyPreset } from 'molstar/lib/extensions/wwpdb/ccd/representation';
+import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -118,9 +121,51 @@ const DefaultViewerProps = {
     backgroundColor: ColorNames.white,
     manualReset: false, // switch to 'true' for 'motif' preset
     pickingAlphaThreshold: 0.5, // lower to 0.2 to accommodate 'motif' preset
-    showWelcomeToast: true
+    showWelcomeToast: true,
 };
 export type ViewerProps = typeof DefaultViewerProps & { canvas3d: PartialCanvas3DProps }
+
+const LigandExtensions = {
+    'wwpdb-chemical-component-dictionary': PluginSpec.Behavior(wwPDBChemicalComponentDictionary),
+};
+
+const DefaultLigandViewerProps = {
+    showImportControls: false,
+    showSessionControls: false,
+    showStructureSourceControls: true,
+    showMeasurementsControls: true,
+    showQuickStylesControls: false,
+    showStructureComponentControls: true,
+
+    ligandUrlProviders: [
+        (id: string) => ({
+            url: id.length <= 5 ? `https://files.rcsb.org/ligands/view/${id.toUpperCase()}.cif` : `https://files.rcsb.org/birds/view/${id.toUpperCase()}.cif`,
+            format: 'mmcif',
+            isBinary: false
+        })
+    ] as LigandUrlProvider[],
+
+    extensions: ObjectKeys(LigandExtensions),
+    layoutIsExpanded: false,
+    layoutShowControls: true,
+    layoutControlsDisplay: 'reactive' as PluginLayoutControlsDisplay,
+    layoutShowSequence: false,
+    layoutShowLog: false,
+
+    viewportShowExpand: true,
+    viewportShowSelectionMode: true,
+    volumeStreamingServer: 'https://maps.rcsb.org/',
+
+    backgroundColor: ColorNames.white,
+    manualReset: false,
+    pickingAlphaThreshold: 0.5,
+    showWelcomeToast: true,
+
+    ignoreHydrogens: true,
+    showLabels: false,
+    shownCoordinateType: 'ideal' as const
+};
+export type LigandViewerProps = typeof DefaultLigandViewerProps & { canvas3d: PartialCanvas3DProps }
 
 export class Viewer {
     private readonly _plugin: PluginUIContext;
@@ -349,4 +394,175 @@ export class Viewer {
     }
 }
 
+export class LigandViewer {
+    private readonly _plugin: PluginUIContext;
+    private readonly ligandUrlProviders: LigandUrlProvider[];
 
+    constructor(elementOrId: string | HTMLElement, props: Partial<LigandViewerProps> = {}) {
+        const element = typeof elementOrId === 'string' ? document.getElementById(elementOrId)! : elementOrId;
+        if (!element) throw new Error(`Could not get element with id '${elementOrId}'`);
+
+        const o = { ...DefaultLigandViewerProps, ...props };
+
+        const defaultSpec = DefaultPluginUISpec();
+        const spec: PluginUISpec = {
+            ...defaultSpec,
+            actions: defaultSpec.actions,
+            behaviors: [
+                ...defaultSpec.behaviors,
+                ...o.extensions.map(e => LigandExtensions[e]),
+            ],
+            animations: [...defaultSpec.animations?.filter(a => a.name !== AnimateStateSnapshots.name) || []],
+            layout: {
+                initial: {
+                    isExpanded: o.layoutIsExpanded,
+                    showControls: o.layoutShowControls,
+                    controlsDisplay: o.layoutControlsDisplay,
+                },
+            },
+            canvas3d: {
+                ...defaultSpec.canvas3d,
+                ...o.canvas3d,
+                renderer: {
+                    ...defaultSpec.canvas3d?.renderer,
+                    ...o.canvas3d?.renderer,
+                    backgroundColor: o.backgroundColor,
+                    pickingAlphaThreshold: o.pickingAlphaThreshold
+                },
+                camera: {
+                    // desirable for alignment view so that the display doesn't "jump around" as more structures get loaded
+                    manualReset: o.manualReset
+                }
+            },
+            components: {
+                ...defaultSpec.components,
+                controls: {
+                    ...defaultSpec.components?.controls,
+                    top: o.layoutShowSequence ? undefined : 'none',
+                    bottom: o.layoutShowLog ? undefined : 'none',
+                    left: 'none',
+                    right: ControlsWrapper,
+                },
+                remoteState: 'none',
+            },
+            config: [
+                [PluginConfig.Viewport.ShowExpand, o.viewportShowExpand],
+                [PluginConfig.Viewport.ShowSelectionMode, o.viewportShowSelectionMode],
+                [PluginConfig.Viewport.ShowAnimation, false],
+                [PluginConfig.VolumeStreaming.DefaultServer, o.volumeStreamingServer],
+                [PluginConfig.Download.DefaultPdbProvider, 'rcsb'],
+                [PluginConfig.Download.DefaultEmdbProvider, 'rcsb'],
+                [PluginConfig.Structure.DefaultRepresentationPreset, PresetStructureRepresentations.auto.id],
+                // wboit & webgl1 checks are needed to work properly on recent Safari versions
+                [PluginConfig.General.EnableWboit, PluginFeatureDetection.preferWebGl1],
+                [PluginConfig.General.PreferWebGl1, PluginFeatureDetection.preferWebGl1]
+            ]
+        };
+
+        this._plugin = new PluginUIContext(spec);
+        this.ligandUrlProviders = o.ligandUrlProviders;
+
+        (this._plugin.customState as LigandViewerState) = {
+            showMeasurementsControls: o.showMeasurementsControls,
+            showStructureComponentControls: o.showStructureComponentControls,
+            modelLoader: new ModelLoader(this._plugin),
+            collapsed: new BehaviorSubject<CollapsedState>({
+                selection: true,
+                measurements: true,
+                strucmotifSubmit: true,
+                superposition: true,
+                quickStyles: true,
+                component: false,
+                volume: true,
+                assemblySymmetry: true,
+                validationReport: true,
+                custom: true,
+            }),
+            ignoreHydrogens: o.ignoreHydrogens,
+            showLabels: o.showLabels,
+            shownCoordinateType: o.shownCoordinateType
+        };
+
+        this._plugin.init()
+            .then(async () => {
+                const root = createRoot(element);
+                root.render(React.createElement(Plugin, { plugin: this._plugin }));
+
+                if (o.showWelcomeToast) {
+                    await PluginCommands.Toast.Show(this._plugin, {
+                        title: 'Welcome',
+                        message: `RCSB PDB Mol* Ligand Viewer ${RCSB_MOLSTAR_VERSION} [${BUILD_DATE.toLocaleString()}]`,
+                        key: 'toast-welcome',
+                        timeoutMs: 5000
+                    });
+                }
+
+                // allow picking of individual atoms
+                this._plugin.managers.interactivity.setProps({ granularity: 'element' });
+            });
+    }
+
+    private get customState() {
+        return this._plugin.customState as LigandViewerState;
+    }
+
+    clear() {
+        const state = this._plugin.state.data;
+        return PluginCommands.State.RemoveObject(this._plugin, { state, ref: state.tree.root.ref });
+    }
+
+    async loadLigandId(id: string) {
+        for (const provider of this.ligandUrlProviders) {
+            try {
+                const p = provider(id);
+                await this.customState.modelLoader.load<any, any>({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, undefined, undefined, ChemicalCompontentTrajectoryHierarchyPreset, { shownCoordinateType: this.customState.shownCoordinateType });
+                await this.syncHydrogenState();
+
+                for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
+                    for (const c of s.components) {
+                        const isHidden = c.cell.state.isHidden === true || !this.customState.showLabels;
+                        await this._plugin.builders.structure.representation.addRepresentation(c.cell, { type: 'label', typeParams: { level: 'element', ignoreHydrogens: this.customState.ignoreHydrogens } }, { initialState: { isHidden } });
+                    }
+                }
+            } catch (e) {
+                console.warn(`loading '${id}' failed with '${e}', trying next ligand-loader-provider`);
+            }
+        }
+    }
+
+    async toggleHydrogen() {
+        this.customState.ignoreHydrogens = !this.customState.ignoreHydrogens;
+        await this.syncHydrogenState();
+    }
+
+    async syncHydrogenState() {
+        const update = this._plugin.build();
+        for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
+            for (const c of s.components) {
+                for (const r of c.representations) {
+                    update.to(r.cell).update(StateTransforms.Representation.StructureRepresentation3D, old => {
+                        old.type.params.ignoreHydrogens = this.customState.ignoreHydrogens;
+                    });
+                }
+            }
+        }
+        await update.commit();
+    }
+
+    async toggleLabels() {
+        this.customState.showLabels = !this.customState.showLabels;
+        await this.syncLabelState();
+    }
+
+    async syncLabelState() {
+        for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
+            for (const c of s.components) {
+                if (c.cell.state.isHidden) continue;
+                for (const r of c.representations) {
+                    if (r.cell.obj?.label !== 'Label') continue;
+                    this._plugin.managers.structure.hierarchy.toggleVisibility([r], this.customState.showLabels ? 'show' : 'hide');
+                }
+            }
+        }
+    }
+}

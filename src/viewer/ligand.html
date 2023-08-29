@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+    <title>RCSB PDB Mol* Ligand Test Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        #viewer {
+            position: absolute;
+            left: 5%;
+            top: 100px;
+            min-width: 90%;
+            height: 85%;
+        }
+
+        .msp-layout-expanded {
+            z-index: 10;
+        }
+
+        #menu {
+            position: absolute;
+            left: 5%;
+            top: 20px;
+        }
+
+        #menu > select {
+            width: 200px;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="rcsb-molstar.css" />
+    <script type="text/javascript" src="./rcsb-molstar.js"></script>
+</head>
+<body>
+<div id="viewer"></div>
+<script>
+    // create an instance of the plugin
+    const viewer = new rcsbMolstar.LigandViewer('viewer', {
+        layoutShowLog: true,
+        layoutShowControls: true,
+    })
+</script>
+<div id="menu">
+    <h2> RCSB PDB Mol* Viewer - Ligand Test Page</h2>
+    <label for="examples">Examples</label>
+    <select id="examples" onchange="loadExample(parseInt(this.value))">
+        <option value=''></option>
+    </select>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    Clear
+    <button style="padding: 3px;" onclick="viewer.clear()">all</button>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <button style="padding: 3px;" onclick="toggleHydrogen()">Hydrogen</button>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <button style="padding: 3px;" onclick="toggleLabels()">Labels</button>
+</div>
+<script>
+
+    function loadExample(index) {
+        const e = examples[index];
+        return viewer.loadLigandId(e.id);
+    }
+
+    const examples = [
+        {
+            id: 'UNK',
+            info: 'Unknown'
+        },
+        {
+            id: 'UNL',
+            info: 'Unknown ligand'
+        },
+        {
+            id: 'UNX',
+            info: 'Unknown atom or ion'
+        },
+        {
+            id: '2NR',
+            info: 'dual rep: N-{(2S)-2-[(N-acetyl-L-threonyl-L-isoleucyl)amino]hexyl}-L-norleucyl-L-glutaminyl-N~5~-[amino(iminio)methyl]-L-ornithinamide'
+        },
+        {
+            id: 'PRDCC_000001',
+            info: 'PRDCC: Actinomycin D'
+        },
+        {
+            id: 'FE',
+            info: '+3 oxidation state'
+        },
+        {
+            id: 'FE2',
+            info: '+2 oxidation state'
+        },
+        {
+            id: 'RUC',
+            info: 'Transition metal'
+        },
+        {
+            id: 'SF4',
+            info: 'Fe-S cluster'
+        },
+        {
+            id: 'TBR',
+            info: 'HEXATANTALUM DODECABROMIDE'
+        },
+        {
+            id: 'OER',
+            info: 'SR-MN4-O5 CLUSTER'
+        },
+        {
+            id: 'FEA',
+            info: 'Charges: MONOAZIDO-MU-OXO-DIIRON'
+        },
+        {
+            id: 'PR2',
+            info: 'Orientation differs: THIENO[3,2-B]PYRIDINE-2-SULFONIC ACID [2-OXO-1-(1H-PYRROLO[2,3-C]PYRIDIN-2-YLMETHYL)-PYRROLIDIN-3-YL]-AMIDE'
+        },
+        {
+            id: 'O3R',
+            info: 'Some atoms missing: 6-{[(3,4-dichlorophenyl)methyl](methyl)amino}pyridine-3-sulfonamide'
+        },
+        {
+            id: 'O2U',
+            info: 'Many atoms missing: [(3S)-1-hydroxy-2,5-dioxopyrrolidin-3-yl]acetic acid'
+        },
+        {
+            id: 'HC0',
+            info: 'No ideal coordinates: 2 IRON/2 SULFUR/6 CARBONYL/1 WATER INORGANIC CLUSTER',
+        },
+        {
+            id: 'Q6O',
+            info: 'No model coordinates: N-(4-chloro-2,5-dimethoxyphenyl)acetamide'
+        },
+        {
+            id: 'H0C',
+            info: 'Huge: [(2~{R},3~{R},4~{R},5~{S},6~{S})-2-[[(1~{R},3~{S},5~{S},8~{R},9~{S},10~{R},11~{R},13~{R},14~{S},17~{R})-10-(hydroxymethyl)-13-methyl-1,5,11,14-tetrakis(oxidanyl)-17-(5-oxidanylidene-2~{H}-furan-3-yl)-2,3,4,6,7,8,9,11,12,15,16,17-dodecahydro-1~{H}-cyclopenta[a]phenanthren-3-yl]oxy]-6-methyl-3,5-bis(oxidanyl)oxan-4-yl] anthracene-9-carboxylate'
+        },
+        {
+            id: 'HEM',
+            info: 'PROTOPORPHYRIN IX CONTAINING FE'
+        },
+    ];
+
+    const examplesSelect = document.getElementById('examples');
+    for (let i = 0, il = examples.length; i < il; ++i) {
+        const e = examples[i]
+        const option = document.createElement('option')
+        Object.assign(option, { text: '[' + e.id + '] ' + e.info, value: i })
+        examplesSelect.appendChild(option)
+    }
+
+    //
+
+    function toggleHydrogen() {
+        viewer.toggleHydrogen();
+    }
+
+    function toggleLabels() {
+        viewer.toggleLabels();
+    }
+</script>
+</body>
+</html>
