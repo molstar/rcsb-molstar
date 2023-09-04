@@ -10,7 +10,7 @@
 import { BehaviorSubject } from 'rxjs';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
-import { ViewerState, CollapsedState, ModelUrlProvider, LigandUrlProvider, LigandViewerState } from './types';
+import { ViewerState, CollapsedState, ModelUrlProvider, LigandUrlProvider, LigandViewerState, LoadParams } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
@@ -147,7 +147,7 @@ const DefaultLigandViewerProps = {
 
     extensions: ObjectKeys(LigandExtensions),
     layoutIsExpanded: false,
-    layoutShowControls: true,
+    layoutShowControls: false,
     layoutControlsDisplay: 'reactive' as PluginLayoutControlsDisplay,
     layoutShowSequence: false,
     layoutShowLog: false,
@@ -431,7 +431,12 @@ export class LigandViewer {
                 },
                 camera: {
                     // desirable for alignment view so that the display doesn't "jump around" as more structures get loaded
-                    manualReset: o.manualReset
+                    manualReset: o.manualReset,
+                    helper: {
+                        axes: {
+                            name: 'off', params: {}
+                        }
+                    }
                 }
             },
             components: {
@@ -446,10 +451,10 @@ export class LigandViewer {
                 remoteState: 'none',
             },
             config: [
+                [PluginConfig.VolumeStreaming.Enabled, false],
                 [PluginConfig.Viewport.ShowExpand, o.viewportShowExpand],
                 [PluginConfig.Viewport.ShowSelectionMode, o.viewportShowSelectionMode],
                 [PluginConfig.Viewport.ShowAnimation, false],
-                [PluginConfig.VolumeStreaming.DefaultServer, o.volumeStreamingServer],
                 [PluginConfig.Download.DefaultPdbProvider, 'rcsb'],
                 [PluginConfig.Download.DefaultEmdbProvider, 'rcsb'],
                 [PluginConfig.Structure.DefaultRepresentationPreset, PresetStructureRepresentations.auto.id],
@@ -515,17 +520,25 @@ export class LigandViewer {
         for (const provider of this.ligandUrlProviders) {
             try {
                 const p = provider(id);
-                await this.customState.modelLoader.load<any, any>({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary }, undefined, undefined, ChemicalCompontentTrajectoryHierarchyPreset, { shownCoordinateType: this.customState.shownCoordinateType });
-                await this.syncHydrogenState();
-
-                for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
-                    for (const c of s.components) {
-                        const isHidden = c.cell.state.isHidden === true || !this.customState.showLabels;
-                        await this._plugin.builders.structure.representation.addRepresentation(c.cell, { type: 'label', typeParams: { level: 'element', ignoreHydrogens: this.customState.ignoreHydrogens } }, { initialState: { isHidden } });
-                    }
-                }
+                await this.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary });
             } catch (e) {
                 console.warn(`loading '${id}' failed with '${e}', trying next ligand-loader-provider`);
+            }
+        }
+    }
+
+    async loadLigandFromUrl(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean) {
+        await this.load({ fileOrUrl: url, format, isBinary });
+    }
+
+    private async load(p: LoadParams) {
+        await this.customState.modelLoader.load<any, any>(p, undefined, undefined, ChemicalCompontentTrajectoryHierarchyPreset, { shownCoordinateType: this.customState.shownCoordinateType, representationPresetParams: { theme: { carbonColor: 'element-symbol' } } });
+        await this.syncHydrogenState();
+
+        for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
+            for (const c of s.components) {
+                const isHidden = c.cell.state.isHidden === true || !this.customState.showLabels;
+                await this._plugin.builders.structure.representation.addRepresentation(c.cell, { type: 'label', typeParams: { level: 'element', fontQuality: 4, borderColor: ColorNames.black, ignoreHydrogens: this.customState.ignoreHydrogens } }, { initialState: { isHidden } });
             }
         }
     }
@@ -535,7 +548,7 @@ export class LigandViewer {
         await this.syncHydrogenState();
     }
 
-    async syncHydrogenState() {
+    private async syncHydrogenState() {
         const update = this._plugin.build();
         for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
             for (const c of s.components) {
@@ -547,6 +560,7 @@ export class LigandViewer {
             }
         }
         await update.commit();
+        this._plugin.managers.camera.reset(undefined, 100);
     }
 
     async toggleLabels() {
@@ -554,7 +568,7 @@ export class LigandViewer {
         await this.syncLabelState();
     }
 
-    async syncLabelState() {
+    private async syncLabelState() {
         for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
             for (const c of s.components) {
                 if (c.cell.state.isHidden) continue;
@@ -564,5 +578,6 @@ export class LigandViewer {
                 }
             }
         }
+        this._plugin.managers.camera.reset(undefined, 100);
     }
 }

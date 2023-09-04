@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## Unreleased
+### Added
+- Dedicated ligand viewer for the visualization of CCD/BIRD entries
+
 ## [2.7.4] - 2023-08-23
 ### Added
 - Motif preset: Show global structure
