@@ -59,11 +59,11 @@
 
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-    <button style="padding: 3px;" onclick="toggleHydrogen()">Hydrogen</button>
+    <button style="padding: 3px;" onclick="viewer.toggleHydrogens()">Hydrogen</button>
 
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-    <button style="padding: 3px;" onclick="toggleLabels()">Labels</button>
+    <button style="padding: 3px;" onclick="viewer.toggleLabels()">Labels</button>
 </div>
 <script>
 
@@ -157,16 +157,6 @@
         const option = document.createElement('option')
         Object.assign(option, { text: '[' + e.id + '] ' + e.info, value: i })
         examplesSelect.appendChild(option)
-    }
-
-    //
-
-    function toggleHydrogen() {
-        viewer.toggleHydrogen();
-    }
-
-    function toggleLabels() {
-        viewer.toggleLabels();
     }
 </script>
 </body>

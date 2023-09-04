@@ -527,12 +527,8 @@ export class LigandViewer {
         }
     }
 
-    async loadLigandFromUrl(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean) {
-        await this.load({ fileOrUrl: url, format, isBinary });
-    }
-
     private async load(p: LoadParams) {
-        await this.customState.modelLoader.load<any, any>(p, undefined, undefined, ChemicalCompontentTrajectoryHierarchyPreset, { shownCoordinateType: this.customState.shownCoordinateType, representationPresetParams: { theme: { carbonColor: 'element-symbol' } } });
+        await this.customState.modelLoader.load<any, any>(p, undefined, undefined, ChemicalCompontentTrajectoryHierarchyPreset, { shownCoordinateType: this.customState.shownCoordinateType });
         await this.syncHydrogenState();
 
         for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
@@ -543,7 +539,7 @@ export class LigandViewer {
         }
     }
 
-    async toggleHydrogen() {
+    async toggleHydrogens() {
         this.customState.ignoreHydrogens = !this.customState.ignoreHydrogens;
         await this.syncHydrogenState();
     }
