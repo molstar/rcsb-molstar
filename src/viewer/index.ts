@@ -130,13 +130,6 @@ const LigandExtensions = {
 };
 
 const DefaultLigandViewerProps = {
-    showImportControls: false,
-    showSessionControls: false,
-    showStructureSourceControls: true,
-    showMeasurementsControls: true,
-    showQuickStylesControls: false,
-    showStructureComponentControls: true,
-
     ligandUrlProviders: [
         (id: string) => ({
             url: id.length <= 5 ? `https://files.rcsb.org/ligands/view/${id.toUpperCase()}.cif` : `https://files.rcsb.org/birds/view/${id.toUpperCase()}.cif`,
@@ -149,16 +142,12 @@ const DefaultLigandViewerProps = {
     layoutIsExpanded: false,
     layoutShowControls: false,
     layoutControlsDisplay: 'reactive' as PluginLayoutControlsDisplay,
-    layoutShowSequence: false,
     layoutShowLog: false,
 
     viewportShowExpand: true,
     viewportShowSelectionMode: true,
-    volumeStreamingServer: 'https://maps.rcsb.org/',
 
     backgroundColor: ColorNames.white,
-    manualReset: false,
-    pickingAlphaThreshold: 0.5,
     showWelcomeToast: true,
 
     ignoreHydrogens: true,
@@ -427,11 +416,8 @@ export class LigandViewer {
                     ...defaultSpec.canvas3d?.renderer,
                     ...o.canvas3d?.renderer,
                     backgroundColor: o.backgroundColor,
-                    pickingAlphaThreshold: o.pickingAlphaThreshold
                 },
                 camera: {
-                    // desirable for alignment view so that the display doesn't "jump around" as more structures get loaded
-                    manualReset: o.manualReset,
                     helper: {
                         axes: {
                             name: 'off', params: {}
@@ -443,7 +429,7 @@ export class LigandViewer {
                 ...defaultSpec.components,
                 controls: {
                     ...defaultSpec.components?.controls,
-                    top: o.layoutShowSequence ? undefined : 'none',
+                    top: 'none',
                     bottom: o.layoutShowLog ? undefined : 'none',
                     left: 'none',
                     right: ControlsWrapper,
@@ -468,8 +454,8 @@ export class LigandViewer {
         this.ligandUrlProviders = o.ligandUrlProviders;
 
         (this._plugin.customState as LigandViewerState) = {
-            showMeasurementsControls: o.showMeasurementsControls,
-            showStructureComponentControls: o.showStructureComponentControls,
+            showMeasurementsControls: true,
+            showStructureComponentControls: true,
             modelLoader: new ModelLoader(this._plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,
