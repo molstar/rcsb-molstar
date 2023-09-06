@@ -542,7 +542,6 @@ export class LigandViewer {
             }
         }
         await update.commit();
-        this._plugin.managers.camera.reset(undefined, 100);
     }
 
     async toggleLabels() {
@@ -560,6 +559,5 @@ export class LigandViewer {
                 }
             }
         }
-        this._plugin.managers.camera.reset(undefined, 100);
     }
 }
