@@ -10,7 +10,7 @@
 import { BehaviorSubject } from 'rxjs';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
-import { ViewerState, CollapsedState, ModelUrlProvider, LigandUrlProvider, LigandViewerState, LoadParams } from './types';
+import { ViewerState, CollapsedState, ModelUrlProvider, LigandViewerState, LoadParams } from './types';
 import { PluginSpec } from 'molstar/lib/mol-plugin/spec';
 
 import { ColorNames } from 'molstar/lib/mol-util/color/names';
@@ -130,13 +130,13 @@ const LigandExtensions = {
 };
 
 const DefaultLigandViewerProps = {
-    ligandUrlProviders: [
+    modelUrlProviders: [
         (id: string) => ({
             url: id.length <= 5 ? `https://files.rcsb.org/ligands/view/${id.toUpperCase()}.cif` : `https://files.rcsb.org/birds/view/${id.toUpperCase()}.cif`,
             format: 'mmcif',
             isBinary: false
         })
-    ] as LigandUrlProvider[],
+    ] as ModelUrlProvider[],
 
     extensions: ObjectKeys(LigandExtensions),
     layoutIsExpanded: false,
@@ -385,7 +385,7 @@ export class Viewer {
 
 export class LigandViewer {
     private readonly _plugin: PluginUIContext;
-    private readonly ligandUrlProviders: LigandUrlProvider[];
+    private readonly modelUrlProviders: ModelUrlProvider[];
 
     constructor(elementOrId: string | HTMLElement, props: Partial<LigandViewerProps> = {}) {
         const element = typeof elementOrId === 'string' ? document.getElementById(elementOrId)! : elementOrId;
@@ -451,7 +451,7 @@ export class LigandViewer {
         };
 
         this._plugin = new PluginUIContext(spec);
-        this.ligandUrlProviders = o.ligandUrlProviders;
+        this.modelUrlProviders = o.modelUrlProviders;
 
         (this._plugin.customState as LigandViewerState) = {
             showMeasurementsControls: true,
@@ -503,7 +503,7 @@ export class LigandViewer {
     }
 
     async loadLigandId(id: string) {
-        for (const provider of this.ligandUrlProviders) {
+        for (const provider of this.modelUrlProviders) {
             try {
                 const p = provider(id);
                 await this.load({ fileOrUrl: p.url, format: p.format, isBinary: p.isBinary });

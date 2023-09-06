@@ -15,12 +15,6 @@ export type ModelUrlProvider = (pdbId: string) => {
     isBinary: boolean
 }
 
-export type LigandUrlProvider = (id: string) => {
-    url: string,
-    format: BuiltInTrajectoryFormat,
-    isBinary: boolean
-}
-
 interface SharedParams {
     /** A supported file format extension string */
     format: BuiltInTrajectoryFormat,
