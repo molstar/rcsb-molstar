@@ -520,7 +520,7 @@ export class LigandViewer {
         for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
             for (const c of s.components) {
                 const isHidden = c.cell.state.isHidden === true || !this.customState.showLabels;
-                await this._plugin.builders.structure.representation.addRepresentation(c.cell, { type: 'label', typeParams: { level: 'element', fontQuality: 4, borderColor: ColorNames.black, attachment: 'bottom-left', ignoreHydrogens: this.customState.ignoreHydrogens } }, { initialState: { isHidden } });
+                await this._plugin.builders.structure.representation.addRepresentation(c.cell, { type: 'label', color: 'uniform', colorParams: { value: ColorNames.black }, typeParams: { level: 'element', fontQuality: 4, borderWidth: 0.1, borderColor: ColorNames.lightgray, attachment: 'bottom-left', ignoreHydrogens: this.customState.ignoreHydrogens } }, { initialState: { isHidden } });
             }
         }
     }
