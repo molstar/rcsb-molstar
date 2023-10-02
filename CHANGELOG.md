@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## Unreleased
+## [2.8.0] - 2023-10-02
 ### Added
 - Dedicated ligand viewer for the visualization of CCD/BIRD entries
 

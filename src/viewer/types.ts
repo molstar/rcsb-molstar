@@ -71,6 +71,7 @@ export interface LigandViewerState {
     ignoreHydrogens: boolean
     showLabels: boolean
     shownCoordinateType: 'ideal' | 'model' | 'both'
+    aromaticBonds: boolean
 
     modelLoader: ModelLoader
 

@@ -152,7 +152,8 @@ const DefaultLigandViewerProps = {
 
     ignoreHydrogens: true,
     showLabels: false,
-    shownCoordinateType: 'ideal' as const
+    shownCoordinateType: 'ideal' as const,
+    aromaticBonds: false, // stylize aromatic rings
 };
 export type LigandViewerProps = typeof DefaultLigandViewerProps & { canvas3d: PartialCanvas3DProps }
 
@@ -471,7 +472,8 @@ export class LigandViewer {
             }),
             ignoreHydrogens: o.ignoreHydrogens,
             showLabels: o.showLabels,
-            shownCoordinateType: o.shownCoordinateType
+            shownCoordinateType: o.shownCoordinateType,
+            aromaticBonds: o.aromaticBonds,
         };
 
         this._plugin.init()
@@ -514,7 +516,7 @@ export class LigandViewer {
     }
 
     private async load(p: LoadParams) {
-        await this.customState.modelLoader.load<any, any>(p, undefined, undefined, ChemicalCompontentTrajectoryHierarchyPreset, { shownCoordinateType: this.customState.shownCoordinateType });
+        await this.customState.modelLoader.load<any, any>(p, undefined, undefined, ChemicalCompontentTrajectoryHierarchyPreset, { shownCoordinateType: this.customState.shownCoordinateType, aromaticBonds: this.customState.aromaticBonds });
         await this.syncHydrogenState();
 
         for (const s of this._plugin.managers.structure.hierarchy.current.structures) {
