@@ -90,7 +90,7 @@ export function extractResidues(ctx: StrucmotifCtx, loci: StructureSelectionHist
         ctx.residueIds.push(residueId);
 
         // retrieve CA/C4', used to compute residue distance
-        const coords = [x(location), y(location), z(location)] as Vec3;
+        const coords = [x(location), y(location), z(location)] as unknown as Vec3;
         ctx.coordinates.push({ coords, residueId });
 
         // handle potential exchanges - can be empty if deselected by users

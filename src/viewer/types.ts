@@ -65,6 +65,19 @@ export interface ViewerState {
     detachedFromSierra: boolean
 }
 
+export interface LigandViewerState {
+    showMeasurementsControls: boolean
+    showStructureComponentControls: boolean
+    ignoreHydrogens: boolean
+    showLabels: boolean
+    shownCoordinateType: 'ideal' | 'model' | 'both'
+    aromaticBonds: boolean
+
+    modelLoader: ModelLoader
+
+    collapsed: BehaviorSubject<CollapsedState>
+}
+
 export function ViewerState(plugin: PluginContext) {
     return plugin.customState as ViewerState;
 }
