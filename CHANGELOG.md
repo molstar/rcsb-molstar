@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.8.1] - 2023-10-16
+### Bug fixes
+- Fix undesired interaction between settings panel and the panel on the right
+
 ## [2.8.0] - 2023-10-02
 ### Added
 - Dedicated ligand viewer for the visualization of CCD/BIRD entries
