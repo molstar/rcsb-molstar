@@ -106,8 +106,12 @@
             function loadExample(index) {
                 const e = examples[index];
                 // let URL, if specified, take precedence over ID
-                if (e.url) return viewer.loadStructureFromUrl(e.url, e.format ?? 'mmcif', e.isBinary ?? false, e.config)
-                if (e.id) return viewer.loadPdbId(e.id, e.config)
+                if (e.url) {
+                    viewer.loadStructureFromUrl(e.url, e.format ?? 'mmcif', e.isBinary ?? false, e.config).then(_ => viewer.resetCamera(0))
+                }
+                if (e.id) {
+                    viewer.loadPdbId(e.id, e.config).then(_ => viewer.resetCamera(0))
+                }
             }
 
             const examples = [
