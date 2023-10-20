@@ -532,8 +532,8 @@
                                 labelAsymId: 'D',
                                 authSeqId: 502
                             },
-                            // radius: 0,
-                            // hiddenChannels: ['fo-fc(+ve)', 'fo-fc(-ve)']
+                            radius: 0,
+                            hiddenChannels: ['fo-fc(+ve)', 'fo-fc(-ve)']
                         }
                     }
                 },
@@ -659,7 +659,22 @@
                             assemblyId: '1'
                         }
                     }
-                }
+                },
+                {
+                    id: '5UJC',
+                    info: 'Ligand wireframe: Crystal structure of a C.elegans B12-trafficking protein CblC, a human MMACHC homologue',
+                    config: {
+                        props: {
+                            kind: 'feature-density',
+                            radius: 5,
+                            hiddenChannels: [],
+                            wireframe: true,
+                            target: {
+                                labelAsymId: 'B'
+                            }
+                        }
+                    }
+                },
             ];
 
             const examplesSelect = document.getElementById('examples');

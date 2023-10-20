@@ -103,7 +103,8 @@ type FeatureDensityProps = {
     kind: 'feature-density',
     target: Target,
     radius?: number,
-    hiddenChannels?: string[]
+    hiddenChannels?: string[],
+    wireframe?: boolean,
 } & BaseProps
 
 export type MotifProps = {
@@ -295,7 +296,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci);
 
             if (p.kind === 'feature-density') {
-                await initVolumeStreaming(plugin, structure, { overrideRadius: p.radius || 0, hiddenChannels: p.hiddenChannels || ['fo-fc(+ve)', 'fo-fc(-ve)'] });
+                await initVolumeStreaming(plugin, structure, { overrideRadius: p.radius ?? 5, hiddenChannels: p.hiddenChannels ?? [], wireframe: p.wireframe ?? true });
             }
 
             plugin.managers.structure.focus.setFromLoci(target);
@@ -406,13 +407,20 @@ function determineAssemblyId(traj: any, p: MotifProps) {
     Object.assign(p, { assemblyId: '1' });
 }
 
-async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject, props?: { overrideRadius?: number, hiddenChannels: string[] }) {
+async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject, props?: { overrideRadius?: number, hiddenChannels: string[], wireframe?: boolean }) {
     if (!structure?.cell?.parent) return;
 
     const volumeRoot = StateSelection.findTagInSubtree(structure.cell.parent.tree, structure.cell.transform.ref, VolumeStreaming.RootTag);
     if (!volumeRoot) {
         const state = plugin.state.data;
         const params = PD.getDefaultValues(InitVolumeStreaming.definition.params!(structure.obj!, plugin));
+        // RO-4085: allow switching to wireframe
+        if (props?.wireframe) {
+            params.options.channelParams['em'] = { wireframe: true };
+            params.options.channelParams['2fo-fc'] = { wireframe: true };
+            params.options.channelParams['fo-fc(+ve)'] = { wireframe: true };
+            params.options.channelParams['fo-fc(-ve)'] = { wireframe: true };
+        }
         await plugin.runTask(state.applyAction(InitVolumeStreaming, params, structure.ref));
 
         // RO-2751: allow to specify radius of shown density
