@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.8.2] - 2023-10-25
+### Added
+- Option to show density as wireframe (RO-4085)
+
 ## [2.8.1] - 2023-10-16
 ### Bug fixes
 - Fix undesired interaction between settings panel and the panel on the right
