@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.8.3] - 2023-11-06
+### Added
+- Less intrusive tooltips in ligand viewer (RO-4126)
+
 ## [2.8.2] - 2023-10-25
 ### Added
 - Option to show density as wireframe (RO-4085)

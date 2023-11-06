@@ -53,6 +53,7 @@ import { AssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/
 import { wwPDBChemicalComponentDictionary } from 'molstar/lib/extensions/wwpdb/ccd/behavior';
 import { ChemicalCompontentTrajectoryHierarchyPreset } from 'molstar/lib/extensions/wwpdb/ccd/representation';
 import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
+import { lociLabel } from 'molstar/lib/mol-theme/label';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -492,6 +493,10 @@ export class LigandViewer {
 
                 // allow picking of individual atoms
                 this._plugin.managers.interactivity.setProps({ granularity: 'element' });
+
+                // custom tooltips that only include atom names
+                this._plugin.managers.lociLabels.clearProviders();
+                this._plugin.managers.lociLabels.addProvider({ label: loci => lociLabel(loci, { condensed: true }) });
             });
     }
 
