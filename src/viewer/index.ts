@@ -128,6 +128,7 @@ export type ViewerProps = typeof DefaultViewerProps & { canvas3d: PartialCanvas3
 
 const LigandExtensions = {
     'wwpdb-chemical-component-dictionary': PluginSpec.Behavior(wwPDBChemicalComponentDictionary),
+    'mp4-export': PluginSpec.Behavior(Mp4Export),
 };
 
 const DefaultLigandViewerProps = {
