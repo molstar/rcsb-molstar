@@ -388,6 +388,7 @@ export class Viewer {
 export class LigandViewer {
     private readonly _plugin: PluginUIContext;
     private readonly modelUrlProviders: ModelUrlProvider[];
+    private prevExpanded: boolean;
 
     constructor(elementOrId: string | HTMLElement, props: Partial<LigandViewerProps> = {}) {
         const element = typeof elementOrId === 'string' ? document.getElementById(elementOrId)! : elementOrId;
@@ -497,11 +498,27 @@ export class LigandViewer {
                 // custom tooltips that only include atom names
                 this._plugin.managers.lociLabels.clearProviders();
                 this._plugin.managers.lociLabels.addProvider({ label: loci => lociLabel(loci, { condensed: true }) });
+
+                this.prevExpanded = this._plugin.layout.state.isExpanded;
+                this._plugin.layout.events.updated.subscribe(() => this.toggleControls());
             });
     }
 
     private get customState() {
         return this._plugin.customState as LigandViewerState;
+    }
+
+    private toggleControls(): void {
+        const currExpanded = this._plugin.layout.state.isExpanded;
+        const expandedChanged = (this.prevExpanded !== currExpanded);
+        if (!expandedChanged) return;
+
+        if (currExpanded && !this._plugin.layout.state.showControls) {
+            this._plugin.layout.setProps({ showControls: true });
+        } else if (!currExpanded && this._plugin.layout.state.showControls) {
+            this._plugin.layout.setProps({ showControls: false });
+        }
+        this.prevExpanded = this._plugin.layout.state.isExpanded;
     }
 
     clear() {
