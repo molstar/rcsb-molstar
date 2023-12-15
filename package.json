@@ -1,6 +1,6 @@
 {
     "name": "@rcsb/rcsb-molstar",
-    "version": "2.8.4-dev.1",
+    "version": "2.8.3",
     "description": "RCSB PDB apps and props based on Mol*.",
     "homepage": "https://github.com/molstar/rcsb-molstar#readme",
     "repository": {
@@ -37,8 +37,8 @@
     "author": "RCSB PDB and Mol* Contributors",
     "license": "MIT",
     "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "^6.13.2",
-        "@typescript-eslint/parser": "^6.13.2",
+        "@typescript-eslint/eslint-plugin": "^6.14.0",
+        "@typescript-eslint/parser": "^6.14.0",
         "buffer": "^6.0.3",
         "concurrently": "^8.2.2",
         "cpx2": "^6.0.1",
@@ -60,7 +60,7 @@
         "webpack-cli": "^5.1.4"
     },
     "dependencies": {
-        "@types/react": "^18.2.42",
+        "@types/react": "^18.2.45",
         "@types/react-dom": "^18.2.17",
         "molstar": "^3.43.1",
         "react": "^18.2.0",

@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.9.0] - 2023-12-15
+### Added
+- Ligand Viewer: expose MP4 export
+- Ligand Viewer: toggle state of controls when expanding viewport
+
 ## [2.8.3] - 2023-11-06
 ### Added
 - Less intrusive tooltips in ligand viewer (RO-4126)
