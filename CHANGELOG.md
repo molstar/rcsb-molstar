@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.9.1] - 2024-01-24
+### General
+- Dependency update
+
 ## [2.9.0] - 2023-12-15
 ### Added
 - Ligand Viewer: expose MP4 export
