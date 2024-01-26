@@ -48,7 +48,7 @@ export class ExchangesControl extends React.Component<{ handler: Residue }> {
     };
 
     swatch() {
-        const out: JSX.Element[] = [];
+        const out: React.JSX.Element[] = [];
         DefaultExchanges.forEach((v, k) => {
             const isSelected = this.props.handler.hasExchange(k);
             const className = isSelected ? 'msp-control-current' : '';
