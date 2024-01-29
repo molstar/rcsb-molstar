@@ -31,7 +31,7 @@ import {
     ResidueSelection,
     uploadStructure
 } from './strucmotif/helpers';
-import * as React from 'react';
+import { JSX } from 'react';
 
 const ABSOLUTE_ADVANCED_SEARCH_URL = 'https://rcsb.org/search?query=';
 const RELATIVE_ADVANCED_SEARCH_URL = '/search?query=';
@@ -226,7 +226,7 @@ class SubmitControls extends PurePluginUIComponent<{}, { isBusy: boolean, residu
     add() {
         const history = this.plugin.managers.structure.selection.additionsHistory;
 
-        const entries: React.JSX.Element[] = [];
+        const entries: JSX.Element[] = [];
         for (let i = 0, _i = Math.min(history.length, 10); i < _i; i++) {
             let residue: Residue;
             if (this.state.residueMap.has(history[i])) {
