@@ -8,7 +8,7 @@ import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { TrajectoryHierarchyPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/hierarchy-preset';
 import { ValidationReportGeometryQualityPreset } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
-import { AssemblySymmetryPreset } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
+import { AssemblySymmetryPreset } from 'molstar/lib/extensions/assembly-symmetry/behavior';
 import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
 import { RootStructureDefinition } from 'molstar/lib/mol-plugin-state/helpers/root-structure';
 import { StructureRepresentationPresetProvider } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
@@ -44,7 +44,7 @@ import { RcsbSuperpositionRepresentationPreset } from './superpose/preset';
 import {
     AssemblySymmetryDataProvider,
     AssemblySymmetryProvider
-} from 'molstar/lib/extensions/rcsb/assembly-symmetry/prop';
+} from 'molstar/lib/extensions/assembly-symmetry/prop';
 import { Task } from 'molstar/lib/mol-task';
 import { PLDDTConfidenceColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/plddt';
 

@@ -20,7 +20,7 @@ import { ModelLoader } from './helpers/model';
 import { PresetProps } from './helpers/preset';
 import { ControlsWrapper } from './ui/controls';
 import { PluginConfig } from 'molstar/lib/mol-plugin/config';
-import { RCSBAssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/behavior';
+import { AssemblySymmetry } from 'molstar/lib/extensions/assembly-symmetry/behavior';
 import { RCSBValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
 import { PluginState } from 'molstar/lib/mol-plugin/state';
@@ -49,7 +49,7 @@ import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { PartialCanvas3DProps } from 'molstar/lib/mol-canvas3d/canvas3d';
 import { RSCCScore } from './helpers/rscc/behavior';
 import { createRoot } from 'react-dom/client';
-import { AssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/prop';
+import { AssemblySymmetryData } from 'molstar/lib/extensions/assembly-symmetry/prop';
 import { wwPDBChemicalComponentDictionary } from 'molstar/lib/extensions/wwpdb/ccd/behavior';
 import { ChemicalCompontentTrajectoryHierarchyPreset } from 'molstar/lib/extensions/wwpdb/ccd/representation';
 import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
@@ -65,7 +65,7 @@ export const BUILD_TIMESTAMP = typeof __BUILD_TIMESTAMP__ != 'undefined' ? __BUI
 export const BUILD_DATE = new Date(BUILD_TIMESTAMP);
 
 const Extensions = {
-    'rcsb-assembly-symmetry': PluginSpec.Behavior(RCSBAssemblySymmetry),
+    'assembly-symmetry': PluginSpec.Behavior(AssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
     'rscc': PluginSpec.Behavior(RSCCScore),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
@@ -220,7 +220,7 @@ export class Viewer {
                 [PluginConfig.Download.DefaultEmdbProvider, 'rcsb'],
                 [PluginConfig.Structure.DefaultRepresentationPreset, PresetStructureRepresentations.auto.id],
                 // wboit & webgl1 checks are needed to work properly on recent Safari versions
-                [PluginConfig.General.EnableWboit, PluginFeatureDetection.preferWebGl1],
+                [PluginConfig.General.Transparency, PluginFeatureDetection.preferWebGl1 ? 'wboit' : undefined],
                 [PluginConfig.General.PreferWebGl1, PluginFeatureDetection.preferWebGl1]
             ]
         };
@@ -265,7 +265,7 @@ export class Viewer {
                     this._plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
                 }
                 // normally, this would be part of CustomStructureControls -- we want to manage its collapsed state individually though
-                this._plugin.customStructureControls.delete(AssemblySymmetry.Tag.Representation);
+                this._plugin.customStructureControls.delete(AssemblySymmetryData.Tag.Representation);
 
                 const root = createRoot(element);
                 root.render(React.createElement(Plugin, { plugin: this._plugin }));
@@ -449,7 +449,7 @@ export class LigandViewer {
                 [PluginConfig.Download.DefaultEmdbProvider, 'rcsb'],
                 [PluginConfig.Structure.DefaultRepresentationPreset, PresetStructureRepresentations.auto.id],
                 // wboit & webgl1 checks are needed to work properly on recent Safari versions
-                [PluginConfig.General.EnableWboit, PluginFeatureDetection.preferWebGl1],
+                [PluginConfig.General.Transparency, PluginFeatureDetection.preferWebGl1 ? 'wboit' : undefined],
                 [PluginConfig.General.PreferWebGl1, PluginFeatureDetection.preferWebGl1]
             ]
         };
