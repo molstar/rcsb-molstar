@@ -47,11 +47,13 @@ import {
 } from 'molstar/lib/extensions/rcsb/assembly-symmetry/prop';
 import { Task } from 'molstar/lib/mol-task';
 import { PLDDTConfidenceColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/plddt';
+import { RcsbChainRepresentationPreset } from './chain/preset';
 
 type BaseProps = {
     assemblyId?: string
     modelIndex?: number
     plddt?: 'off' | 'single-chain' | 'on'
+    colorTheme?: string
 }
 
 export { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
@@ -117,8 +119,15 @@ export type NakbProps = {
     kind: 'nakb'
 } & BaseProps
 
+type ChainProps = {
+    kind: 'chain',
+    asymId: string,
+} & BaseProps
+
 export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | AlignmentProps |
-MembraneProps | FeatureDensityProps | MotifProps | NakbProps | EmptyProps;
+MembraneProps | FeatureDensityProps | MotifProps | NakbProps | ChainProps | EmptyProps;
+
+
 
 const RcsbParams = () => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -240,6 +249,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, { ...presetParams, ...additions });
         } else if (p.kind === 'validation') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, ValidationReportGeometryQualityPreset, presetParams);
+        } else if (p.kind === 'chain'){
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbChainRepresentationPreset, { asymId: p.asymId, colorTheme: p.colorTheme });
         } else if (p.kind === 'symmetry' && structure?.obj) {
             const data = structure!.obj.data;
             if (!AssemblySymmetryDataProvider.get(data).value) {
@@ -275,7 +286,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         } else if (p.kind === 'nakb') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, 'auto', { ...presetParams, theme: { globalName: 'nakb', focus: { name: 'nakb' } } });
         } else {
-            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
+            representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', {...presetParams, theme: { globalName: p.colorTheme, focus: { name: p.colorTheme } } });
         }
 
         // TODO align with 'motif'?

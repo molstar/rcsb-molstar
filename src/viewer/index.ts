@@ -53,6 +53,7 @@ import { AssemblySymmetry } from 'molstar/lib/extensions/rcsb/assembly-symmetry/
 import { wwPDBChemicalComponentDictionary } from 'molstar/lib/extensions/wwpdb/ccd/behavior';
 import { ChemicalCompontentTrajectoryHierarchyPreset } from 'molstar/lib/extensions/wwpdb/ccd/representation';
 import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
+import { Camera } from 'molstar/lib/mol-canvas3d/camera';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -355,6 +356,22 @@ export class Viewer {
         this._plugin.layout.events.updated.next(void 0);
     }
 
+    async loadMolrenderStateFromUrl(url: string) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            this.loadPdbId(data.id, { props: buildProps(data) }).then(_ => {
+                this._plugin.canvas3d?.camera.setState(data.cameraState);
+                this.resetCamera(0);
+            });
+        } catch (error) {
+            console.error('There was a problem fetching the JSON file:', error);
+        }
+    }
+
     exportLoadedStructures(options?: { format?: 'cif' | 'bcif' }) {
         return exportHierarchy(this.plugin, options);
     }
@@ -561,5 +578,45 @@ export class LigandViewer {
                 }
             }
         }
+    }
+}
+
+type MolRenderStateType = {
+    id: string;
+    colorTheme: 'plddt-confidence' | 'sequence-id' | 'polymer-index' | 'polymer-id';
+    cameraState: Camera.Snapshot;
+} & ({
+    case: 'chain';
+    asymId: string;
+} | {
+    case: 'model';
+    modelIndex: number;
+} | {
+    case: 'assembly';
+    assemblyId: string;
+});
+
+function buildProps(molrenderState: MolRenderStateType): PresetProps {
+    switch (molrenderState.case) {
+        case 'model':
+            return {
+                kind: 'standard',
+                modelIndex: molrenderState.modelIndex,
+                colorTheme: molrenderState.colorTheme,
+            };
+        case 'assembly':
+            return {
+                kind: 'standard' as const,
+                assemblyId: molrenderState.assemblyId,
+                colorTheme: molrenderState.colorTheme,
+            };
+        case 'chain':
+            return {
+                kind: 'chain' as const,
+                asymId: molrenderState.asymId,
+                colorTheme: molrenderState.colorTheme,
+            };
+        default:
+            throw new Error(`Unknown case '${molrenderState}'`);
     }
 }
