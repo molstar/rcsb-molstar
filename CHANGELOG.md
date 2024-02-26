@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [Unreleased]
+## [2.9.2] - 2024-02-26
 ### General
 - Dependency update to Mol* v4
 
