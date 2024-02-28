@@ -156,6 +156,13 @@ export function createSelectionExpressions(labelBase: string, selection?: Target
             {
                 expression: Q.branched.expression,
                 label: `${labelBase} - Carbohydrates`,
+                type: 'ball-and-stick',
+                tag: 'branched-ball-and-stick',
+                alpha: 0.3
+            },
+            {
+                expression: Q.branched.expression,
+                label: `${labelBase} - Carbohydrates`,
                 type: 'carbohydrate',
                 tag: 'branched-snfg-3d'
             },
