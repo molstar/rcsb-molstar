@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.9.4] - 2024-04-16
+### General
+- Dependency updates
+
 ## [2.9.3] - 2024-02-28
 ### General
 - Adjust superimpose/motif visuals to include ball-and-stick representation of carbohydrates (RO-4202)
