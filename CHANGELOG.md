@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.10.0] - 2024-05-01
+### Added
+- GlyGen visuals (RO-4259)
+
 ## [2.9.4] - 2024-04-16
 ### General
 - Dependency updates

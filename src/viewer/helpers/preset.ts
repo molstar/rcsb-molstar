@@ -33,6 +33,7 @@ import {
     VolumeStreamingVisual
 } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/transformers';
 import {
+    createGlyGenSelectionExpressions,
     createSelectionExpressions,
     normalizeTargets,
     SelectionExpression,
@@ -118,8 +119,15 @@ export type NakbProps = {
     kind: 'nakb'
 } & BaseProps
 
+export type GlyGenProps = {
+    kind: 'glygen',
+    label?: string,
+    focus: Target,
+    glycosylation: Target[],
+} & BaseProps
+
 export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | AlignmentProps |
-MembraneProps | FeatureDensityProps | MotifProps | NakbProps | EmptyProps;
+MembraneProps | FeatureDensityProps | MotifProps | NakbProps | GlyGenProps | EmptyProps;
 
 const RcsbParams = () => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -232,6 +240,15 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             if (p.color) {
                 selectionExpressions = selectionExpressions.map(e => { return { ...e, color: p.color }; });
             }
+
+            const additions = {
+                ignoreHydrogens: true,
+                quality: CommonParams.quality.defaultValue,
+                selectionExpressions: selectionExpressions
+            };
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, RcsbSuperpositionRepresentationPreset, { ...presetParams, ...additions });
+        } else if (p.kind === 'glygen' && structure?.obj) {
+            const selectionExpressions = createGlyGenSelectionExpressions(p, p.label || model.data!.entryId);
 
             const additions = {
                 ignoreHydrogens: true,

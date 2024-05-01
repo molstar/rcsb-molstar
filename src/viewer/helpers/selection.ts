@@ -4,6 +4,7 @@ import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/
 import { Expression } from 'molstar/lib/mol-script/language/expression';
 import { QueryContext, Structure, StructureElement, StructureSelection } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
+import { GlyGenProps } from './preset';
 
 export type Range = {
     readonly beg: number
@@ -180,6 +181,26 @@ export function createSelectionExpressions(labelBase: string, selection?: Target
             }
         ];
     }
+}
+
+export function createGlyGenSelectionExpressions(p: GlyGenProps, label: string): SelectionExpression[] {
+    // TODO migrate this and other composable presets to MVS
+    const glycoChains = MS.set(...p.glycosylation.map(t => t.labelAsymId!));
+    return [
+        {
+            expression: MS.struct.generator.atomGroups({ 'chain-test': MS.core.rel.eq([MS.ammp('label_asym_id'), p.focus.labelAsymId!]) }),
+            label: `Chain ${p.focus.labelAsymId}`,
+            type: 'cartoon',
+            tag: 'polymer'
+        },
+        {
+            expression: MS.struct.generator.atomGroups({ 'chain-test': MS.core.set.has([glycoChains, MS.ammp('label_asym_id')]) }),
+            label: 'Glycosylation',
+            type: 'carbohydrate',
+            tag: 'carbohydrate'
+        },
+        ...createSelectionExpressions(label).map(e => { return { ...e, alpha: 0.21 }; })
+    ];
 }
 
 export const toRange = (start: number, end?: number) => {
