@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.10.1] - 2024-05-22
+### General
+- Update of RSCC statistics (RO-3983)
+
 ## [2.10.0] - 2024-05-01
 ### Added
 - GlyGen visuals (RO-4259)
