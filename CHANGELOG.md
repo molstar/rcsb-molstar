@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.10.2] - 2024-07-01
+### General
+- Dependency updates
+
 ## [2.10.1] - 2024-05-22
 ### General
 - Update of RSCC statistics (RO-3983)
