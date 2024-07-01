@@ -47,7 +47,7 @@ import {
     AssemblySymmetryProvider
 } from 'molstar/lib/extensions/assembly-symmetry/prop';
 import { Task } from 'molstar/lib/mol-task';
-import { PLDDTConfidenceColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/plddt';
+import { QualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
 
 type BaseProps = {
     assemblyId?: string
@@ -352,7 +352,7 @@ function checkPlddtColorTheme(structure: StructureObject | undefined, plddt: 'on
     if (!structure?.data) return false;
     if (plddt === 'off') return false;
     if (plddt === 'single-chain' && structure.data?.polymerUnitCount !== 1) return false;
-    return PLDDTConfidenceColorThemeProvider.isApplicable({ structure: structure.data });
+    return structure.data.models.some(m => QualityAssessment.isApplicable(m, 'pLDDT'));
 }
 
 function determineAssemblyId(traj: any, p: MotifProps) {

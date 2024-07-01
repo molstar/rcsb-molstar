@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.10.3] - 2024-07-01
+### Bug fixes
+- HELP-21267: don't apply pLDDT coloring to experimental structures
+
 ## [2.10.2] - 2024-07-01
 ### General
 - Dependency updates
