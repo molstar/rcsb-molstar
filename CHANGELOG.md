@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.10.4] - 2024-09-30
+### General
+- Dependency updates
+- Sequence Viewer: Adjust visuals of unobserved regions (HELP-21475)
+
 ## [2.10.3] - 2024-07-01
 ### Bug fixes
 - HELP-21267: don't apply pLDDT coloring to experimental structures
