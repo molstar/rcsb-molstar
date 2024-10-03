@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.10.5] - 2024-10-03
+### General
+- Dependency updates (e.g., higher resolution on mobile)
+
 ## [2.10.4] - 2024-09-30
 ### General
 - Dependency updates
