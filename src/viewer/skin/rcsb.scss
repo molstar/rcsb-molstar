@@ -1,4 +1,6 @@
-$default-background:         lighten(#325880, 60%);
+@use "sass:color";
+
+$default-background:         color.adjust(#325880, $lightness: 60%);
 $font-color:                 #333333;
 $hover-font-color:           #325880;
 $entity-current-font-color:  #ccd4e0;
@@ -13,14 +15,14 @@ $log-info:             #5E3673;
 $log-warning:          #FCC937;
 $log-error:            #FD354B;
 
-$logo-background: lighten(#325880, 60%);
+$logo-background: color.adjust(#325880, $lightness: 60%);
 
 @function color-lower-contrast($color, $amount) {
-    @return lighten($color, $amount);
+    @return color.adjust($color, $lightness: $amount);
 }
 
 @function color-increase-contrast($color, $amount) {
-    @return darken($color, $amount);
+    @return color.adjust($color, $lightness: -$amount);
 }
 
 .msp-semi-transparent-background {
