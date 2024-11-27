@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019-2020 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2024 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @author Joan Segura <joan.segura@rcsb.org>
@@ -19,7 +19,7 @@ import * as React from 'react';
 import { ModelLoader } from './helpers/model';
 import { PresetProps } from './helpers/preset';
 import { ControlsWrapper } from './ui/controls';
-import { PluginConfig } from 'molstar/lib/mol-plugin/config';
+import { PluginConfig, PluginConfigItem } from 'molstar/lib/mol-plugin/config';
 import { AssemblySymmetry } from 'molstar/lib/extensions/assembly-symmetry/behavior';
 import { RCSBValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/behavior';
 import { Mat4 } from 'molstar/lib/mol-math/linear-algebra';
@@ -123,6 +123,8 @@ const DefaultViewerProps = {
     manualReset: false, // switch to 'true' for 'motif' preset
     pickingAlphaThreshold: 0.5, // lower to 0.2 to accommodate 'motif' preset
     showWelcomeToast: true,
+
+    config: [] as [PluginConfigItem, any][],
 };
 export type ViewerProps = typeof DefaultViewerProps & { canvas3d: PartialCanvas3DProps }
 
@@ -221,7 +223,8 @@ export class Viewer {
                 [PluginConfig.Structure.DefaultRepresentationPreset, PresetStructureRepresentations.auto.id],
                 // wboit & webgl1 checks are needed to work properly on recent Safari versions
                 [PluginConfig.General.Transparency, PluginFeatureDetection.preferWebGl1 ? 'wboit' : undefined],
-                [PluginConfig.General.PreferWebGl1, PluginFeatureDetection.preferWebGl1]
+                [PluginConfig.General.PreferWebGl1, PluginFeatureDetection.preferWebGl1],
+                ...(o.config ?? []),
             ]
         };
 

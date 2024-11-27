@@ -44,7 +44,8 @@ const sharedConfig = {
         ],
         fallback: {
             fs: false,
-            buffer: require.resolve('buffer'),
+            vm: false,
+            buffer: false,
             crypto: require.resolve('crypto-browserify'),
             path: require.resolve('path-browserify'),
             stream: require.resolve('stream-browserify')
