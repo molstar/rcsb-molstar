@@ -87,6 +87,7 @@ const DefaultViewerProps = {
     showVolumeStreamingControls: true,
     showAssemblySymmetryControls: true,
     showValidationReportControls: true,
+    showPredictedAlignedErrorPlot: true,
 
     showMembraneOrientationPreset: false,
     showNakbColorTheme: false,
@@ -243,6 +244,7 @@ export class Viewer {
             showVolumeStreamingControls: o.showVolumeStreamingControls,
             showAssemblySymmetryControls: o.showAssemblySymmetryControls,
             showValidationReportControls: o.showValidationReportControls,
+            showPredictedAlignedErrorPlot: o.showPredictedAlignedErrorPlot,
             modelLoader: new ModelLoader(this._plugin),
             collapsed: new BehaviorSubject<CollapsedState>({
                 selection: true,

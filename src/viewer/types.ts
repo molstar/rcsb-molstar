@@ -58,6 +58,7 @@ export interface ViewerState {
     showVolumeStreamingControls: boolean
     showAssemblySymmetryControls: boolean
     showValidationReportControls: boolean
+    showPredictedAlignedErrorPlot: boolean
 
     modelLoader: ModelLoader
 
