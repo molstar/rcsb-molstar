@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.11.1] - 2024-12-17
+### General
+- Dependency updates
+
 ## [2.11.0] - 2024-11-27
 ### General
 - Enable Predicted Aligned Error Panel (RO-3593)
