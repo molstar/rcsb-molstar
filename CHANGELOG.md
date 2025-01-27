@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.11.2] - 2025-01-27
+### General
+- Dependency updates (RO-4535: PDB-IHM rebranding)
+
 ## [2.11.1] - 2024-12-17
 ### General
 - Dependency updates
