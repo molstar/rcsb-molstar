@@ -419,9 +419,10 @@ function determineAssemblyId(traj: any, p: MotifProps) {
     } catch (error) {
         console.warn(error);
     }
-    // default to '1' if error or legitimately not found
-    console.warn(`Could not auto-detect assembly-of-interest. Falling back to '1'`);
-    Object.assign(p, { assemblyId: '1' });
+    // default to model coordinates if error or legitimately not found
+    console.warn(`Could not auto-detect assembly-of-interest. Defaulting to model coordinates and dropping "structOperId" values`);
+    Object.assign(p, { assemblyId: undefined });
+    Object.assign(p, { targets: p.targets.map(({ structOperId, ...rest }) => rest) });
 }
 
 async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject, props?: { overrideRadius?: number, hiddenChannels: string[], wireframe?: boolean }) {

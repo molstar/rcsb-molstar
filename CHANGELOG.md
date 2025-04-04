@@ -2,6 +2,15 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.11.3] - 2025-04-04
+### General
+- Better handling for motifs in assembly-less entries (RO-4624)
+
+## [2.11.2] - 2025-04-02
+### General
+- Dependency updates
+- React 19 support
+
 ## [2.11.2] - 2025-01-27
 ### General
 - Dependency updates (RO-4535: PDB-IHM rebranding)
