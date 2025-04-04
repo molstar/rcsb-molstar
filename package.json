@@ -38,8 +38,8 @@
     "author": "RCSB PDB and Mol* Contributors",
     "license": "MIT",
     "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "^8.29.0",
-        "@typescript-eslint/parser": "^8.29.0",
+        "@typescript-eslint/eslint-plugin": "^7.18.0",
+        "@typescript-eslint/parser": "^7.18.0",
         "concurrently": "^9.1.2",
         "cpx2": "^8.0.0",
         "crypto-browserify": "^3.12.1",
