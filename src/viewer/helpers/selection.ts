@@ -253,7 +253,10 @@ function targetToExpression(target: Target): Expression {
     } else if (target.labelSeqId) {
         residueTests.push(MS.core.rel.eq([target.labelSeqId, MS.ammp('label_seq_id')]));
     } else if (target.labelSeqRange) {
-        residueTests.push(MS.core.rel.inRange([MS.ammp('label_seq_id'), target.labelSeqRange.beg, target.labelSeqRange.end ?? target.labelSeqRange.beg]));
+        residueTests.push(MS.struct.atomProperty.ihm.overlapsSeqIdRange({
+            beg: target.labelSeqRange.beg,
+            end: (target.labelSeqRange.end ?? target.labelSeqRange.beg)
+        }));
     }
     if (target.labelCompId) {
         residueTests.push(MS.core.rel.eq([target.labelCompId, MS.ammp('label_comp_id')]));
