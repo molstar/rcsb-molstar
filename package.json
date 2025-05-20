@@ -1,6 +1,6 @@
 {
     "name": "@rcsb/rcsb-molstar",
-    "version": "2.11.5-dev-js-ihm.1",
+    "version": "2.12.0",
     "description": "RCSB PDB apps and props based on Mol*.",
     "homepage": "https://github.com/molstar/rcsb-molstar#readme",
     "repository": {
@@ -25,7 +25,7 @@
         "preversion": "npm run test",
         "version": "npm run build",
         "postversion": "git push && git push --tags",
-        "publish-app": "npm publish --tag dev-js-ihm"
+        "publish-app": "npm publish"
     },
     "publishConfig": {
         "registry": "https://registry.npmjs.org/"

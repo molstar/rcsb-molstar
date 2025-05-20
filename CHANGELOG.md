@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.12.0] - 2025-05-20
+### Improvements
+- IHM adjustments
+
 ## [2.11.3] - 2025-04-04
 ### General
 - Better handling for motifs in assembly-less entries (RO-4624)
