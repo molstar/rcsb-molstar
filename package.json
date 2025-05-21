@@ -62,7 +62,7 @@
     "dependencies": {
         "@types/react": "^18.3.18",
         "@types/react-dom": "^18.3.5",
-        "molstar": "^4.12.1",
+        "molstar": "^4.16.0",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
         "rxjs": "^7.8.1",
