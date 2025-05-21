@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.12.1] - 2025-05-21
+### General
+- Mol* dependency update
+
 ## [2.12.0] - 2025-05-20
 ### Improvements
 - IHM adjustments
