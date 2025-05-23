@@ -117,7 +117,10 @@ const DefaultViewerProps = {
     layoutShowLog: false,
 
     viewportShowExpand: true,
+    viewportShowControls: true,
+    viewportShowSettings: true,
     viewportShowSelectionMode: true,
+    viewportShowTrajectoryControls: true,
     volumeStreamingServer: 'https://maps.rcsb.org/',
 
     backgroundColor: ColorNames.white,
@@ -216,8 +219,11 @@ export class Viewer {
             },
             config: [
                 [PluginConfig.Viewport.ShowExpand, o.viewportShowExpand],
+                [PluginConfig.Viewport.ShowControls, o.viewportShowControls],
+                [PluginConfig.Viewport.ShowSettings, o.viewportShowSettings],
                 [PluginConfig.Viewport.ShowSelectionMode, o.viewportShowSelectionMode],
                 [PluginConfig.Viewport.ShowAnimation, false],
+                [PluginConfig.Viewport.ShowTrajectoryControls, o.viewportShowTrajectoryControls],
                 [PluginConfig.VolumeStreaming.DefaultServer, o.volumeStreamingServer],
                 [PluginConfig.Download.DefaultPdbProvider, 'rcsb'],
                 [PluginConfig.Download.DefaultEmdbProvider, 'rcsb'],
