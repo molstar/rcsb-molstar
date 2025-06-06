@@ -48,6 +48,7 @@ import {
 } from 'molstar/lib/extensions/assembly-symmetry/prop';
 import { Task } from 'molstar/lib/mol-task';
 import { QualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
+import { getAssemblyIdsFromModel } from './viewer';
 
 type BaseProps = {
     assemblyId?: string
@@ -126,8 +127,12 @@ export type GlyGenProps = {
     glycosylation: Target[],
 } & BaseProps
 
+export type DefaultAssembly = {
+    kind: 'default-assembly'
+} & BaseProps;
+
 export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | AlignmentProps |
-MembraneProps | FeatureDensityProps | MotifProps | NakbProps | GlyGenProps | EmptyProps;
+MembraneProps | FeatureDensityProps | MotifProps | NakbProps | GlyGenProps | EmptyProps | DefaultAssembly;
 
 const RcsbParams = () => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -150,16 +155,26 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         // jump through some hoops to determine the unknown assemblyId of query selections
         if (p.kind === 'motif') determineAssemblyId(trajectory, p);
 
-        const structureParams: RootStructureDefinition.Params = { name: 'model', params: {} };
-        if (p.assemblyId && p.assemblyId !== '' && p.assemblyId !== '0') {
-            Object.assign(structureParams, {
-                name: 'assembly',
-                params: { id: p.assemblyId }
-            } as RootStructureDefinition.Params);
-        }
-
         const model = await builder.createModel(trajectory, modelParams);
         const modelProperties = await builder.insertModelProperties(model);
+
+        const structureParams: RootStructureDefinition.Params = { name: 'model', params: {} };
+        if (p.kind === 'default-assembly') {
+            const assemblyIds = getAssemblyIdsFromModel(model.cell?.obj?.data);
+            if (assemblyIds.length > 0) {
+                Object.assign(structureParams, {
+                    name: 'assembly',
+                    params: { id: assemblyIds[0] }
+                } as RootStructureDefinition.Params);
+            }
+        } else {
+            if (p.assemblyId && p.assemblyId !== '' && p.assemblyId !== '0') {
+                Object.assign(structureParams, {
+                    name: 'assembly',
+                    params: { id: p.assemblyId }
+                } as RootStructureDefinition.Params);
+            }
+        }
 
         let structure: StructureObject | undefined = undefined;
         let structureProperties: StructureObject | undefined = undefined;
