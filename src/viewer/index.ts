@@ -7,7 +7,7 @@
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
 
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { ViewerState, CollapsedState, ModelUrlProvider, LigandViewerState, LoadParams } from './types';
@@ -29,8 +29,8 @@ import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { NakbColorThemeProvider } from './helpers/nakb/color';
-import { setFocusFromRange, removeComponent, clearSelection, createComponent, select } from './helpers/viewer';
-import { SelectBase, SelectRange, SelectTarget, Target } from './helpers/selection';
+import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getModelByIndex as getStructureModel } from './helpers/viewer';
+import { lociToTarget, SelectBase, SelectRange, SelectTarget, Target } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
@@ -54,6 +54,7 @@ import { wwPDBChemicalComponentDictionary } from 'molstar/lib/extensions/wwpdb/c
 import { ChemicalCompontentTrajectoryHierarchyPreset } from 'molstar/lib/extensions/wwpdb/ccd/representation';
 import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 import { lociLabel } from 'molstar/lib/mol-theme/label';
+import { Loci } from 'molstar/lib/mol-model/loci';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -120,8 +121,14 @@ const DefaultViewerProps = {
     viewportShowExpand: true,
     viewportShowControls: true,
     viewportShowSettings: true,
+    viewportShowScreenshotControls: true,
+    // when set to true, the viewport control for activating selection mode is displayed
     viewportShowSelectionMode: true,
+    viewportShowSelectionTools: true,
     viewportShowTrajectoryControls: true,
+    // when set to true, selection mode is activated by default
+    behaviorSelectionModeActive: false,
+
     volumeStreamingServer: 'https://maps.rcsb.org/',
 
     backgroundColor: ColorNames.white,
@@ -132,6 +139,8 @@ const DefaultViewerProps = {
     config: [] as [PluginConfigItem, any][],
 };
 export type ViewerProps = typeof DefaultViewerProps & { canvas3d: PartialCanvas3DProps }
+
+type SelectionEventType = 'add' | 'remove' | 'clear';
 
 const LigandExtensions = {
     'wwpdb-chemical-component-dictionary': PluginSpec.Behavior(wwPDBChemicalComponentDictionary),
@@ -155,6 +164,7 @@ const DefaultLigandViewerProps = {
 
     viewportShowExpand: true,
     viewportShowSelectionMode: true,
+    viewportShowControls: true,
 
     backgroundColor: ColorNames.white,
     showWelcomeToast: true,
@@ -164,6 +174,7 @@ const DefaultLigandViewerProps = {
     shownCoordinateType: 'ideal' as const,
     aromaticBonds: false, // stylize aromatic rings
 };
+
 export type LigandViewerProps = typeof DefaultLigandViewerProps & { canvas3d: PartialCanvas3DProps }
 
 export class Viewer {
@@ -209,6 +220,9 @@ export class Viewer {
             },
             components: {
                 ...defaultSpec.components,
+                selectionTools: {
+                    controls: o.viewportShowSelectionTools ? undefined : () => undefined,
+                },
                 controls: {
                     ...defaultSpec.components?.controls,
                     top: o.layoutShowSequence ? undefined : 'none',
@@ -222,6 +236,7 @@ export class Viewer {
                 [PluginConfig.Viewport.ShowExpand, o.viewportShowExpand],
                 [PluginConfig.Viewport.ShowControls, o.viewportShowControls],
                 [PluginConfig.Viewport.ShowSettings, o.viewportShowSettings],
+                [PluginConfig.Viewport.ShowScreenshotControls, o.viewportShowScreenshotControls],
                 [PluginConfig.Viewport.ShowSelectionMode, o.viewportShowSelectionMode],
                 [PluginConfig.Viewport.ShowAnimation, false],
                 [PluginConfig.Viewport.ShowTrajectoryControls, o.viewportShowTrajectoryControls],
@@ -296,6 +311,10 @@ export class Viewer {
 
                 this.prevExpanded = this._plugin.layout.state.isExpanded;
                 this._plugin.layout.events.updated.subscribe(() => this.toggleControls());
+
+                if (o.behaviorSelectionModeActive) {
+                    this._plugin.behaviors.interaction.selectionMode.next(true);
+                }
             });
     }
 
@@ -309,28 +328,6 @@ export class Viewer {
 
     private get customState() {
         return this._plugin.customState as ViewerState;
-    }
-
-    private toggleControls(): void {
-        const currExpanded = this._plugin.layout.state.isExpanded;
-        const expandedChanged = (this.prevExpanded !== currExpanded);
-        if (!expandedChanged) return;
-
-        if (currExpanded && !this._plugin.layout.state.showControls) {
-            this._plugin.layout.setProps({ showControls: true });
-        } else if (!currExpanded && this._plugin.layout.state.showControls) {
-            this._plugin.layout.setProps({ showControls: false });
-        }
-        this.prevExpanded = this._plugin.layout.state.isExpanded;
-    }
-
-    resetCamera(durationMs?: number) {
-        this._plugin.managers.camera.reset(undefined, durationMs);
-    }
-
-    clear() {
-        const state = this._plugin.state.data;
-        return PluginCommands.State.RemoveObject(this._plugin, { state, ref: state.tree.root.ref });
     }
 
     async loadPdbId<P, S>(pdbId: string, config?: { props?: PresetProps; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P }) {
@@ -365,6 +362,159 @@ export class Viewer {
         return this.customState.modelLoader.parse({ data, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
     }
 
+    /**
+     * Subscribes to a structural selection-related event in the plugin.
+     *
+     * This method allows clients to react to changes in structure selections,
+     * including when selections are added, removed, or cleared. The callback
+     * receives a `Target` object derived from the selection loci, except in
+     * the case of `clear-selection`, where no target is provided.
+     *
+     * @param {SelectionEventType} type - The type of selection event to subscribe to.
+     *        - `'add'`: Triggered when a new selection is added.
+     *        - `'remove'`: Triggered when a selection is removed.
+     *        - `'clear'`: Triggered when all selections are cleared.
+     *
+     * @param {(target?: Target) => void} callback - The function to call when the event occurs.
+     *        The callback receives a `Target` object for add/remove events,
+     *        and `undefined` for clear events.
+     *
+     * @returns {Subscription} A subscription object that can be used to unsubscribe later.
+     *
+     * @example
+     * // Subscribe to add selection events
+     * const subscription = viewer.subscribeToEvent('add', (target) => {
+     *     if (target) console.log('Selection added:', target);
+     * });
+     *
+     * // Unsubscribe when no longer needed
+     * subscription.unsubscribe();
+     */
+    subscribeSelectionToEvent(type: SelectionEventType, callback: (target?: Target) => void): Subscription {
+        switch (type) {
+            case 'add':
+                return this._plugin.managers.structure.selection.events.loci.add.subscribe((loci) => {
+                    const target = lociToTarget(loci);
+                    if (target)
+                        callback(target);
+                });
+            case 'remove':
+                return this._plugin.managers.structure.selection.events.loci.remove.subscribe((loci) => {
+                    const target = lociToTarget(loci);
+                    if (target)
+                        callback(target);
+                });
+            case 'clear':
+                return this._plugin.managers.structure.selection.events.loci.clear.subscribe((_loci) => {
+                    callback();
+                });
+        }
+    };
+
+    /**
+     * This method updates the interactivity settings in the plugin's interactivity manager,
+     * specifically changing how fine or coarse the selection behavior should be (e.g., by atom, residue, chain, etc.).
+     *
+     * @param {Loci.Granularity} granularity - The desired level of selection granularity.
+     *        Common values might include:
+     *        - `element`: individual atoms
+     *        - `residue`: whole residues
+     *        - `chain`: entire chains
+     */
+    setSelectionGranularity(granularity: Loci.Granularity) {
+        this._plugin.managers.interactivity.setProps({ granularity: granularity });
+    }
+
+    /**
+     * Retrieves the list of assembly IDs for a given structure model.
+     *
+     * This method accesses the structure model at the specified index and returns
+     * all associated assembly IDs, as defined in the `_pdbx_struct_assembly` category.
+     * If the model at the given index is not available, it returns an empty array.
+     *
+     * @param {number} modelIndex - The index of the model to retrieve assembly IDs from.
+     * @returns {string[]} An array of assembly ID strings, or an empty array if no model is available.
+     */
+    getModelAssemblyIds(modelIndex: number): string[] {
+        const model = getStructureModel(this._plugin, modelIndex);
+        if (!model) return [];
+        return getAssemblyIdsFromModel(model);
+    }
+
+    /**
+     * Retrieves asym and author chain IDs for a given structure model.
+     *
+     * This method accesses the structure model at the specified index and returns a list of
+     * asym and author IDs. Asym IDs correspond to unique chains or subunits in the model
+     * and are typically defined in the `_struct_asym` category of the mmCIF format.
+     *
+     * If the model at the given index is not available, the method returns an empty array.
+     *
+     * @param {number} modelIndex - The index of the model to retrieve chain IDs from.
+     * @returns {string[][]} A 2D array of asym and author chain IDs (in this format: [asym Id, auth Id]),
+     * or an empty array if the model is unavailable.
+     */
+    getModelAsymIds(modelIndex: number): string[][] {
+        const model = getStructureModel(this._plugin, modelIndex);
+        if (!model) return [];
+        return getAsymIdsFromModel(model);
+    }
+
+    /**
+     * Sets the current structure view based on the provided assembly ID.
+     *
+     * If an `assemblyId` is provided, the structure view is updated to show
+     * the corresponding assembly (as defined in `_pdbx_struct_assembly`).
+     * If no `assemblyId` is provided, the structure view is reverted to the default model view.
+     *
+     * This updates the plugin's structure hierarchy manager using the first loaded structure.
+     *
+     * @param {string | undefined} assemblyId - The assembly ID to display, or `undefined`
+     *         to display the model.
+     *
+     * @returns {Promise<void>} A promise that resolves once the structure view is updated.
+     */
+    setStructureView(assemblyId: string | undefined): Promise<void> {
+        if (assemblyId) {
+            return this.plugin.managers.structure.hierarchy.updateStructure(this.plugin.managers.structure.hierarchy.current.structures[0], {
+                type: {
+                    name: 'assembly',
+                    params: {
+                        id: assemblyId,
+                    }
+                }
+            });
+        } else {
+            return this.plugin.managers.structure.hierarchy.updateStructure(this.plugin.managers.structure.hierarchy.current.structures[0], {
+                type: {
+                    name: 'model'
+                }
+            });
+        }
+    }
+
+    private toggleControls(): void {
+        const currExpanded = this._plugin.layout.state.isExpanded;
+        const expandedChanged = (this.prevExpanded !== currExpanded);
+        if (!expandedChanged) return;
+
+        if (currExpanded && !this._plugin.layout.state.showControls) {
+            this._plugin.layout.setProps({ showControls: true });
+        } else if (!currExpanded && this._plugin.layout.state.showControls) {
+            this._plugin.layout.setProps({ showControls: false });
+        }
+        this.prevExpanded = this._plugin.layout.state.isExpanded;
+    }
+
+    resetCamera(durationMs?: number) {
+        this._plugin.managers.camera.reset(undefined, durationMs);
+    }
+
+    clear() {
+        const state = this._plugin.state.data;
+        return PluginCommands.State.RemoveObject(this._plugin, { state, ref: state.tree.root.ref });
+    }
+
     handleResize() {
         this._plugin.layout.events.updated.next(void 0);
     }
@@ -385,7 +535,7 @@ export class Viewer {
         select(this._plugin, targets, mode, modifier);
     }
 
-    clearSelection(mode: 'select' | 'hover', target?: { modelId: string; } & Target) {
+    clearSelection(mode: 'select' | 'hover', target?: Target) {
         clearSelection(this._plugin, mode, target);
     }
 
