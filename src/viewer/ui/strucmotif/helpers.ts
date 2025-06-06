@@ -105,7 +105,7 @@ export function extractResidues(ctx: StrucmotifCtx, loci: StructureSelectionHist
     }
 }
 
-function join(opers: any[]) {
+export function join(opers: any[]) {
     // this makes the assumptions that '1' is the identity operator
     if (!opers || !opers.length) return '1';
     if (opers.length > 1) {

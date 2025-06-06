@@ -2,9 +2,12 @@ import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder'
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { Expression } from 'molstar/lib/mol-script/language/expression';
-import { QueryContext, Structure, StructureElement, StructureSelection } from 'molstar/lib/mol-model/structure';
+import { QueryContext, Structure, StructureElement, StructureProperties, StructureSelection } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { GlyGenProps } from './preset';
+import { Unit } from 'molstar/lib/mol-model/structure/structure/unit';
+import { OrderedSet } from 'molstar/lib/mol-data/int';
+import { join } from '../ui/strucmotif/helpers';
 
 export type Range = {
     readonly beg: number
@@ -17,12 +20,14 @@ export type Target = {
     readonly labelSeqId?: number
     readonly labelSeqRange?: Range
     readonly labelCompId?: string
-    // readonly authAsymId?: string
+    readonly authAsymId?: string
     readonly labelAsymId?: string
     /**
      * Mol*-internal UUID of a model.
      */
     readonly modelId?: string
+
+    readonly modelNum?: number
     /**
      * Mol*-internal representation, like 'ASM_2'. Enumerated in the order of appearance in the source file. If
      * possible, specify the assemblyId when using this selector.
@@ -43,7 +48,8 @@ export type Target = {
 }
 
 export type SelectBase = {
-    readonly modelId: string
+    readonly modelId?: string
+    readonly modelNum?: number
     readonly labelAsymId: string
     readonly operatorName?: string
 }
@@ -237,6 +243,34 @@ export function targetToLoci(target: Target, structure: Structure): StructureEle
     const selection = query(new QueryContext(structure));
     return StructureSelection.toLociWithSourceUnits(selection);
 }
+
+const location = StructureElement.Location.create(void 0);
+export function lociToTarget(loci: StructureElement.Loci): Target | undefined {
+    const structure = loci.structure;
+    const e = loci.elements[0];
+    StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
+    if (!Unit.isAtomic(location.unit)) return;
+
+    const label_asym_id = StructureProperties.chain.label_asym_id(location);
+    const auth_asym_id = StructureProperties.chain.auth_asym_id(location);
+
+    const label_seq_id = StructureProperties.residue.label_seq_id(location);
+    const auth_seq_id = StructureProperties.residue.auth_seq_id(location);
+
+    const label_comp_id = StructureProperties.atom.label_comp_id(location);
+
+    const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
+    const struct_oper_id = join(struct_oper_list_ids);
+
+    return {
+        labelAsymId: label_asym_id,
+        authAsymId: auth_asym_id,
+        labelSeqId: label_seq_id,
+        authSeqId: auth_seq_id,
+        labelCompId: label_comp_id,
+        structOperId: struct_oper_id
+    };
+};
 
 function targetsToExpression(targets: Target[]): Expression {
     const expressions = targets.map(t => targetToExpression(t));

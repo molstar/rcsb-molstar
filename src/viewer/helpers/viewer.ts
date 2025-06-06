@@ -19,9 +19,13 @@ import {
     targetToLoci,
     toRange
 } from './selection';
+import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
+import { Model } from 'molstar/lib/mol-model/structure';
 
 export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
-    const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+    if (!target.modelId)
+        throw Error('createComponent error: model id MUST be provided');
+    const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId);
     if (!data) return;
 
     const loci = targetToLoci(target, data);
@@ -30,17 +34,30 @@ export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
     plugin.managers.structure.focus.setFromLoci(loci);
 }
 
-function getStructureWithModelId(structures: StructureRef[], target: { modelId: string }): Structure | undefined {
-    const structureRef = getStructureRefWithModelId(structures, target);
+function getStructureWithModelId(structures: StructureRef[], modelId: string): Structure | undefined {
+    const structureRef = getStructureRefWithModelId(structures, modelId);
     if (structureRef) return structureRef.cell?.obj?.data;
 }
 
-export function getStructureRefWithModelId(structures: StructureRef[], target: { modelId: string }): StructureRef | undefined {
+export function getStructureRefWithModelId(structures: StructureRef[], modelId: string): StructureRef | undefined {
     for (const structure of structures) {
         if (!structure.cell?.obj?.data?.units) continue;
 
         const unit = structure.cell.obj.data.units[0];
-        if (unit.model.id === target.modelId) return structure;
+        if (unit.model.id === modelId) return structure;
+    }
+}
+
+function getStructureWithModelNum(structures: StructureRef[], modelNum: number): Structure | undefined {
+    const structureRef = getStructureRefWithModelNum(structures, modelNum);
+    if (structureRef) return structureRef.cell?.obj?.data;
+}
+
+function getStructureRefWithModelNum(structures: StructureRef[], modelNum: number): StructureRef | undefined {
+    for (const structure of structures) {
+        if (!structure.cell?.obj?.data?.units) continue;
+        const unit = structure.cell.obj.data.units[0];
+        if (unit.model.modelNum === modelNum) return structure;
     }
 }
 
@@ -48,7 +65,11 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
     if (modifier === 'set')
         clearSelection(plugin, mode);
     (Array.isArray(targets) ? targets : [targets]).forEach((target, n)=>{
-        const structure = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+        let structure;
+        if (target.modelId)
+            structure = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId);
+        else if (target.modelNum)
+            structure = getStructureWithModelNum(plugin.managers.structure.hierarchy.current.structures, target.modelNum);
         if (!structure) return;
 
         const loci = targetToLoci(target, structure);
@@ -62,7 +83,7 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
     });
 }
 
-export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', target?: { modelId: string; } & Target) {
+export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', target?: Target) {
     if (mode === 'hover') {
         plugin.managers.interactivity.lociHighlights.clearHighlights();
         return;
@@ -73,7 +94,11 @@ export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', 
         return;
     }
 
-    const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+    let data;
+    if (target.modelId)
+        data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId);
+    else if (target.modelNum)
+        data = getStructureWithModelNum(plugin.managers.structure.hierarchy.current.structures, target.modelNum);
     if (!data) return;
 
     const loci = targetToLoci(target, data);
@@ -82,7 +107,9 @@ export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', 
 
 export async function createComponent(plugin: PluginContext, componentLabel: string, targets: SelectBase | SelectTarget | SelectTarget[], representationType: StructureRepresentationRegistry.BuiltIn) {
     for (const target of (Array.isArray(targets) ? targets : [targets])) {
-        const structureRef = getStructureRefWithModelId(plugin.managers.structure.hierarchy.current.structures, target);
+        if (!target.modelId)
+            throw Error('createComponent error: model id MUST be provided');
+        const structureRef = getStructureRefWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId);
         if (!structureRef) throw Error('createComponent error: model not found');
 
         const residues = toResidues(target);
@@ -120,4 +147,29 @@ export async function removeComponent(plugin: PluginContext, componentLabel: str
         }
     });
     await Promise.all(out);
+}
+
+export function getAssemblyIdsFromModel(model: Model | undefined) {
+    if (!model) return [];
+    const symmetry = model && ModelSymmetry.Provider.get(model);
+    return symmetry ? symmetry.assemblies.map(a => a.id) : [];
+}
+
+export function getAsymIdsFromModel(model: Model | undefined) {
+    if (!model) return [];
+    const asymIds: [string, string][] = [];
+    if (model) {
+        model.properties.structAsymMap.forEach(v => {
+            asymIds.push([v.id, v.auth_id]);
+        });
+    }
+    return asymIds;
+}
+
+export function getModelByIndex(plugin: PluginContext, modelIndex: number) {
+    const refs = plugin.managers.structure.hierarchy.current.models;
+    if (refs.length === 0) return;
+    const ref = refs[modelIndex];
+    if (!ref) return;
+    return ref.cell.obj?.data;
 }
