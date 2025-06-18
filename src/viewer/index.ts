@@ -30,7 +30,7 @@ import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { NakbColorThemeProvider } from './helpers/nakb/color';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getModelByIndex as getStructureModel } from './helpers/viewer';
-import { lociToTarget, SelectBase, SelectRange, SelectTarget, Target } from './helpers/selection';
+import { lociToTarget, SelectBase, SelectRange, SelectTarget, Target, targetToLoci } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
@@ -55,6 +55,7 @@ import { ChemicalCompontentTrajectoryHierarchyPreset } from 'molstar/lib/extensi
 import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 import { lociLabel } from 'molstar/lib/mol-theme/label';
 import { Loci } from 'molstar/lib/mol-model/loci';
+import { Color } from 'molstar/lib/mol-util/color';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -390,7 +391,7 @@ export class Viewer {
      * // Unsubscribe when no longer needed
      * subscription.unsubscribe();
      */
-    subscribeSelectionToEvent(type: SelectionEventType, callback: (target?: Target) => void): Subscription {
+    subscribeToSelectionEvent(type: SelectionEventType, callback: (target?: Target) => void): Subscription {
         switch (type) {
             case 'add':
                 return this._plugin.managers.structure.selection.events.loci.add.subscribe((loci) => {
@@ -488,6 +489,44 @@ export class Viewer {
             return this.plugin.managers.structure.hierarchy.updateStructure(this.plugin.managers.structure.hierarchy.current.structures[0], {
                 type: {
                     name: 'model'
+                }
+            });
+        }
+    }
+
+    /**
+     * Adds custom labels to specified targets within the current structure.
+     *
+     * This method iterates over an array of target objects, converts each target to a
+     * corresponding loci in the current structure, and then adds a label at that loci
+     * position using the structure measurement manager.
+     *
+     * The label text is constructed by concatenating the target's `labelCompId` and
+     * `labelSeqId` properties. Labels are styled with a dark grey border and a lighter
+     * grey text color.
+     *
+     * @param targets - An array of Target objects to label on the structure.
+     *                  Each Target is expected to have `labelCompId` and `labelSeqId` properties.
+     *
+     * Styling:
+     * - Label border color: #555555 (dark grey)
+     * - Label text color: #B9B9B9 (light grey)
+     */
+    showLabels(targets: Target[]) {
+        const refs = this._plugin.managers.structure.hierarchy.current.structures;
+        if (refs.length === 0) return;
+        const ref = refs[0];
+        if (!ref) return;
+        const structure = ref.cell.obj?.data;
+        if (!structure) return;
+        for (const t of targets) {
+            const loci = targetToLoci(t, structure);
+            const text = `${t.labelCompId} ${t.labelSeqId}`;
+            this._plugin.managers.structure.measurement.addLabel(loci, {
+                labelParams: {
+                    customText: text,
+                    borderColor: Color(0x555555),
+                    textColor: Color(0xB9B9B9)
                 }
             });
         }
