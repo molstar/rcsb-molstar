@@ -6,7 +6,7 @@
  * @author Yana Rose <yana.rose@rcsb.org>
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
-
+import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { Plugin } from 'molstar/lib/mol-plugin-ui/plugin';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
@@ -29,7 +29,7 @@ import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { NakbColorThemeProvider } from './helpers/nakb/color';
-import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getModelByIndex as getStructureModel } from './helpers/viewer';
+import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getDefaultModel as getDefaultStructureModel, getDefaultStructure } from './helpers/viewer';
 import { lociToTarget, SelectBase, SelectRange, SelectTarget, Target, targetToLoci } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
@@ -56,6 +56,8 @@ import { StateTransforms } from 'molstar/lib/mol-plugin-state/transforms';
 import { lociLabel } from 'molstar/lib/mol-theme/label';
 import { Loci } from 'molstar/lib/mol-model/loci';
 import { Color } from 'molstar/lib/mol-util/color';
+import { StructureSelection, QueryContext } from 'molstar/lib/mol-model/structure';
+import { compile } from 'molstar/lib/mol-script/runtime/query/base';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -391,7 +393,7 @@ export class Viewer {
      * // Unsubscribe when no longer needed
      * subscription.unsubscribe();
      */
-    subscribeToSelectionEvent(type: SelectionEventType, callback: (target?: Target) => void): Subscription {
+    subscribeToSelection(type: SelectionEventType, callback: (target?: Target) => void): Subscription {
         switch (type) {
             case 'add':
                 return this._plugin.managers.structure.selection.events.loci.add.subscribe((loci) => {
@@ -427,36 +429,34 @@ export class Viewer {
     }
 
     /**
-     * Retrieves the list of assembly IDs for a given structure model.
+     * Retrieves the list of assembly IDs for a default structure model.
      *
-     * This method accesses the structure model at the specified index and returns
+     * This method accesses the default structure model and returns
      * all associated assembly IDs, as defined in the `_pdbx_struct_assembly` category.
-     * If the model at the given index is not available, it returns an empty array.
+     * If the model is not available, it returns an empty array.
      *
-     * @param {number} modelIndex - The index of the model to retrieve assembly IDs from.
      * @returns {string[]} An array of assembly ID strings, or an empty array if no model is available.
      */
-    getModelAssemblyIds(modelIndex: number): string[] {
-        const model = getStructureModel(this._plugin, modelIndex);
+    getAssemblyIds(): string[] {
+        const model = getDefaultStructureModel(this._plugin);
         if (!model) return [];
         return getAssemblyIdsFromModel(model);
     }
 
     /**
-     * Retrieves asym and author chain IDs for a given structure model.
+     * Retrieves asym and author chain IDs for a default structure model.
      *
-     * This method accesses the structure model at the specified index and returns a list of
+     * This method accesses the default structure model and returns a list of
      * asym and author IDs. Asym IDs correspond to unique chains or subunits in the model
      * and are typically defined in the `_struct_asym` category of the mmCIF format.
      *
-     * If the model at the given index is not available, the method returns an empty array.
+     * If the model is not available, the method returns an empty array.
      *
-     * @param {number} modelIndex - The index of the model to retrieve chain IDs from.
      * @returns {string[][]} A 2D array of asym and author chain IDs (in this format: [asym Id, auth Id]),
      * or an empty array if the model is unavailable.
      */
-    getModelAsymIds(modelIndex: number): string[][] {
-        const model = getStructureModel(this._plugin, modelIndex);
+    getAsymIds(): string[][] {
+        const model = getDefaultStructureModel(this._plugin);
         if (!model) return [];
         return getAsymIdsFromModel(model);
     }
@@ -501,35 +501,70 @@ export class Viewer {
      * corresponding loci in the current structure, and then adds a label at that loci
      * position using the structure measurement manager.
      *
-     * The label text is constructed by concatenating the target's `labelCompId` and
-     * `labelSeqId` properties. Labels are styled with a dark grey border and a lighter
-     * grey text color.
+     * The label text and appearance can be customized via the `config` parameter.
      *
      * @param targets - An array of Target objects to label on the structure.
      *                  Each Target is expected to have `labelCompId` and `labelSeqId` properties.
-     *
-     * Styling:
-     * - Label border color: #555555 (dark grey)
-     * - Label text color: #B9B9B9 (light grey)
+     * @param config - Configuration object specifying how labels should be rendered.
+     * @param config.text - A function that takes a `Target` and returns a `string` to be shown as the label.
+     *                      For example: `(t) => \`\${t.labelCompId} \${t.labelSeqId}\``.
+     * @param config.borderColor - Label border color, as a hex number (e.g., `0x555555`).
+     * @param config.textColor - Label text color, as a hex number (e.g., `0xB9B9B9`).
      */
-    showLabels(targets: Target[]) {
-        const refs = this._plugin.managers.structure.hierarchy.current.structures;
-        if (refs.length === 0) return;
-        const ref = refs[0];
-        if (!ref) return;
-        const structure = ref.cell.obj?.data;
+    showLabels(targets: Target[], config: {
+        text: (t: Target) => string,
+        borderColor: number,
+        textColor: number
+    }) {
+        const structure = getDefaultStructure(this._plugin);
         if (!structure) return;
         for (const t of targets) {
             const loci = targetToLoci(t, structure);
-            const text = `${t.labelCompId} ${t.labelSeqId}`;
             this._plugin.managers.structure.measurement.addLabel(loci, {
                 labelParams: {
-                    customText: text,
-                    borderColor: Color(0x555555),
-                    textColor: Color(0xB9B9B9)
+                    customText: config.text(t),
+                    borderColor: Color(config.borderColor),
+                    textColor: Color(config.textColor)
                 }
             });
         }
+    }
+
+    /**
+     * Focuses the 3D viewer on a specific residue within the current structure.
+     *
+     * This function identifies the residue using either `authSeqId` or `labelSeqId` from the given `Target`,
+     * constructs a query to locate the corresponding atoms, and then adjusts the camera to focus on the selection.
+     *
+     * It combines sequence-based and chain-level constraints to ensure precise targeting, including the chain
+     * (`label_asym_id`) and operator (`operatorName`).
+     *
+     * @param target - A `Target` object specifying the residue to focus on. It must include:
+     *   - `labelAsymId`: the chain ID (label format),
+     *   - `operatorName`: the operator applied to the chain,
+     *   - Either `authSeqId` or `labelSeqId` to locate the residue.
+     */
+    focusOnResidue(target: Target) {
+        const structure = getDefaultStructure(this._plugin);
+        if (!structure) return;
+        const residueTest = (target.authSeqId) ?
+            MS.core.rel.eq([target.authSeqId, MS.ammp('auth_seq_id')]) :
+            MS.core.rel.eq([target.labelSeqId, MS.ammp('label_seq_id')]);
+        const tests = {
+            'residue-test': MS.core.logic.and([residueTest]),
+            'chain-test': MS.core.logic.and([
+                MS.core.rel.eq([target.labelAsymId, MS.ammp('label_asym_id')]),
+                MS.core.rel.eq([target.operatorName, MS.acp('operatorName')])
+            ]),
+        };
+        const expression = MS.struct.modifier.union([
+            MS.struct.generator.atomGroups(tests)
+        ]);
+        const query = compile<StructureSelection>(expression);
+        const selection = query(new QueryContext(structure));
+        const loci = StructureSelection.toLociWithSourceUnits(selection);
+        this._plugin.managers.structure.focus.setFromLoci(loci);
+        this._plugin.managers.camera.focusLoci(loci);
     }
 
     private toggleControls(): void {

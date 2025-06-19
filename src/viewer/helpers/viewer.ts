@@ -23,9 +23,12 @@ import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/
 import { Model } from 'molstar/lib/mol-model/structure';
 
 export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
-    if (!target.modelId)
-        throw Error('createComponent error: model id MUST be provided');
-    const data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId);
+    let data: Structure | undefined;
+    if (target.modelId) {
+        data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId);
+    } else {
+        data = plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
+    }
     if (!data) return;
 
     const loci = targetToLoci(target, data);
@@ -48,28 +51,13 @@ export function getStructureRefWithModelId(structures: StructureRef[], modelId: 
     }
 }
 
-function getStructureWithModelNum(structures: StructureRef[], modelNum: number): Structure | undefined {
-    const structureRef = getStructureRefWithModelNum(structures, modelNum);
-    if (structureRef) return structureRef.cell?.obj?.data;
-}
-
-function getStructureRefWithModelNum(structures: StructureRef[], modelNum: number): StructureRef | undefined {
-    for (const structure of structures) {
-        if (!structure.cell?.obj?.data?.units) continue;
-        const unit = structure.cell.obj.data.units[0];
-        if (unit.model.modelNum === modelNum) return structure;
-    }
-}
-
 export function select(plugin: PluginContext, targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
     if (modifier === 'set')
         clearSelection(plugin, mode);
     (Array.isArray(targets) ? targets : [targets]).forEach((target, n)=>{
-        let structure;
-        if (target.modelId)
-            structure = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId);
-        else if (target.modelNum)
-            structure = getStructureWithModelNum(plugin.managers.structure.hierarchy.current.structures, target.modelNum);
+        const structure = (target.modelId) ?
+            getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId) :
+            plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
         if (!structure) return;
 
         const loci = targetToLoci(target, structure);
@@ -94,11 +82,9 @@ export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', 
         return;
     }
 
-    let data;
-    if (target.modelId)
-        data = getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId);
-    else if (target.modelNum)
-        data = getStructureWithModelNum(plugin.managers.structure.hierarchy.current.structures, target.modelNum);
+    const data = (target.modelId) ?
+        getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId) :
+        plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
     if (!data) return;
 
     const loci = targetToLoci(target, data);
@@ -166,10 +152,18 @@ export function getAsymIdsFromModel(model: Model | undefined) {
     return asymIds;
 }
 
-export function getModelByIndex(plugin: PluginContext, modelIndex: number) {
+export function getDefaultModel(plugin: PluginContext) {
     const refs = plugin.managers.structure.hierarchy.current.models;
     if (refs.length === 0) return;
-    const ref = refs[modelIndex];
+    const ref = refs[0];
+    if (!ref) return;
+    return ref.cell.obj?.data;
+}
+
+export function getDefaultStructure(plugin: PluginContext) {
+    const refs = plugin.managers.structure.hierarchy.current.structures;
+    if (refs.length === 0) return;
+    const ref = refs[0];
     if (!ref) return;
     return ref.cell.obj?.data;
 }
