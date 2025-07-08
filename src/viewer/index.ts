@@ -30,7 +30,7 @@ import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { NakbColorThemeProvider } from './helpers/nakb/color';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getDefaultModel as getDefaultStructureModel, getDefaultStructure } from './helpers/viewer';
-import { lociToTarget, SelectBase, SelectRange, SelectTarget, Target, targetToLoci } from './helpers/selection';
+import { lociToTarget, SelectBase, SelectRange, SelectTarget, Target, targetToExpression, targetToLoci } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
@@ -58,6 +58,7 @@ import { Loci } from 'molstar/lib/mol-model/loci';
 import { Color } from 'molstar/lib/mol-util/color';
 import { StructureSelection, QueryContext } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/base';
+import { EntitySubtype } from 'molstar/lib/mol-model/structure/model/properties/common';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -184,6 +185,7 @@ export class Viewer {
     private readonly _plugin: PluginUIContext;
     private readonly modelUrlProviders: ModelUrlProvider[];
     private prevExpanded: boolean;
+    private selectionRefs = new Map();
 
     constructor(elementOrId: string | HTMLElement, props: Partial<ViewerProps> = {}) {
         const element = typeof elementOrId === 'string' ? document.getElementById(elementOrId)! : elementOrId;
@@ -396,19 +398,19 @@ export class Viewer {
     subscribeToSelection(type: SelectionEventType, callback: (target?: Target) => void): Subscription {
         switch (type) {
             case 'add':
-                return this._plugin.managers.structure.selection.events.loci.add.subscribe((loci) => {
+                return this.plugin.managers.structure.selection.events.loci.add.subscribe((loci) => {
                     const target = lociToTarget(loci);
                     if (target)
                         callback(target);
                 });
             case 'remove':
-                return this._plugin.managers.structure.selection.events.loci.remove.subscribe((loci) => {
+                return this.plugin.managers.structure.selection.events.loci.remove.subscribe((loci) => {
                     const target = lociToTarget(loci);
                     if (target)
                         callback(target);
                 });
             case 'clear':
-                return this._plugin.managers.structure.selection.events.loci.clear.subscribe((_loci) => {
+                return this.plugin.managers.structure.selection.events.loci.clear.subscribe((_loci) => {
                     callback();
                 });
         }
@@ -425,7 +427,7 @@ export class Viewer {
      *        - `chain`: entire chains
      */
     setSelectionGranularity(granularity: Loci.Granularity) {
-        this._plugin.managers.interactivity.setProps({ granularity: granularity });
+        this.plugin.managers.interactivity.setProps({ granularity: granularity });
     }
 
     /**
@@ -438,7 +440,7 @@ export class Viewer {
      * @returns {string[]} An array of assembly ID strings, or an empty array if no model is available.
      */
     getAssemblyIds(): string[] {
-        const model = getDefaultStructureModel(this._plugin);
+        const model = getDefaultStructureModel(this.plugin);
         if (!model) return [];
         return getAssemblyIdsFromModel(model);
     }
@@ -455,10 +457,10 @@ export class Viewer {
      * @returns {string[][]} A 2D array of asym and author chain IDs (in this format: [asym Id, auth Id]),
      * or an empty array if the model is unavailable.
      */
-    getAsymIds(): string[][] {
-        const model = getDefaultStructureModel(this._plugin);
+    getAsymIds(types?: EntitySubtype[]): string[][] {
+        const model = getDefaultStructureModel(this.plugin);
         if (!model) return [];
-        return getAsymIdsFromModel(model);
+        return getAsymIdsFromModel(model, types);
     }
 
     /**
@@ -520,7 +522,7 @@ export class Viewer {
         if (!structure) return;
         for (const t of targets) {
             const loci = targetToLoci(t, structure);
-            this._plugin.managers.structure.measurement.addLabel(loci, {
+            this.plugin.managers.structure.measurement.addLabel(loci, {
                 labelParams: {
                     customText: config.text(t),
                     borderColor: Color(config.borderColor),
@@ -545,7 +547,7 @@ export class Viewer {
      *   - Either `authSeqId` or `labelSeqId` to locate the residue.
      */
     focusOnResidue(target: Target) {
-        const structure = getDefaultStructure(this._plugin);
+        const structure = getDefaultStructure(this.plugin);
         if (!structure) return;
         const residueTest = (target.authSeqId) ?
             MS.core.rel.eq([target.authSeqId, MS.ammp('auth_seq_id')]) :
@@ -563,8 +565,50 @@ export class Viewer {
         const query = compile<StructureSelection>(expression);
         const selection = query(new QueryContext(structure));
         const loci = StructureSelection.toLociWithSourceUnits(selection);
-        this._plugin.managers.structure.focus.setFromLoci(loci);
-        this._plugin.managers.camera.focusLoci(loci);
+        this.plugin.managers.structure.focus.setFromLoci(loci);
+        this.plugin.managers.camera.focusLoci(loci);
+    }
+
+    async setBallAndStick(target: Target | Target[], mode: 'on' | 'off') {
+
+        const s = getDefaultStructure(this.plugin);
+        if (!s) return;
+
+        const parent = this.plugin.helpers.substructureParent.get(s);
+        if (!parent || !parent.obj) return;
+
+        const state = this.plugin.state.data;
+        const builder = state.build();
+
+        const targets = Array.isArray(target) ? target : [target];
+        for (const t of targets) {
+            const label = `${t.labelAsymId} ${t.structOperId} ${t.labelSeqId}`;
+            if (mode === 'on') {
+                const exp = targetToExpression(t);
+                const selectionRef = builder
+                    .to(parent)
+                    .apply(StateTransforms.Model.StructureSelectionFromExpression,
+                        { expression: exp, label }, { tags: 'selected-residues' }).ref;
+                this.selectionRefs.set(label, selectionRef);
+                builder
+                    .to(selectionRef)
+                    .apply(StateTransforms.Representation.StructureRepresentation3D, {
+                        type: { name: 'ball-and-stick', params: {} },
+                        sizeTheme: { name: 'physical', params: {} }
+                    });
+            } else {
+                const transformRef = this.selectionRefs.get(label);
+                if (transformRef) {
+                    builder.delete(transformRef);
+                    this.selectionRefs.delete(transformRef);
+                }
+            }
+        }
+        await PluginCommands.State.Update(this.plugin, {
+            state,
+            tree: builder,
+            options: { doNotLogTiming: true, doNotUpdateCurrent: true }
+        });
     }
 
     private toggleControls(): void {

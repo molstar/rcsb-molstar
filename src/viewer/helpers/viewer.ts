@@ -21,6 +21,7 @@ import {
 } from './selection';
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
 import { Model } from 'molstar/lib/mol-model/structure';
+import { EntitySubtype } from 'molstar/lib/mol-model/structure/model/properties/common';
 
 export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
     let data: Structure | undefined;
@@ -57,7 +58,7 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
     (Array.isArray(targets) ? targets : [targets]).forEach((target, n)=>{
         const structure = (target.modelId) ?
             getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId) :
-            plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
+            getDefaultStructure(plugin);
         if (!structure) return;
 
         const loci = targetToLoci(target, structure);
@@ -141,15 +142,18 @@ export function getAssemblyIdsFromModel(model: Model | undefined) {
     return symmetry ? symmetry.assemblies.map(a => a.id) : [];
 }
 
-export function getAsymIdsFromModel(model: Model | undefined) {
+export function getAsymIdsFromModel(model: Model | undefined, types?: EntitySubtype[]) {
     if (!model) return [];
-    const asymIds: [string, string][] = [];
-    if (model) {
-        model.properties.structAsymMap.forEach(v => {
-            asymIds.push([v.id, v.auth_id]);
-        });
-    }
-    return asymIds;
+    model.properties.structAsymMap;
+    return Array.from(model.properties.structAsymMap.values())
+        .filter(v => {
+            if (!types) return true;
+            const idx = model.entities.getEntityIndex(v.entity_id);
+            const subtype = model.entities.subtype.value(idx);
+            if (!subtype) return true;
+            return types.includes(subtype);
+        })
+        .map(v => [v.id, v.auth_id]);
 }
 
 export function getDefaultModel(plugin: PluginContext) {

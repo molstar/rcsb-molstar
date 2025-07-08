@@ -277,7 +277,7 @@ function targetsToExpression(targets: Target[]): Expression {
     return MS.struct.combinator.merge(expressions);
 }
 
-function targetToExpression(target: Target): Expression {
+export function targetToExpression(target: Target): Expression {
     const residueTests: Expression[] = [];
     const chainTests: Expression[] = [];
     const tests: { 'residue-test': Expression, 'chain-test': Expression } = Object.create(null);
