@@ -11,6 +11,7 @@ import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder'
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { StructureSelectionQuery } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import {
+    normalizeTarget,
     rangeToTest,
     SelectBase,
     SelectRange,
@@ -61,6 +62,11 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
             getDefaultStructure(plugin);
         if (!structure) return;
 
+        // This serves as adapter between the strucmotif-/BioJava-approach to identify transformed chains and the Mol* way
+        // Only convert structOperId to operatorName, if operatorName is not defined
+        if (target.structOperId && !target.operatorName) {
+            target = normalizeTarget(target, structure) as SelectTarget;
+        }
         const loci = targetToLoci(target, structure);
         if (!loci) return;
 
@@ -83,12 +89,17 @@ export function clearSelection(plugin: PluginContext, mode: 'select' | 'hover', 
         return;
     }
 
-    const data = (target.modelId) ?
+    const structure = (target.modelId) ?
         getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId) :
         plugin.managers.structure.hierarchy.current.structures[0]?.cell.obj?.data;
-    if (!data) return;
+    if (!structure) return;
 
-    const loci = targetToLoci(target, data);
+    // This serves as adapter between the strucmotif-/BioJava-approach to identify transformed chains and the Mol* way
+    // Only convert structOperId to operatorName, if operatorName is not defined
+    if (target.structOperId && !target.operatorName) {
+        target = normalizeTarget(target, structure) as SelectTarget;
+    }
+    const loci = targetToLoci(target, structure);
     plugin.managers.interactivity.lociSelects.deselect({ loci });
 }
 
@@ -112,7 +123,7 @@ export async function createComponent(plugin: PluginContext, componentLabel: str
 
 function toResidues(target: SelectBase | SelectTarget): number[] {
     if ('labelSeqRange' in target) {
-        return toRange(target.labelSeqRange.beg, target.labelSeqRange.end);
+        return toRange(target.labelSeqRange!.beg, target.labelSeqRange!.end);
     }
 
     if ('labelSeqId' in target) {

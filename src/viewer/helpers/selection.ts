@@ -53,12 +53,11 @@ export type SelectBase = {
     readonly labelAsymId: string
     readonly operatorName?: string
 }
-export type SelectSingle = {
-    readonly labelSeqId: number
-} & SelectBase;
+export type SelectSingle = Required<Pick<Target, 'labelAsymId' | 'labelSeqId'>> & Omit<Target, 'labelAsymId' | 'labelSeqId'>
 export type SelectRange = {
     readonly labelSeqRange: Range
-} & SelectBase;
+} & Required<Pick<Target, 'labelAsymId'>> & Omit<Target, 'labelAsymId'>;
+
 export type SelectTarget = SelectSingle | SelectRange;
 
 export type SelectionExpression = {
@@ -80,14 +79,16 @@ export type SelectionExpression = {
  * @param operatorName optional value to which missing operators are set
  */
 export function normalizeTargets(targets: Target[], structure: Structure, operatorName = undefined): Target[] {
-    return targets.map(t => {
-        if (t.structOperId) {
-            const { structOperId, ...others } = t;
-            const oper = toOperatorName(structure, structOperId);
-            return { ...others, operatorName: oper };
-        }
-        return t.operatorName ? t : { ...t, operatorName };
-    });
+    return targets.map(t => normalizeTarget(t, structure, operatorName));
+}
+
+export function normalizeTarget(target: Target, structure: Structure, operatorName = undefined): Target {
+    if (target.structOperId) {
+        const { structOperId, ...others } = target;
+        const oper = toOperatorName(structure, structOperId);
+        return { ...others, operatorName: oper };
+    }
+    return target.operatorName ? target : { ...target, operatorName };
 }
 
 function toOperatorName(structure: Structure, expression: string): string {
