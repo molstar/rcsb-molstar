@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.13.0] - 2025-09-29
+### General
+- Dependency update: Mol* to v5.0.0
+
 ## [2.12.1] - 2025-05-21
 ### General
 - Mol* dependency update
