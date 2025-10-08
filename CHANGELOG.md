@@ -2,6 +2,20 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.14.0] - Unreleased
+### General
+- Default assembly preset
+- More configuration options for controls in the layout and viewport
+
+### API
+- Subscribe to a structural selection-related event in the plugin
+- Update the interactivity settings in the plugin's interactivity manager
+- Retrieve the list of assembly IDs for a default structure model
+- Retrieve asym and author chain IDs for a default structure model
+- Set the current structure view based on the provided assembly ID
+- Add custom labels to specified targets within the current structure
+- Focuse on a specific residue within the current structure
+
 ## [2.13.0] - 2025-09-29
 ### General
 - Dependency update: Mol* to v5.0.0
