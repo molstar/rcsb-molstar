@@ -109,8 +109,7 @@ export function join(opers: any[]) {
     // this makes the assumptions that '1' is the identity operator
     if (!opers || !opers.length) return '1';
     if (opers.length > 1) {
-        // Mol* operators are right-to-left
-        return opers[1] + 'x' + opers[0];
+        return opers[0] + 'x' + opers[1];
     }
     return opers[0];
 }
