@@ -30,7 +30,7 @@ import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { NakbColorThemeProvider } from './helpers/nakb/color';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getDefaultModel as getDefaultStructureModel, getDefaultStructure } from './helpers/viewer';
-import { lociToTarget, SelectBase, SelectRange, SelectTarget, Target, targetToExpression, targetToLoci } from './helpers/selection';
+import { lociToTarget, normalizeTarget, SelectBase, SelectRange, SelectTarget, Target, targetToExpression, targetToLoci } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
@@ -355,8 +355,12 @@ export class Viewer {
         return out;
     }
 
-    loadStructureFromUrl<P, S>(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps & { dataLabel?: string }; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P}) {
-        return this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
+    async loadStructureFromUrl<P, S>(url: string, format: BuiltInTrajectoryFormat, isBinary: boolean, config?: {props?: PresetProps & { dataLabel?: string }; matrix?: Mat4; reprProvider?: TrajectoryHierarchyPresetProvider<P, S>, params?: P}) {
+        try {
+            return await this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
+        } catch (e) {
+            throw new Error(`Failed to load ${url}. Error: ${e instanceof Error ? e.message : e}. The file may be in an unsupported format.`);
+        }
     }
 
     loadSnapshotFromUrl(url: string, type: PluginState.SnapshotType) {
@@ -521,7 +525,8 @@ export class Viewer {
         const structure = getDefaultStructure(this._plugin);
         if (!structure) return;
         for (const t of targets) {
-            const loci = targetToLoci(t, structure);
+            const nt = normalizeTarget(t, structure);
+            const loci = targetToLoci(nt, structure);
             this.plugin.managers.structure.measurement.addLabel(loci, {
                 labelParams: {
                     customText: config.text(t),
