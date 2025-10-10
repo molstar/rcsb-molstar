@@ -35,7 +35,7 @@ import {
 import {
     createGlyGenSelectionExpressions,
     createSelectionExpressions,
-    normalizeTargets,
+    normalizeTarget,
     SelectionExpression,
     Target,
     targetToLoci,
@@ -247,7 +247,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         } else if (p.kind === 'motif' && structure?.obj) {
             // let's force ASM_1 for motifs (as we use this contract in the rest of the stack)
             // TODO should ASM_1 be the default, seems like we'd run into problems when selecting ligands that are e.g. ambiguous with asym_id & seq_id alone?
-            const targets = normalizeTargets(p.targets, structure!.obj.data);
+            const targets = p.targets.map(t => normalizeTarget(t, structure!.obj!.data));
             let selectionExpressions = createSelectionExpressions(p.label || model.data!.entryId, targets);
             const globalExpressions = createSelectionExpressions(p.label || model.data!.entryId);
             selectionExpressions = selectionExpressions.concat(globalExpressions.map(e => { return { ...e, alpha: 0.21 }; }));

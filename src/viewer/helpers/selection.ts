@@ -74,14 +74,10 @@ export type SelectionExpression = {
  * This serves as adapter between the strucmotif-/BioJava-approach to identify transformed chains and the Mol* way.
  * Looks for 'structOperId', converts it to an 'operatorName', and removes the original value. This will
  * override pre-existing 'operatorName' values.
- * @param targets collection to process
+ * @param target object to process
  * @param structure parent structure
  * @param operatorName optional value to which missing operators are set
  */
-export function normalizeTargets(targets: Target[], structure: Structure, operatorName = undefined): Target[] {
-    return targets.map(t => normalizeTarget(t, structure, operatorName));
-}
-
 export function normalizeTarget(target: Target, structure: Structure, operatorName = undefined): Target {
     if (target.structOperId) {
         const { structOperId, ...others } = target;
