@@ -30,7 +30,7 @@ import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { NakbColorThemeProvider } from './helpers/nakb/color';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getDefaultModel as getDefaultStructureModel, getDefaultStructure } from './helpers/viewer';
-import { lociToTarget, normalizeTarget, SelectBase, SelectRange, SelectTarget, Target, targetToExpression, targetToLoci } from './helpers/selection';
+import { lociToTargets, normalizeTarget, SelectBase, SelectRange, SelectTarget, Target, targetToExpression, targetToLoci } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
@@ -399,19 +399,19 @@ export class Viewer {
      * // Unsubscribe when no longer needed
      * subscription.unsubscribe();
      */
-    subscribeToSelection(type: SelectionEventType, callback: (target?: Target) => void): Subscription {
+    subscribeToSelection(type: SelectionEventType, callback: (targets?: Target[]) => void): Subscription {
         switch (type) {
             case 'add':
                 return this.plugin.managers.structure.selection.events.loci.add.subscribe((loci) => {
-                    const target = lociToTarget(loci);
-                    if (target)
-                        callback(target);
+                    const targets = lociToTargets(loci);
+                    if (targets)
+                        callback(targets);
                 });
             case 'remove':
                 return this.plugin.managers.structure.selection.events.loci.remove.subscribe((loci) => {
-                    const target = lociToTarget(loci);
-                    if (target)
-                        callback(target);
+                    const targets = lociToTargets(loci);
+                    if (targets)
+                        callback(targets);
                 });
             case 'clear':
                 return this.plugin.managers.structure.selection.events.loci.clear.subscribe((_loci) => {

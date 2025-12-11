@@ -5,7 +5,7 @@
  */
 
 import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
-import { Structure } from 'molstar/lib/mol-model/structure/structure';
+import { Structure, StructureElement } from 'molstar/lib/mol-model/structure/structure';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
@@ -54,8 +54,13 @@ export function getStructureRefWithModelId(structures: StructureRef[], modelId: 
 }
 
 export function select(plugin: PluginContext, targets: SelectTarget | SelectTarget[], mode: 'select' | 'hover', modifier: 'add' | 'set') {
+
     if (modifier === 'set')
         clearSelection(plugin, mode);
+
+    // Group targets by their parent structure and create a union `Loci` representing all
+    // targets associated with that structure
+    const lociMap = new Map<Structure, StructureElement.Loci>();
     (Array.isArray(targets) ? targets : [targets]).forEach((target, n)=>{
         const structure = (target.modelId) ?
             getStructureWithModelId(plugin.managers.structure.hierarchy.current.structures, target.modelId) :
@@ -70,6 +75,13 @@ export function select(plugin: PluginContext, targets: SelectTarget | SelectTarg
         const loci = targetToLoci(target, structure);
         if (!loci) return;
 
+        const structureLoci = lociMap.get(structure) ?? StructureElement.Loci(structure, []);
+        const unionLoci = StructureElement.Loci.union(loci, structureLoci);
+        lociMap.set(structure, unionLoci);
+    });
+
+    // Emits a single event for all targets that belong to the same structure
+    lociMap.forEach(loci => {
         if (mode === 'hover') {
             plugin.managers.interactivity.lociHighlights.highlight({ loci });
         } else if (mode === 'select') {

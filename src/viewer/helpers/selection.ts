@@ -242,32 +242,34 @@ export function targetToLoci(target: Target, structure: Structure): StructureEle
     return StructureSelection.toLociWithSourceUnits(selection);
 }
 
-const location = StructureElement.Location.create(void 0);
-export function lociToTarget(loci: StructureElement.Loci): Target | undefined {
-    const structure = loci.structure;
-    const e = loci.elements[0];
-    StructureElement.Location.set(location, structure, e.unit, e.unit.elements[OrderedSet.getAt(e.indices, 0)]);
-    if (!Unit.isAtomic(location.unit)) return;
-
-    const label_asym_id = StructureProperties.chain.label_asym_id(location);
-    const auth_asym_id = StructureProperties.chain.auth_asym_id(location);
-
-    const label_seq_id = StructureProperties.residue.label_seq_id(location);
-    const auth_seq_id = StructureProperties.residue.auth_seq_id(location);
-
-    const label_comp_id = StructureProperties.atom.label_comp_id(location);
-
-    const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
-    const struct_oper_id = join(struct_oper_list_ids);
-
-    return {
-        labelAsymId: label_asym_id,
-        authAsymId: auth_asym_id,
-        labelSeqId: label_seq_id,
-        authSeqId: auth_seq_id,
-        labelCompId: label_comp_id,
-        structOperId: struct_oper_id
-    };
+export function lociToTargets(loci: StructureElement.Loci): Target[] | undefined {
+    const keys = new Set();
+    const targets: Target[] = [];
+    StructureElement.Loci.forEachLocation(loci, location => {
+        if (!Unit.isAtomic(location.unit)) return;
+        const label_asym_id = StructureProperties.chain.label_asym_id(location);
+        const auth_asym_id = StructureProperties.chain.auth_asym_id(location);
+        const label_seq_id = StructureProperties.residue.label_seq_id(location);
+        const auth_seq_id = StructureProperties.residue.auth_seq_id(location);
+        const label_comp_id = StructureProperties.atom.label_comp_id(location);
+        const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
+        const struct_oper_id = join(struct_oper_list_ids);
+        // canonical key string
+        const key = [label_asym_id, auth_asym_id, label_seq_id, auth_seq_id, label_comp_id, struct_oper_id].join('|');
+        if (!keys.has(key)) {
+            // Pushing only unique targets
+            keys.add(key);
+            targets.push({
+                labelAsymId: label_asym_id,
+                authAsymId: auth_asym_id,
+                labelSeqId: label_seq_id,
+                authSeqId: auth_seq_id,
+                labelCompId: label_comp_id,
+                structOperId: struct_oper_id
+            });
+        }
+    });
+    return targets;
 };
 
 function targetsToExpression(targets: Target[]): Expression {
