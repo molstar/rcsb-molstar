@@ -6,7 +6,6 @@ import { QueryContext, Structure, StructureElement, StructureProperties, Structu
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { GlyGenProps } from './preset';
 import { Unit } from 'molstar/lib/mol-model/structure/structure/unit';
-import { OrderedSet } from 'molstar/lib/mol-data/int';
 import { join } from '../ui/strucmotif/helpers';
 
 export type Range = {
@@ -242,7 +241,7 @@ export function targetToLoci(target: Target, structure: Structure): StructureEle
     return StructureSelection.toLociWithSourceUnits(selection);
 }
 
-export function lociToTargets(loci: StructureElement.Loci): Target[] | undefined {
+export function lociToTargets(loci: StructureElement.Loci): Target[] {
     const keys = new Set();
     const targets: Target[] = [];
     StructureElement.Loci.forEachLocation(loci, location => {
