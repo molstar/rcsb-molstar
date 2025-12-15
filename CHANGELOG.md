@@ -14,7 +14,8 @@
 - Retrieve asym and author chain IDs for a default structure model
 - Set the current structure view based on the provided assembly ID
 - Add custom labels to specified targets within the current structure
-- Focuse on a specific residue within the current structure
+- Focus on a specific residue within the current structure
+- Set ball and stick representation for a specific target
 
 ## [2.13.0] - 2025-09-29
 ### General
