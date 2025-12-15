@@ -7,6 +7,7 @@ import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { GlyGenProps } from './preset';
 import { Unit } from 'molstar/lib/mol-model/structure/structure/unit';
 import { join } from '../ui/strucmotif/helpers';
+import { Loci } from 'molstar/lib/mol-model/loci';
 
 export type Range = {
     readonly beg: number
@@ -241,7 +242,7 @@ export function targetToLoci(target: Target, structure: Structure): StructureEle
     return StructureSelection.toLociWithSourceUnits(selection);
 }
 
-export function lociToTargets(loci: StructureElement.Loci): Target[] {
+function lociToResidueTargets(loci: StructureElement.Loci): Target[] {
     const keys = new Set();
     const targets: Target[] = [];
     StructureElement.Loci.forEachLocation(loci, location => {
@@ -269,6 +270,73 @@ export function lociToTargets(loci: StructureElement.Loci): Target[] {
         }
     });
     return targets;
+}
+
+function lociToChainTargets(loci: StructureElement.Loci): Target[] {
+    const keys = new Set();
+    const targets: Target[] = [];
+    StructureElement.Loci.forEachLocation(loci, location => {
+        if (!Unit.isAtomic(location.unit)) return;
+        const label_asym_id = StructureProperties.chain.label_asym_id(location);
+        const auth_asym_id = StructureProperties.chain.auth_asym_id(location);
+        // canonical key string
+        const key = [label_asym_id, auth_asym_id].join('|');
+        if (!keys.has(key)) {
+            // Pushing only unique targets
+            keys.add(key);
+            targets.push({
+                labelAsymId: label_asym_id,
+                authAsymId: auth_asym_id
+            });
+        }
+    });
+    return targets;
+}
+
+function lociToModelTargets(loci: StructureElement.Loci): Target[] {
+    const keys = new Set();
+    const targets: Target[] = [];
+    StructureElement.Loci.forEachLocation(loci, location => {
+        if (!Unit.isAtomic(location.unit)) return;
+        const modelId = location.structure.model.id;
+        if (!keys.has(modelId)) {
+            // Pushing only unique targets
+            keys.add(modelId);
+            targets.push({
+                modelId: modelId
+            });
+        }
+    });
+    return targets;
+}
+
+/**
+ * Convert a StructureElement.Loci into a list of targets based on the
+ * selected granularity.
+ *
+ * This function currently supports only the granularities required by the
+ * Advanced Search UI (`residue`, `chain`, and `model`).
+ *
+ * If additional features or tools require other levels of granularity,
+ * corresponding conversion functions must be implemented here. Unsupported
+ * granularities will throw an error to prevent silent fallback behavior.
+ *
+ * @param loci - The loci representing the selected structure elements.
+ * @param granularity - The target granularity requested for conversion.
+ * @returns A list of converted targets.
+ * @throws Error if the granularity is not implemented.
+ */
+export function lociToTargets(loci: StructureElement.Loci, granularity: Loci.Granularity): Target[] {
+    switch (granularity) {
+        case 'residue':
+            return lociToResidueTargets(loci);
+        case 'chain':
+            return lociToChainTargets(loci);
+        case 'model':
+            return lociToModelTargets(loci);
+        default:
+            throw new Error(`Failed to return targets: granularity '${granularity}' is not supported`);
+    }
 };
 
 function targetsToExpression(targets: Target[]): Expression {

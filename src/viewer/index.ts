@@ -403,13 +403,15 @@ export class Viewer {
         switch (type) {
             case 'add':
                 return this.plugin.managers.structure.selection.events.loci.add.subscribe((loci) => {
-                    const targets = lociToTargets(loci);
+                    const granularity = this.plugin.managers.interactivity.props.granularity;
+                    const targets = lociToTargets(loci, granularity);
                     if (targets)
                         callback(targets);
                 });
             case 'remove':
                 return this.plugin.managers.structure.selection.events.loci.remove.subscribe((loci) => {
-                    const targets = lociToTargets(loci);
+                    const granularity = this.plugin.managers.interactivity.props.granularity;
+                    const targets = lociToTargets(loci, granularity);
                     if (targets)
                         callback(targets);
                 });
