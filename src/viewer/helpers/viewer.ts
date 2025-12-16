@@ -23,6 +23,7 @@ import {
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
 import { Model } from 'molstar/lib/mol-model/structure';
 import { EntitySubtype } from 'molstar/lib/mol-model/structure/model/properties/common';
+import { CifCategory } from 'molstar/lib/mol-io/reader/cif';
 
 export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
     let data: Structure | undefined;
@@ -193,4 +194,89 @@ export function getDefaultStructure(plugin: PluginContext) {
     const ref = refs[0];
     if (!ref) return;
     return ref.cell.obj?.data;
+}
+
+function parseOperatorList(value: string): string[][] {
+    // '(X0)(1-5)' becomes [['X0'], ['1', '2', '3', '4', '5']]
+    // kudos to Glen van Ginkel.
+
+    const oeRegex = /\(?([^()]+)\)?]*/g,
+        groups: string[] = [],
+        ret: string[][] = [];
+
+    let g: any;
+    while ((g = oeRegex.exec(value))) groups[groups.length] = g[1];
+
+    groups.forEach((g) => {
+        const group: string[] = [];
+        g.split(',').forEach((e) => {
+            const dashIndex = e.indexOf('-');
+            if (dashIndex > 0) {
+                const from = parseInt(e.substring(0, dashIndex)),
+                    to = parseInt(e.substring(dashIndex + 1));
+                for (let i = from; i <= to; i++) group[group.length] = i.toString();
+            } else {
+                group[group.length] = e.trim();
+            }
+        });
+        ret[ret.length] = group;
+    });
+
+    return ret;
+}
+
+function operatorEquals(expr: string, val: string): boolean {
+    const list = parseOperatorList(expr);
+    const split = val.split('x');
+    let matches = 0;
+    for (let i = 0, il = Math.min(list.length, split.length); i < il; i++) {
+        if (list[i].indexOf(split[i]) !== -1) matches++;
+    }
+    return matches === split.length;
+}
+
+/**
+ * Returns the first assembly ID whose generated assembly definition matches
+ * all provided (structOperId, labelAsymId) combinations.
+ *
+ * The function iterates over rows in the `pdbx_struct_assembly_gen` category
+ * and checks whether, for a given assembly:
+ *  - the operator expression matches the provided structOperId, and
+ *  - the asym_id_list contains the provided labelAsymId
+ *
+ * A row is considered a match only if **all** provided combinations satisfy
+ * these conditions for that row. The first matching `assembly_id` is returned.
+ *
+ * @param pdbx_struct_assembly_gen
+ *   CIF category describing how biological assemblies are generated.
+ *   Expected to contain `assembly_id`, `oper_expression`, and `asym_id_list` fields.
+ *
+ * @param ids
+ *   A list of [structOperId, labelAsymId] pairs to match against an assembly.
+ *   These typically come from selected targets and represent the required
+ *   operator and chain combinations that must be present in the assembly.
+ *
+ * @returns
+ *   The first matching assembly ID, or `undefined` if no match is found
+ *   or if the `pdbx_struct_assembly_gen` category is missing.
+ *
+ * @remarks
+ * - `structOperId` defaults to `'1'` when not explicitly provided.
+ * - Matching uses `operatorEquals` for operator expressions and a substring
+ *   check for `labelAsymId` membership in `asym_id_list`.
+ * - If the CIF file does not contain `pdbx_struct_assembly_gen`,
+ *   a warning is logged and no value is returned.
+ */
+export function firstMatchingAssemblyId(pdbx_struct_assembly_gen: CifCategory, ids: string[][]) {
+    if (pdbx_struct_assembly_gen) {
+        const assembly_id = pdbx_struct_assembly_gen.getField('assembly_id');
+        const oper_expression = pdbx_struct_assembly_gen.getField('oper_expression');
+        const asym_id_list = pdbx_struct_assembly_gen.getField('asym_id_list');
+        for (let i = 0, il = pdbx_struct_assembly_gen.rowCount; i < il; i++) {
+            if (ids.some(val => !operatorEquals(oper_expression!.str(i), val[0]) || asym_id_list!.str(i).indexOf(val[1]) === -1)) continue;
+            return assembly_id!.str(i);
+        }
+    } else {
+        console.warn(`Source file is missing 'pdbx_struct_assembly_gen' category`);
+    }
 }

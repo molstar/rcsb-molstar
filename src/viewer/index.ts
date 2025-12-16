@@ -29,7 +29,7 @@ import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { NakbColorThemeProvider } from './helpers/nakb/color';
-import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getDefaultModel as getDefaultStructureModel, getDefaultStructure } from './helpers/viewer';
+import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getDefaultModel as getDefaultStructureModel, getDefaultStructure, firstMatchingAssemblyId } from './helpers/viewer';
 import { lociToTargets, normalizeTarget, SelectBase, SelectRange, SelectTarget, Target, targetToExpression, targetToLoci } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
@@ -59,6 +59,7 @@ import { Color } from 'molstar/lib/mol-util/color';
 import { StructureSelection, QueryContext } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/base';
 import { EntitySubtype } from 'molstar/lib/mol-model/structure/model/properties/common';
+import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -449,6 +450,44 @@ export class Viewer {
         const model = getDefaultStructureModel(this.plugin);
         if (!model) return [];
         return getAssemblyIdsFromModel(model);
+    }
+
+    /**
+     * Determines the most appropriate biological assembly ID for a set of targets.
+     *
+     * The assembly ID is inferred by matching the provided targets against
+     * the `pdbx_struct_assembly_gen` category of the structure’s mmCIF data.
+     * Each target contributes a `(structOperId, labelAsymId)` pair, and the
+     * first assembly whose generation rules satisfy all such pairs is returned.
+     *
+     * @param targets
+     *   A list of targets (e.g., residues, chains) associated with the current
+     *   structure. Each target is expected to provide a `labelAsymId` and may
+     *   optionally provide a `structOperId` (defaulting to `'1'` if absent).
+     *
+     * @returns
+     *   The matching biological assembly ID, or `undefined` if no assemblies
+     *   are defined or if none satisfy all target constraints.
+     *
+     * @throws
+     *   An error if no default structure is available in the plugin, or if
+     *   the structure source data is not in mmCIF format.
+     *
+     * @remarks
+     * - Duplicate `(structOperId, labelAsymId)` pairs derived from the targets
+     *   are removed before matching.
+     */
+    determineAssemblyId(targets: Target[]): string | undefined {
+        const s = getDefaultStructure(this.plugin);
+        if (!s) throw new Error(`No default structure is available`);
+        if (!MmcifFormat.is(s.model.sourceData)) throw new Error(`Structure source data is not in mmCIF format`);
+
+        // set of provided [structOperId, labelAsymId] combinations
+        const ids = targets.map(t => [t.structOperId || '1', t.labelAsymId!]).filter((x, i, a) => a.indexOf(x) === i);
+
+        const { frame } = s.model.sourceData.data;
+        const pdbx_struct_assembly_gen = frame.categories.pdbx_struct_assembly_gen;
+        return firstMatchingAssemblyId(pdbx_struct_assembly_gen, ids);
     }
 
     /**

@@ -48,7 +48,7 @@ import {
 } from 'molstar/lib/extensions/assembly-symmetry/prop';
 import { Task } from 'molstar/lib/mol-task';
 import { QualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
-import { getAssemblyIdsFromModel } from './viewer';
+import { getAssemblyIdsFromModel, firstMatchingAssemblyId } from './viewer';
 
 type BaseProps = {
     assemblyId?: string
@@ -374,62 +374,15 @@ function determineAssemblyId(traj: any, p: MotifProps) {
     // nothing to do if assembly is known
     if (p.assemblyId && p.assemblyId !== '' && p.assemblyId !== '0') return;
 
-    function equals(expr: string, val: string): boolean {
-        const list = parseOperatorList(expr);
-        const split = val.split('x');
-        let matches = 0;
-        for (let i = 0, il = Math.min(list.length, split.length); i < il; i++) {
-            if (list[i].indexOf(split[i]) !== -1) matches++;
-        }
-        return matches === split.length;
-    }
-
-    function parseOperatorList(value: string): string[][] {
-        // '(X0)(1-5)' becomes [['X0'], ['1', '2', '3', '4', '5']]
-        // kudos to Glen van Ginkel.
-
-        const oeRegex = /\(?([^()]+)\)?]*/g, groups: string[] = [], ret: string[][] = [];
-
-        let g: any;
-        while (g = oeRegex.exec(value)) groups[groups.length] = g[1];
-
-        groups.forEach(g => {
-            const group: string[] = [];
-            g.split(',').forEach(e => {
-                const dashIndex = e.indexOf('-');
-                if (dashIndex > 0) {
-                    const from = parseInt(e.substring(0, dashIndex)), to = parseInt(e.substring(dashIndex + 1));
-                    for (let i = from; i <= to; i++) group[group.length] = i.toString();
-                } else {
-                    group[group.length] = e.trim();
-                }
-            });
-            ret[ret.length] = group;
-        });
-
-        return ret;
-    }
-
     // set of provided [structOperId, labelAsymId] combinations
     const ids = p.targets.map(t => [t.structOperId || '1', t.labelAsymId!]).filter((x, i, a) => a.indexOf(x) === i);
-
     try {
-        // find first assembly that contains all requested structOperIds - if multiple, the first will be returned
         const pdbx_struct_assembly_gen = traj.obj.data.representative.sourceData.data.frame.categories.pdbx_struct_assembly_gen;
-        if (pdbx_struct_assembly_gen) {
-            const assembly_id = pdbx_struct_assembly_gen.getField('assembly_id');
-            const oper_expression = pdbx_struct_assembly_gen.getField('oper_expression');
-            const asym_id_list = pdbx_struct_assembly_gen.getField('asym_id_list');
-
-            for (let i = 0, il = pdbx_struct_assembly_gen.rowCount; i < il; i++) {
-                if (ids.some(val => !equals(oper_expression.str(i), val[0]) || asym_id_list.str(i).indexOf(val[1]) === -1)) continue;
-
-                Object.assign(p, { assemblyId: assembly_id.str(i) });
-                return;
-            }
-        } else {
-            // this happens e.g. for AlphaFold structures
-            console.warn(`Source file is missing 'pdbx_struct_assembly_gen' category`);
+        // find first assembly that contains all requested structOperIds - if multiple, the first will be returned
+        const assemblyId = firstMatchingAssemblyId(pdbx_struct_assembly_gen, ids);
+        if (assemblyId) {
+            Object.assign(p, { assemblyId: assemblyId });
+            return;
         }
     } catch (error) {
         console.warn(error);
@@ -481,3 +434,4 @@ async function initVolumeStreaming(plugin: PluginContext, structure: StructureOb
         volume: false
     });
 }
+
