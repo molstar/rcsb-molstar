@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [2.14.0] - Unreleased
+## [2.14.0] - 2025-12-18
 ### General
 - Default assembly preset
 - More configuration options for controls in the layout and viewport
