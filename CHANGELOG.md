@@ -16,6 +16,8 @@
 - Add custom labels to specified targets within the current structure
 - Focus on a specific residue within the current structure
 - Set ball and stick representation for a specific target
+- Determine the unknown assemblyId for a set of targets
+- Toggle visibility of structure component groups
 
 ## [2.13.0] - 2025-09-29
 ### General

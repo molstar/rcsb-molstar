@@ -147,6 +147,12 @@ export type ViewerProps = typeof DefaultViewerProps & { canvas3d: PartialCanvas3
 
 type SelectionEventType = 'add' | 'remove' | 'clear';
 
+const COMPONENT_LABELS = ['Polymer', 'Ligand', 'Carbohydrate', 'Lipid', 'Ion', 'Water'];
+type ComponentLabelType = typeof COMPONENT_LABELS[number];
+function isComponentLabelType(label: string): label is ComponentLabelType {
+    return (COMPONENT_LABELS as readonly string[]).includes(label);
+}
+
 const LigandExtensions = {
     'wwpdb-chemical-component-dictionary': PluginSpec.Behavior(wwPDBChemicalComponentDictionary),
     'mp4-export': PluginSpec.Behavior(Mp4Export),
@@ -655,6 +661,39 @@ export class Viewer {
             tree: builder,
             options: { doNotLogTiming: true, doNotUpdateCurrent: true }
         });
+    }
+
+    /**
+     * Toggle visibility of structure component groups based on Mol*-assigned component labels.
+     *
+     * Component labels are assigned by Mol* at runtime and are not strongly typed.
+     * The {@link ComponentLabelType} union reflects the currently adopted Mol* label
+     * notation. Although these labels are not formally guaranteed by Mol*, they are
+     * considered stable and unlikely to change.
+     *
+     * Visibility is toggled only when a change is required, avoiding redundant state
+     * updates.
+     *
+     * @param {ComponentLabelType[]} labels
+     *   List of component labels whose visibility should be modified.
+     *
+     * @param {'on' | 'off'} mode
+     *   Desired visibility state:
+     *   - `'on'` shows components that are currently hidden
+     *   - `'off'` hides components that are currently visible
+     *
+     * @returns {void}
+    */
+    setVisibility(labels: ComponentLabelType[], mode: 'on' | 'off'): void {
+        for (const components of this.plugin.managers.structure.hierarchy.currentComponentGroups) {
+            const label = components[0].cell.obj?.label;
+            if (!label || !isComponentLabelType(label)) continue;
+            const isRequestedLabel = labels.includes(label);
+            const shouldToggle = mode === (components[0].cell.state.isHidden ? 'on' : 'off');
+            if (isRequestedLabel && shouldToggle) {
+                this.plugin.managers.structure.component.toggleVisibility(components);
+            }
+        }
     }
 
     private toggleControls(): void {
