@@ -41,6 +41,9 @@ export class ModelLoader {
         params?: P
     ): Promise<S | ReturnType<typeof RcsbPreset.apply> | undefined> {
         const trajectory = await this.plugin.builders.structure.parseTrajectory(data, format);
+        if (!trajectory) {
+            throw new Error('Trajectory data is unavailable or invalid');
+        }
         if (reprProvider) {
             return this.plugin.builders.structure.hierarchy.applyPreset(trajectory, reprProvider, params);
         } else {

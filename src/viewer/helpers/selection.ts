@@ -2,9 +2,12 @@ import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder'
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { Expression } from 'molstar/lib/mol-script/language/expression';
-import { QueryContext, Structure, StructureElement, StructureSelection } from 'molstar/lib/mol-model/structure';
+import { QueryContext, Structure, StructureElement, StructureProperties, StructureSelection } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
 import { GlyGenProps } from './preset';
+import { Unit } from 'molstar/lib/mol-model/structure/structure/unit';
+import { join } from '../ui/strucmotif/helpers';
+import { Loci } from 'molstar/lib/mol-model/loci';
 
 export type Range = {
     readonly beg: number
@@ -17,12 +20,14 @@ export type Target = {
     readonly labelSeqId?: number
     readonly labelSeqRange?: Range
     readonly labelCompId?: string
-    // readonly authAsymId?: string
+    readonly authAsymId?: string
     readonly labelAsymId?: string
     /**
      * Mol*-internal UUID of a model.
      */
     readonly modelId?: string
+
+    readonly modelNum?: number
     /**
      * Mol*-internal representation, like 'ASM_2'. Enumerated in the order of appearance in the source file. If
      * possible, specify the assemblyId when using this selector.
@@ -43,16 +48,16 @@ export type Target = {
 }
 
 export type SelectBase = {
-    readonly modelId: string
+    readonly modelId?: string
+    readonly modelNum?: number
     readonly labelAsymId: string
     readonly operatorName?: string
 }
-export type SelectSingle = {
-    readonly labelSeqId: number
-} & SelectBase;
+export type SelectSingle = Required<Pick<Target, 'labelAsymId' | 'labelSeqId'>> & Omit<Target, 'labelAsymId' | 'labelSeqId'>
 export type SelectRange = {
     readonly labelSeqRange: Range
-} & SelectBase;
+} & Required<Pick<Target, 'labelAsymId'>> & Omit<Target, 'labelAsymId'>;
+
 export type SelectTarget = SelectSingle | SelectRange;
 
 export type SelectionExpression = {
@@ -69,40 +74,39 @@ export type SelectionExpression = {
  * This serves as adapter between the strucmotif-/BioJava-approach to identify transformed chains and the Mol* way.
  * Looks for 'structOperId', converts it to an 'operatorName', and removes the original value. This will
  * override pre-existing 'operatorName' values.
- * @param targets collection to process
+ * @param target object to process
  * @param structure parent structure
  * @param operatorName optional value to which missing operators are set
  */
-export function normalizeTargets(targets: Target[], structure: Structure, operatorName = undefined): Target[] {
-    return targets.map(t => {
-        if (t.structOperId) {
-            const { structOperId, ...others } = t;
-            const oper = toOperatorName(structure, structOperId);
-            return { ...others, operatorName: oper };
-        }
-        return t.operatorName ? t : { ...t, operatorName };
-    });
+export function normalizeTarget(target: Target, structure: Structure, operatorName = undefined): Target {
+    if (target.structOperId) {
+        const { structOperId, ...others } = target;
+        const oper = toOperatorName(structure, structOperId);
+        return { ...others, operatorName: oper };
+    }
+    return target.operatorName ? target : { ...target, operatorName };
 }
 
 function toOperatorName(structure: Structure, expression: string): string {
-    function join(opers: any[]) {
-        // this makes the assumptions that '1' is the identity operator
-        if (!opers || !opers.length) return '1';
-        if (opers.length > 1) {
-            // Mol* operators are right-to-left
-            return opers[1] + 'x' + opers[0];
-        }
-        return opers[0];
-    }
+    let isAssemblyDefined = false;
 
     for (const unit of structure.units) {
         const assembly = unit.conformation.operator.assembly;
         if (!assembly) continue;
 
-        if (expression === join(assembly.operList)) return `ASM_${assembly.operId}`;
+        isAssemblyDefined = true;
+        const { operList, operId } = assembly;
+
+        if (expression === join(operList)) {
+            return `ASM_${operId}`;
+        }
     }
-    // TODO better error handling?
-    throw Error(`Unable to find expression '${expression}'`);
+    if (isAssemblyDefined) {
+        // TODO better error handling?
+        throw Error(`Assemblies exist, but no matching operator expression found: '${expression}'`);
+    }
+    // Assemblies are not defined; return identity operator
+    return '1_555';
 }
 
 /**
@@ -238,12 +242,109 @@ export function targetToLoci(target: Target, structure: Structure): StructureEle
     return StructureSelection.toLociWithSourceUnits(selection);
 }
 
+function lociToResidueTargets(loci: StructureElement.Loci): Target[] {
+    const keys = new Set();
+    const targets: Target[] = [];
+    StructureElement.Loci.forEachLocation(loci, location => {
+        if (!Unit.isAtomic(location.unit)) return;
+        const label_asym_id = StructureProperties.chain.label_asym_id(location);
+        const auth_asym_id = StructureProperties.chain.auth_asym_id(location);
+        const label_seq_id = StructureProperties.residue.label_seq_id(location);
+        const auth_seq_id = StructureProperties.residue.auth_seq_id(location);
+        const label_comp_id = StructureProperties.atom.label_comp_id(location);
+        const struct_oper_list_ids = StructureProperties.unit.pdbx_struct_oper_list_ids(location);
+        const struct_oper_id = join(struct_oper_list_ids);
+        // canonical key string
+        const key = [label_asym_id, auth_asym_id, label_seq_id, auth_seq_id, label_comp_id, struct_oper_id].join('|');
+        if (!keys.has(key)) {
+            // Pushing only unique targets
+            keys.add(key);
+            targets.push({
+                labelAsymId: label_asym_id,
+                authAsymId: auth_asym_id,
+                labelSeqId: label_seq_id,
+                authSeqId: auth_seq_id,
+                labelCompId: label_comp_id,
+                structOperId: struct_oper_id
+            });
+        }
+    });
+    return targets;
+}
+
+function lociToChainTargets(loci: StructureElement.Loci): Target[] {
+    const keys = new Set();
+    const targets: Target[] = [];
+    StructureElement.Loci.forEachLocation(loci, location => {
+        if (!Unit.isAtomic(location.unit)) return;
+        const label_asym_id = StructureProperties.chain.label_asym_id(location);
+        const auth_asym_id = StructureProperties.chain.auth_asym_id(location);
+        // canonical key string
+        const key = [label_asym_id, auth_asym_id].join('|');
+        if (!keys.has(key)) {
+            // Pushing only unique targets
+            keys.add(key);
+            targets.push({
+                labelAsymId: label_asym_id,
+                authAsymId: auth_asym_id
+            });
+        }
+    });
+    return targets;
+}
+
+function lociToModelTargets(loci: StructureElement.Loci): Target[] {
+    const keys = new Set();
+    const targets: Target[] = [];
+    StructureElement.Loci.forEachLocation(loci, location => {
+        if (!Unit.isAtomic(location.unit)) return;
+        const modelId = location.structure.model.id;
+        if (!keys.has(modelId)) {
+            // Pushing only unique targets
+            keys.add(modelId);
+            targets.push({
+                modelId: modelId
+            });
+        }
+    });
+    return targets;
+}
+
+/**
+ * Convert a StructureElement.Loci into a list of targets based on the
+ * selected granularity.
+ *
+ * This function currently supports only the granularities required by the
+ * Advanced Search UI (`residue`, `chain`, and `model`).
+ *
+ * If additional features or tools require other levels of granularity,
+ * corresponding conversion functions must be implemented here. Unsupported
+ * granularities will throw an error to prevent silent fallback behavior.
+ *
+ * @param loci - The loci representing the selected structure elements.
+ * @param granularity - The target granularity requested for conversion.
+ * @returns A list of converted targets.
+ * @throws Error if the granularity is not implemented.
+ */
+export function lociToTargets(loci: StructureElement.Loci, granularity: Loci.Granularity): Target[] {
+    switch (granularity) {
+        case 'residue':
+            return lociToResidueTargets(loci);
+        case 'chain':
+            return lociToChainTargets(loci);
+        case 'model':
+            return lociToModelTargets(loci);
+        default:
+            throw new Error(`Failed to return targets: granularity '${granularity}' is not supported`);
+    }
+};
+
 function targetsToExpression(targets: Target[]): Expression {
     const expressions = targets.map(t => targetToExpression(t));
     return MS.struct.combinator.merge(expressions);
 }
 
-function targetToExpression(target: Target): Expression {
+export function targetToExpression(target: Target): Expression {
     const residueTests: Expression[] = [];
     const chainTests: Expression[] = [];
     const tests: { 'residue-test': Expression, 'chain-test': Expression } = Object.create(null);
