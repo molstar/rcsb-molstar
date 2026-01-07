@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.14.1] - 2026-01-07
+### General
+- Update of RSCC statistics (RO-4900)
+
 ## [2.14.0] - 2025-12-18
 ### General
 - Default assembly preset
