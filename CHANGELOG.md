@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [2.14.1] - 2026-01-07
+## [2.14.1] - 2026-01-08
 ### General
 - Update of RSCC statistics (RO-4900)
 
