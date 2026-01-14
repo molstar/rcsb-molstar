@@ -610,7 +610,30 @@ export class Viewer {
         this.plugin.managers.camera.focusLoci(loci);
     }
 
-    selectResidueSurroundings(target: Target, radius: number) {
+    /**
+     * Selects all surrounding polymeric residues within a specified radius of a given target.
+     *
+     * The function:
+     * 1. Resolves the default structure from the plugin context.
+     * 2. Creates a residue-level selection expression for the given target.
+     * 3. Expands the selection to include all residues within the provided
+     *    radius (in Å), treating each residue as a whole.
+     * 4. Restricts the expanded selection to residues from polymeric chains only.
+     * 5. Executes the compiled query and adds the resulting loci to the
+     *    structure selection manager.
+     *
+     * If no default structure is available, the function returns without
+     * modifying the current selection.
+     *
+     * @param {Target} target
+     *   The target residue used as the center of the surroundings selection.
+     *
+     * @param {number} radius
+     *   The radius (in Å) within which surrounding residues are selected.
+     *
+     * @returns {void}
+     */
+    selectResidueSurroundings(target: Target, radius: number): void {
         const structure = getDefaultStructure(this.plugin);
         if (!structure) return;
 
@@ -633,7 +656,24 @@ export class Viewer {
         this.plugin.managers.structure.selection.fromLoci('add', surroundingsLoci);
     }
 
-    orderTargetsByDistanceToPivot(pivot: Target, targets: Target[]) {
+    /**
+     * Orders a list of targets by their spatial distance to a pivot target.
+     *
+     * The distance between the pivot and each target is computed using the
+     * currently loaded default structure. Targets are then sorted in ascending
+     * order of distance (closest first).
+     *
+     * @param {Target} pivot
+     *   The reference target from which distances are calculated.
+     *
+     * @param {Target[]} targets
+     *   The list of targets to be ordered by distance to the pivot.
+     *
+     * @returns {Target[] | undefined}
+     *   An array of targets sorted by increasing distance to the pivot, or
+     *   {@code undefined} if no default structure is available.
+     */
+    orderTargetsByDistanceToPivot(pivot: Target, targets: Target[]): Target[] | undefined {
         const structure = getDefaultStructure(this.plugin);
         if (!structure) return;
         return getTargetsDistanceToPivot(pivot, targets, structure)
