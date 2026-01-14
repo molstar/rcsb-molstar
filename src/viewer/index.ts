@@ -30,7 +30,7 @@ import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { NakbColorThemeProvider } from './helpers/nakb/color';
 import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getDefaultModel as getDefaultStructureModel, getDefaultStructure, firstMatchingAssemblyId } from './helpers/viewer';
-import { lociToTargets, normalizeTarget, SelectBase, SelectRange, SelectTarget, Target, targetToExpression, targetToLoci } from './helpers/selection';
+import { lociToTargets, normalizeTarget, SelectBase, SelectRange, SelectTarget, Target, targetToExpression, targetToLoci, createResidueSelectionExpression, getTargetsDistanceToPivot } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
@@ -60,6 +60,7 @@ import { StructureSelection, QueryContext } from 'molstar/lib/mol-model/structur
 import { compile } from 'molstar/lib/mol-script/runtime/query/base';
 import { EntitySubtype } from 'molstar/lib/mol-model/structure/model/properties/common';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
+import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -595,30 +596,49 @@ export class Viewer {
      *
      * @param target - A `Target` object specifying the residue to focus on. It must include:
      *   - `labelAsymId`: the chain ID (label format),
-     *   - `operatorName`: the operator applied to the chain,
+     *   - Either `structOperId` or `operatorName`: the operator applied to the chain,
      *   - Either `authSeqId` or `labelSeqId` to locate the residue.
      */
     focusOnResidue(target: Target) {
         const structure = getDefaultStructure(this.plugin);
         if (!structure) return;
-        const residueTest = (target.authSeqId) ?
-            MS.core.rel.eq([target.authSeqId, MS.ammp('auth_seq_id')]) :
-            MS.core.rel.eq([target.labelSeqId, MS.ammp('label_seq_id')]);
-        const tests = {
-            'residue-test': MS.core.logic.and([residueTest]),
-            'chain-test': MS.core.logic.and([
-                MS.core.rel.eq([target.labelAsymId, MS.ammp('label_asym_id')]),
-                MS.core.rel.eq([target.operatorName, MS.acp('operatorName')])
-            ]),
-        };
-        const expression = MS.struct.modifier.union([
-            MS.struct.generator.atomGroups(tests)
-        ]);
+        const expression = createResidueSelectionExpression(target, structure);
         const query = compile<StructureSelection>(expression);
         const selection = query(new QueryContext(structure));
         const loci = StructureSelection.toLociWithSourceUnits(selection);
         this.plugin.managers.structure.focus.setFromLoci(loci);
         this.plugin.managers.camera.focusLoci(loci);
+    }
+
+    selectResidueSurroundings(target: Target, radius: number) {
+        const structure = getDefaultStructure(this.plugin);
+        if (!structure) return;
+
+        const residue = createResidueSelectionExpression(target, structure);
+        // include all residues withing a given radius
+        const residuePlusSurroundings = MS.struct.modifier.includeSurroundings({
+            0: residue,
+            radius: radius,
+            'as-whole-residues': true
+        });
+        // include only residues from polymeric chains
+        const polymerResidues = MS.struct.modifier.intersectBy({
+            0: residuePlusSurroundings,
+            by: Q.polymer.expression
+        });
+
+        const query = compile<StructureSelection>(polymerResidues);
+        const selection = query(new QueryContext(structure));
+        const surroundingsLoci = StructureSelection.toLociWithSourceUnits(selection);
+        this.plugin.managers.structure.selection.fromLoci('add', surroundingsLoci);
+    }
+
+    orderTargetsByDistanceToPivot(pivot: Target, targets: Target[]) {
+        const structure = getDefaultStructure(this.plugin);
+        if (!structure) return;
+        return getTargetsDistanceToPivot(pivot, targets, structure)
+            .sort((a, b) => a.distance - b.distance)
+            .map(a => a.target);
     }
 
     async setBallAndStick(target: Target | Target[], mode: 'on' | 'off') {

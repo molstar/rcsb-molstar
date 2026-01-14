@@ -8,6 +8,7 @@ import { GlyGenProps } from './preset';
 import { Unit } from 'molstar/lib/mol-model/structure/structure/unit';
 import { join } from '../ui/strucmotif/helpers';
 import { Loci } from 'molstar/lib/mol-model/loci';
+import { Vec3 } from 'molstar/lib/mol-math/linear-algebra/3d/vec3';
 
 export type Range = {
     readonly beg: number
@@ -205,6 +206,56 @@ export function createGlyGenSelectionExpressions(p: GlyGenProps, label: string):
         },
         ...createSelectionExpressions(label).map(e => { return { ...e, alpha: 0.21 }; })
     ];
+}
+
+export function createResidueSelectionExpression(target: Target, structure: Structure): Expression {
+    if (target.structOperId && !target.operatorName) {
+        target = normalizeTarget(target, structure);
+    }
+    const residueId = (target.authSeqId) ?
+        MS.core.rel.eq([target.authSeqId, MS.ammp('auth_seq_id')]) :
+        MS.core.rel.eq([target.labelSeqId, MS.ammp('label_seq_id')]);
+    const residueInstance = {
+        'residue-test': MS.core.logic.and([residueId]),
+        'chain-test': MS.core.logic.and([
+            MS.core.rel.eq([target.labelAsymId, MS.ammp('label_asym_id')]),
+            MS.core.rel.eq([target.operatorName, MS.acp('operatorName')])
+        ]),
+    };
+    return MS.struct.modifier.union([
+        MS.struct.generator.atomGroups(residueInstance)
+    ]);
+}
+
+function getTargetCoords(target: Target, structure: Structure): Vec3[] {
+    const out: Vec3[] = [];
+    const loci = targetToLoci(target, structure);
+    StructureElement.Loci.forEachLocation(loci, l => {
+        const v = Vec3.create(
+            StructureProperties.atom.x(l),
+            StructureProperties.atom.y(l),
+            StructureProperties.atom.z(l),
+        );
+        out.push(v);
+    });
+    return out;
+}
+
+export function getTargetsDistanceToPivot(pivot: Target, targets: Target[], structure: Structure): { target: Target, distance: number }[] {
+    const out: { target: Target, distance: number }[] = [];
+    const pivotCoords = getTargetCoords(pivot, structure);
+    for (const t of targets) {
+        const coords = getTargetCoords(t, structure);
+        let minDist = Infinity;
+        for (const pc of pivotCoords) {
+            for (const c of coords) {
+                const d = Vec3.distance(pc, c);
+                if (d < minDist) minDist = d;
+            }
+        }
+        out.push({ target: t, distance: minDist });
+    }
+    return out;
 }
 
 export const toRange = (start: number, end?: number) => {
