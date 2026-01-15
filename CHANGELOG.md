@@ -2,6 +2,11 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.14.2] - Unreleased
+### API
+- Selects surrounding polymeric residues within a specified radius of a given target
+- Order a list of targets by their spatial distance to a pivot target
+
 ## [2.14.1] - 2026-01-08
 ### General
 - Update of RSCC statistics (RO-4900)
