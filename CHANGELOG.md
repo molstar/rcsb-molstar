@@ -2,7 +2,7 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [2.14.2] - Unreleased
+## [2.14.2] - 2026-01-16
 ### API
 - Selects surrounding polymeric residues within a specified radius of a given target
 - Order a list of targets by their spatial distance to a pivot target
