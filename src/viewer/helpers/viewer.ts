@@ -217,7 +217,9 @@ export function getAsymIdsFromStructure(structure: Structure, types?: EntitySubt
 
 export async function getAssemblyIdsFromStructure(structure: Structure, types?: EntitySubtype[], maxLength?: number) {
     const symmetry = ModelSymmetry.Provider.get(structure.model);
-    const assemblyIds = symmetry ? symmetry.assemblies.map(a => a.id) : ['deposited'];
+    const assemblyIds = Array.isArray(symmetry?.assemblies) && symmetry.assemblies.length > 0
+        ? symmetry.assemblies.map(a => a.id)
+        : ['deposited'];
     if (!types && !maxLength) {
         return assemblyIds;
     }
