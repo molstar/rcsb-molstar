@@ -25,6 +25,7 @@ import { EntitySubtype } from 'molstar/lib/mol-model/structure/model/properties/
 import { CifCategory } from 'molstar/lib/mol-io/reader/cif';
 import { StructureSelection, QueryContext } from 'molstar/lib/mol-model/structure';
 import { compile } from 'molstar/lib/mol-script/runtime/query/base';
+import { Expression } from 'molstar/lib/mol-script/language/expression';
 
 export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
     let data: Structure | undefined;
@@ -161,29 +162,44 @@ export async function removeComponent(plugin: PluginContext, componentLabel: str
     await Promise.all(out);
 }
 
+/**
+ * Build a regex string that matches any string in the array.
+ * @param values Array of strings to match
+ * @returns regex string
+ */
+function buildRegexString(values: string[]): string {
+    // Escape regex special characters in each string
+    const escaped = values.map(v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    // Join with | to match any of them
+    return `(${escaped.join('|')})`;
+}
+
 const getResidueCount = (structure: Structure, types?: EntitySubtype[], labelAsymId?: string) => {
-    const conditions = [
-        ...(types
-            ? [MS.core.str.match([
-                MS.re(`(${types.join('|')})`, 'i'),
+
+    // Fast path: no filters
+    if (!types?.length && !labelAsymId) return structure.atomicResidueCount;
+
+    // Generate the filtered atom groups
+    const expressionArgs: { [key: string]: Expression } = {};
+    if (types?.length) {
+        expressionArgs['entity-test'] = MS.core.logic.and([
+            MS.core.rel.eq([MS.ammp('entityType'), 'polymer']),
+            MS.core.str.match([
+                MS.re(buildRegexString(types), 'i'),
                 MS.ammp('entitySubtype')
-            ])]
-            : []),
+            ])
+        ]);
+    }
+    if (labelAsymId) {
+        expressionArgs['chain-test'] = MS.core.rel.eq([labelAsymId, MS.ammp('label_asym_id')]);
+    }
+    const groups = MS.struct.generator.atomGroups(expressionArgs);
 
-        ...(labelAsymId
-            ? [MS.core.rel.eq([labelAsymId, MS.ammp('label_asym_id')])]
-            : [])
-    ];
-
-    const loci = conditions.length
-        ? StructureSelection.toLociWithSourceUnits(
-            compile<StructureSelection>(
-                MS.core.logic.and(conditions)
-            )(new QueryContext(structure))
-        )
-        : StructureElement.Loci.all(structure);
-
-    return StructureElement.Stats.ofLoci(loci).residueCount;
+    // Compile and execute the query
+    const selection = compile<StructureSelection>(MS.struct.modifier.union([groups]))(
+        new QueryContext(structure)
+    );
+    return StructureSelection.unionStructure(selection).atomicResidueCount;
 };
 
 export function getAsymIdsFromStructure(structure: Structure, types?: EntitySubtype[], maxLength?: number) {
