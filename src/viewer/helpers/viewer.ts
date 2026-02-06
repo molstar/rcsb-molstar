@@ -5,7 +5,7 @@
  */
 
 import { StructureRef } from 'molstar/lib/mol-plugin-state/manager/structure/hierarchy-state';
-import { Structure, StructureElement } from 'molstar/lib/mol-model/structure/structure';
+import { Structure, StructureElement, StructureSymmetry } from 'molstar/lib/mol-model/structure/structure';
 import { PluginContext } from 'molstar/lib/mol-plugin/context';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
@@ -21,9 +21,10 @@ import {
     toRange
 } from './selection';
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
-import { Model } from 'molstar/lib/mol-model/structure';
 import { EntitySubtype } from 'molstar/lib/mol-model/structure/model/properties/common';
 import { CifCategory } from 'molstar/lib/mol-io/reader/cif';
+import { StructureSelection, QueryContext } from 'molstar/lib/mol-model/structure';
+import { compile } from 'molstar/lib/mol-script/runtime/query/base';
 
 export function setFocusFromRange(plugin: PluginContext, target: SelectRange) {
     let data: Structure | undefined;
@@ -160,32 +161,61 @@ export async function removeComponent(plugin: PluginContext, componentLabel: str
     await Promise.all(out);
 }
 
-export function getAssemblyIdsFromModel(model: Model | undefined) {
-    if (!model) return [];
-    const symmetry = model && ModelSymmetry.Provider.get(model);
-    return symmetry ? symmetry.assemblies.map(a => a.id) : [];
+const getResidueCount = (structure: Structure, types?: EntitySubtype[], labelAsymId?: string) => {
+    const conditions = [
+        ...(types
+            ? [MS.core.str.match([
+                MS.re(`(${types.join('|')})`, 'i'),
+                MS.ammp('entitySubtype')
+            ])]
+            : []),
+
+        ...(labelAsymId
+            ? [MS.core.rel.eq([labelAsymId, MS.ammp('label_asym_id')])]
+            : [])
+    ];
+
+    const loci = conditions.length
+        ? StructureSelection.toLociWithSourceUnits(
+            compile<StructureSelection>(
+                MS.core.logic.and(conditions)
+            )(new QueryContext(structure))
+        )
+        : StructureElement.Loci.all(structure);
+
+    return StructureElement.Stats.ofLoci(loci).residueCount;
+};
+
+export function getAsymIdsFromStructure(structure: Structure, types?: EntitySubtype[], maxLength?: number) {
+    const structAsymMap = structure.model.properties.structAsymMap.values();
+    const asymIds: Array<[string, string]> =
+        Array.from(structAsymMap).map(({ id, auth_id }) => [id, auth_id]);
+    if (!types && !maxLength) {
+        return asymIds;
+    }
+    return asymIds.filter(([labelAsymId]) => {
+        const residueCount = getResidueCount(structure, types, labelAsymId);
+        return residueCount > 0 && (!maxLength || residueCount <= maxLength);
+    });
 }
 
-export function getAsymIdsFromModel(model: Model | undefined, types?: EntitySubtype[]) {
-    if (!model) return [];
-    model.properties.structAsymMap;
-    return Array.from(model.properties.structAsymMap.values())
-        .filter(v => {
-            if (!types) return true;
-            const idx = model.entities.getEntityIndex(v.entity_id);
-            const subtype = model.entities.subtype.value(idx);
-            if (!subtype) return true;
-            return types.includes(subtype);
+export async function getAssemblyIdsFromStructure(structure: Structure, types?: EntitySubtype[], maxLength?: number) {
+    const symmetry = ModelSymmetry.Provider.get(structure.model);
+    const assemblyIds = symmetry ? symmetry.assemblies.map(a => a.id) : [];
+    if (!types && !maxLength) {
+        return assemblyIds;
+    }
+    const results = await Promise.all(
+        assemblyIds.map(async assemblyId => {
+            const assembly = await StructureSymmetry
+                .buildAssembly(structure, assemblyId)
+                .run();
+            const residueCount = getResidueCount(assembly, types);
+            const keep = residueCount > 0 && (!maxLength || residueCount <= maxLength);
+            return keep ? assemblyId : null;
         })
-        .map(v => [v.id, v.auth_id]);
-}
-
-export function getDefaultModel(plugin: PluginContext) {
-    const refs = plugin.managers.structure.hierarchy.current.models;
-    if (refs.length === 0) return;
-    const ref = refs[0];
-    if (!ref) return;
-    return ref.cell.obj?.data;
+    );
+    return results.filter((id): id is string => id !== null);
 }
 
 export function getDefaultStructure(plugin: PluginContext) {

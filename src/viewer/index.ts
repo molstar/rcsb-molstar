@@ -29,8 +29,27 @@ import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { PluginLayoutControlsDisplay } from 'molstar/lib/mol-plugin/layout';
 import { SuperposeColorThemeProvider } from './helpers/superpose/color';
 import { NakbColorThemeProvider } from './helpers/nakb/color';
-import { setFocusFromRange, removeComponent, clearSelection, createComponent, select, getAssemblyIdsFromModel, getAsymIdsFromModel, getDefaultModel as getDefaultStructureModel, getDefaultStructure, firstMatchingAssemblyId } from './helpers/viewer';
-import { lociToTargets, normalizeTarget, SelectBase, SelectRange, SelectTarget, Target, targetToExpression, targetToLoci, createResidueSelectionExpression, getTargetsDistanceToPivot } from './helpers/selection';
+import {
+    setFocusFromRange,
+    removeComponent,
+    clearSelection,
+    createComponent,
+    select,
+    getAssemblyIdsFromStructure,
+    getAsymIdsFromStructure,
+    getDefaultStructure,
+    firstMatchingAssemblyId } from './helpers/viewer';
+import {
+    lociToTargets,
+    normalizeTarget,
+    SelectBase,
+    SelectRange,
+    SelectTarget,
+    Target,
+    targetToExpression,
+    targetToLoci,
+    createResidueSelectionExpression,
+    getTargetsDistanceToPivot } from './helpers/selection';
 import { StructureRepresentationRegistry } from 'molstar/lib/mol-repr/structure/registry';
 import { DefaultPluginUISpec, PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
@@ -445,18 +464,36 @@ export class Viewer {
     }
 
     /**
-     * Retrieves the list of assembly IDs for a default structure model.
-     *
-     * This method accesses the default structure model and returns
-     * all associated assembly IDs, as defined in the `_pdbx_struct_assembly` category.
-     * If the model is not available, it returns an empty array.
-     *
-     * @returns {string[]} An array of assembly ID strings, or an empty array if no model is available.
-     */
-    getAssemblyIds(): string[] {
-        const model = getDefaultStructureModel(this.plugin);
-        if (!model) return [];
-        return getAssemblyIdsFromModel(model);
+    * Retrieves the list of assembly IDs for the default structure model,
+    * optionally filtered by matching entity types (`_entity_poly.type`)
+    * and/or the total number of modeled residues in the assembly.
+    *
+    * The default structure is obtained from the plugin state. For each
+    * biological assembly defined in the structure
+    * (`_pdbx_struct_assembly`), the assembly is built and evaluated.
+    *
+    * If `types` is provided, only assemblies containing entities with
+    * matching `_entity_poly.type` values are considered.
+    *
+    * If `maxLength` is provided, only assemblies whose total modeled residue
+    * count is less than or equal to `maxLength` are returned. Assemblies with
+    * zero matching residues are always excluded when filters are applied.
+    *
+    * If neither `types` nor `maxLength` is specified, all assembly IDs
+    * defined for the default model are returned without building assemblies.
+    *
+    * @param types Optional list of `_entity_poly.type` used to filter assemblies
+    *              (e.g. polypeptide(L), polyribonucleotide, peptide-like).
+    * @param maxLength Optional maximum allowed modeled residue count for an assembly.
+    *
+    * @returns {Promise<string[]>}
+    * An array of assembly ID strings. Returns an empty array if no default
+    * structure is available.
+    */
+    async getAssemblyIds(types?: EntitySubtype[], maxLength?: number): Promise<string[]> {
+        const s = getDefaultStructure(this.plugin);
+        if (!s) return [];
+        return getAssemblyIdsFromStructure(s, types, maxLength);
     }
 
     /**
@@ -498,21 +535,38 @@ export class Viewer {
     }
 
     /**
-     * Retrieves asym and author chain IDs for a default structure model.
+     * Retrieves label and author asym ID pairs from the default structure model,
+     * optionally filtered by entity types (`_entity_poly.type`) and/or number of
+     * modeled residues in the chain.
      *
-     * This method accesses the default structure model and returns a list of
-     * asym and author IDs. Asym IDs correspond to unique chains or subunits in the model
-     * and are typically defined in the `_struct_asym` category of the mmCIF format.
+     * The default structure is obtained from the plugin state. Each returned pair
+     * corresponds to a single chain, where:
+     *  - the label asym ID identifies the chain within the structure model
+     *  - the author asym ID reflects the depositor-assigned chain identifier
      *
-     * If the model is not available, the method returns an empty array.
+     * If `types` is provided, only chains containing entities with matching
+     * `_entity_poly.type` values are included.
      *
-     * @returns {string[][]} A 2D array of asym and author chain IDs (in this format: [asym Id, auth Id]),
-     * or an empty array if the model is unavailable.
+     * If `maxLength` is provided, only chains whose number of modeled residues
+     * is less than or equal to `maxLength` are returned. When filters are applied,
+     * chains with zero matching residues are excluded.
+     *
+     * If neither `types` nor `maxLength` is specified, all label/author asym ID pairs
+     * defined for the default model are returned without additional filtering.
+     *
+     * @param types Optional list of entity subtypes used to filter chains
+     *              (e.g. polypeptide(L), polyribonucleotide, peptide-like).
+     * @param maxLength Optional maximum allowed number of modeled residues per chain.
+     *
+     * @returns {string[][]}
+     * A 2D array of asym and author chain ID pairs in the form
+     * `[labelAsymId, authAsymId]`. Returns an empty array if no default structure
+     * is available.
      */
-    getAsymIds(types?: EntitySubtype[]): string[][] {
-        const model = getDefaultStructureModel(this.plugin);
-        if (!model) return [];
-        return getAsymIdsFromModel(model, types);
+    getAsymIds(types?: EntitySubtype[], maxLength?: number): string[][] {
+        const s = getDefaultStructure(this.plugin);
+        if (!s) return [];
+        return getAsymIdsFromStructure(s, types, maxLength);
     }
 
     /**
