@@ -48,7 +48,8 @@ import {
 } from 'molstar/lib/extensions/assembly-symmetry/prop';
 import { Task } from 'molstar/lib/mol-task';
 import { QualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
-import { getAssemblyIdsFromModel, firstMatchingAssemblyId } from './viewer';
+import { firstMatchingAssemblyId } from './viewer';
+import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
 
 type BaseProps = {
     assemblyId?: string
@@ -160,7 +161,11 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
 
         const structureParams: RootStructureDefinition.Params = { name: 'model', params: {} };
         if (p.kind === 'default-assembly') {
-            const assemblyIds = getAssemblyIdsFromModel(model.cell?.obj?.data);
+            const m = model.cell?.obj?.data;
+            const symmetry = m ? ModelSymmetry.Provider.get(m) : undefined;
+            const assemblyIds = Array.isArray(symmetry?.assemblies) && symmetry.assemblies.length > 0
+                ? symmetry.assemblies.map(a => a.id)
+                : [];
             if (assemblyIds.length > 0) {
                 Object.assign(structureParams, {
                     name: 'assembly',
