@@ -35,9 +35,10 @@ import {
     clearSelection,
     createComponent,
     select,
-    getAssemblyIdsFromStructure,
-    getAsymIdsFromStructure,
+    getAssemblyIdsFromModel,
+    getAsymIdsFromStructureModel,
     getDefaultStructure,
+    getDefaultModel,
     firstMatchingAssemblyId } from './helpers/viewer';
 import {
     lociToTargets,
@@ -491,9 +492,9 @@ export class Viewer {
     * structure is available.
     */
     async getAssemblyIds(types?: EntitySubtype[], maxLength?: number): Promise<string[]> {
-        const s = getDefaultStructure(this.plugin);
-        if (!s) return [];
-        return getAssemblyIdsFromStructure(s, types, maxLength);
+        const m = getDefaultModel(this.plugin);
+        if (!m) return [];
+        return getAssemblyIdsFromModel(m, types, maxLength);
     }
 
     /**
@@ -564,9 +565,9 @@ export class Viewer {
      * is available.
      */
     getAsymIds(types?: EntitySubtype[], maxLength?: number): string[][] {
-        const s = getDefaultStructure(this.plugin);
-        if (!s) return [];
-        return getAsymIdsFromStructure(s, types, maxLength);
+        const m = getDefaultModel(this.plugin);
+        if (!m) return [];
+        return getAsymIdsFromStructureModel(m, types, maxLength);
     }
 
     /**
