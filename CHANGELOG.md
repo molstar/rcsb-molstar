@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.14.3] - 2026-03-03
+### API
+- Allow to specify maximum allowed modeled residue count for an assembly or chain ID retrieval
+
 ## [2.14.2] - 2026-01-16
 ### API
 - Selects surrounding polymeric residues within a specified radius of a given target
