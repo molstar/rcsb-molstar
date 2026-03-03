@@ -228,11 +228,11 @@ export async function getAssemblyIdsFromModel(m: Model, types?: EntitySubtype[],
     const out = [];
     for (const assemblyId of assemblyIds) {
         const assembly = assemblyId !== 'deposited'
-                ? await StructureSymmetry.buildAssembly(base, assemblyId).run()
-                : base;
+            ? await StructureSymmetry.buildAssembly(base, assemblyId).run()
+            : base;
         const residueCount = getResidueCount(assembly, types);
         const keep = residueCount > 0 && (!maxLength || residueCount <= maxLength);
-        if (keep) out.push(assemblyId);        
+        if (keep) out.push(assemblyId);
     }
     return out;
 }
