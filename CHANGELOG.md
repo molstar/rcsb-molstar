@@ -2,6 +2,14 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.14.4] - 2026-09-01
+### API
+- Better user-facing error message when failing to load structure from URL
+
+## [2.14.4] - 2026-05-04
+### General
+- Dependency update: Mol* to v5.9.0
+
 ## [2.14.3] - 2026-03-03
 ### API
 - Allow to specify maximum allowed modeled residue count for an assembly or chain ID retrieval
