@@ -387,7 +387,8 @@ export class Viewer {
         try {
             return await this.customState.modelLoader.load({ fileOrUrl: url, format, isBinary }, config?.props, config?.matrix, config?.reprProvider, config?.params);
         } catch (e) {
-            throw new Error(`Failed to load ${url}. Error: ${e instanceof Error ? e.message : e}. The file may be in an unsupported format.`);
+            console.error(`Faild to load: ${url}. Error: ${e instanceof Error ? e.message : e}`);
+            throw new Error(`Unable to load the structure from this URL: ${url}. Please provide a URL to an mmCIF or PDB file.`);
         }
     }
 
