@@ -4,6 +4,10 @@
 
 ## [2.14.4] - 2026-09-01
 ### API
+- Loading structure from URL: error message fix
+
+## [2.14.4] - 2026-09-01
+### API
 - Better user-facing error message when failing to load structure from URL
 
 ## [2.14.4] - 2026-05-04
