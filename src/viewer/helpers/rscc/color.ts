@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020-2022 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2020-2026 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
@@ -8,10 +8,9 @@ import { ThemeDataContext } from 'molstar/lib/mol-theme/theme';
 import { ColorTheme, LocationColor } from 'molstar/lib/mol-theme/color';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { Color } from 'molstar/lib/mol-util/color';
-import { StructureElement, Model, Bond } from 'molstar/lib/mol-model/structure';
+import { StructureElement, Bond } from 'molstar/lib/mol-model/structure';
 import { Location } from 'molstar/lib/mol-model/location';
 import { CustomProperty } from 'molstar/lib/mol-model-props/common/custom-property';
-import { ValidationReport } from 'molstar/lib/extensions/rcsb/validation-report/prop';
 import { TableLegend } from 'molstar/lib/mol-util/legend';
 import { RSCC, RSCCProvider } from './prop';
 
@@ -95,7 +94,7 @@ export const RSCCColorThemeProvider: ColorTheme.Provider<RSCCColorThemeParams, '
     factory: RSCCColorTheme,
     getParams: getRSCCColorThemeParams,
     defaultValues: PD.getDefaultValues(getRSCCColorThemeParams({})),
-    isApplicable: (ctx: ThemeDataContext) => !!ctx.structure && ValidationReport.isApplicable(ctx.structure.models[0]) && Model.isFromXray(ctx.structure.models[0]) && Model.probablyHasDensityMap(ctx.structure.models[0]),
+    isApplicable: (ctx: ThemeDataContext) => RSCC.isApplicableAndAvailable(ctx),
     ensureCustomProperties: {
         attach: (ctx: CustomProperty.Context, data: ThemeDataContext) => data.structure ? RSCCProvider.attach(ctx, data.structure.models[0], void 0, true) : Promise.resolve(),
         detach: (data) => data.structure && RSCCProvider.ref(data.structure.models[0], false)

@@ -2,6 +2,10 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.14.7] - 2026-09-22
+### Bug fixes
+- Experimental Support Confidence (RSCC) coloring no longer removes the representation when no RSCC values are available (e.g., pdb_00001mbn)
+
 ## [2.14.4] - 2026-09-01
 ### API
 - Loading structure from URL: error message fix

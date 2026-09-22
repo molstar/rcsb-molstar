@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021-2022 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2021-2026 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
@@ -122,7 +122,7 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         try {
             await RSCCPreset.apply(this.pivot.cell, Object.create(null), this.plugin);
         } catch (err) {
-            // happens e.g. for 4HHB
+            // happens e.g. for pdb_00004hhb or pdb_00001mbn (no RSCC values in validation report)
             this.setState(({ errorStates }) => {
                 const errors = new Set(errorStates);
                 errors.add(RSCCReportTag);
@@ -153,11 +153,12 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         ];
 
         if (this.rsccData) {
+            const noRSCC = noValidationReport || rsccReportError || RSCC.isUnavailable(this.pivot.cell.obj!.data.models[0]);
             out.push({
                 kind: 'item',
-                label: rsccReportError || validationReportError ? 'Failed to Obtain RSCC Values' : (noValidationReport ? 'No RSCC Values Available' : 'Experimental Support Confidence'),
+                label: validationReportError ? 'Failed to Obtain RSCC Values' : (noRSCC ? 'No RSCC Values Available' : 'Experimental Support Confidence'),
                 value: this.requestRSCCPreset,
-                disabled: noValidationReport || validationReportError || rsccReportError
+                disabled: noRSCC || validationReportError
             });
         }
         if (this.pLDDTData) {

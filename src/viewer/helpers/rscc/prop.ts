@@ -9,7 +9,7 @@ import { CustomPropertyDescriptor } from 'molstar/lib/mol-model/custom-property'
 import { Model, ResidueIndex } from 'molstar/lib/mol-model/structure/model';
 import { CustomProperty } from 'molstar/lib/mol-model-props/common/custom-property';
 import { PropertyWrapper } from 'molstar/lib/mol-model-props/common/wrapper';
-import { IndexedCustomProperty } from 'molstar/lib/commonjs/mol-model/structure/model/properties/custom/indexed';
+import { IndexedCustomProperty } from 'molstar/lib/mol-model/structure/model/properties/custom/indexed';
 import { Structure, StructureElement } from 'molstar/lib/mol-model/structure/structure';
 import { Unit } from 'molstar/lib/mol-model/structure/structure';
 import { ValidationReport, ValidationReportProvider } from 'molstar/lib/extensions/rcsb/validation-report/prop';
@@ -38,7 +38,24 @@ export namespace RSCC {
     }
 
     export function isApplicable(ctx: ThemeDataContext) {
-        return !!ctx.structure && ValidationReport.isApplicable(ctx.structure.models[0]) && Model.isFromXray(ctx.structure.models[0]) && Model.probablyHasDensityMap(ctx.structure.models[0]);
+        return !!ctx.structure && isApplicableModel(ctx.structure.models[0]);
+    }
+
+    export function isApplicableModel(model: Model) {
+        return ValidationReport.isApplicable(model) && Model.isFromXray(model) && Model.probablyHasDensityMap(model);
+    }
+
+    /** RSCC values were requested but none are available (e.g., no validation report or no structure factors deposited) */
+    export function isUnavailable(model: Model) {
+        const prop = RSCCProvider.get(model).value;
+        if (prop) return !prop.data;
+        const validationReport = ValidationReportProvider.get(model).value;
+        return !!validationReport && (!validationReport.rscc || validationReport.rscc.size === 0);
+    }
+
+    /** Like `isApplicable` but also `false` if RSCC values are known to be unavailable */
+    export function isApplicableAndAvailable(ctx: ThemeDataContext) {
+        return isApplicable(ctx) && !isUnavailable(ctx.structure!.models[0]);
     }
 
     export async function obtain(ctx: CustomProperty.Context, model: Model, props: RSCCProps): Promise<CustomProperty.Data<any>> {
@@ -47,7 +64,7 @@ export namespace RSCC {
 
     async function _obtain(ctx: CustomProperty.Context, model: Model, _props: RSCCProps): Promise<RSCC['data'] | undefined> {
         const rscc = ValidationReportProvider.get(model)?.value?.rscc;
-        if (!rscc) return;
+        if (!rscc || rscc.size === 0) return;
 
         const resolution = await fetchResolution(ctx, model, DefaultBaseUrl);
         if (!resolution) return;
@@ -107,10 +124,14 @@ export const RSCCProvider: CustomModelProperty.Provider<RSCCParams, RSCC> = Cust
     type: 'static',
     defaultParams: RSCCParams,
     getParams: () => RSCCParams,
-    isApplicable: (data: Model) => RSCC.isApplicable(data),
+    isApplicable: (data: Model) => RSCC.isApplicableModel(data),
     obtain: async (ctx: CustomProperty.Context, data: Model, props: Partial<RSCCProps>) => {
-        await ValidationReportProvider.attach(ctx, data);
-        if (!ValidationReportProvider.get(data).value?.rscc || ValidationReportProvider.get(data).value?.rscc.size === 0) throw Error('No RSCC available');
+        try {
+            await ValidationReportProvider.attach(ctx, data);
+        } catch (e) {
+            console.warn(`Failed to obtain validation report for ${data.entryId}`, e);
+            return { value: { info: PropertyWrapper.createInfo(), data: undefined } };
+        }
 
         const p = { ...PD.getDefaultValues(RSCCParams), ...props };
         return await RSCC.obtain(ctx, data, p);
@@ -121,5 +142,5 @@ const DefaultBaseUrl = 'https://data.rcsb.org/graphql';
 async function fetchResolution(ctx: ThemeDataContext, model: Model, serverUrl: string): Promise<number> {
     const client = new GraphQLClient(serverUrl, ctx.assetManager);
     const result = await client.request(SyncRuntimeContext, resolution_gql, { entry_id: model.entryId });
-    return result.data.entry.rcsb_entry_info.resolution_combined;
+    return result.data.entry?.rcsb_entry_info?.resolution_combined;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2022-2026 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Sebastian Bittrich <sebastian.bittrich@rcsb.org>
  */
@@ -8,9 +8,7 @@ import {
     PresetStructureRepresentations,
     StructureRepresentationPresetProvider
 } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
-import { ValidationReport, ValidationReportProvider } from 'molstar/lib/extensions/rcsb/validation-report/prop';
-import { Model } from 'molstar/lib/mol-model/structure/model';
-import { StateObjectRef } from 'molstar/lib/mol-state';
+import { State, StateObjectRef } from 'molstar/lib/mol-state';
 import { RSCCColorThemeProvider } from './color';
 import { PluginBehavior } from 'molstar/lib/mol-plugin/behavior/behavior';
 import { RSCC, RSCCProvider } from './prop';
@@ -19,6 +17,8 @@ import { StructureElement } from 'molstar/lib/mol-model/structure/structure';
 import { OrderedSet } from 'molstar/lib/mol-data/int';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { Task } from 'molstar/lib/mol-task';
+import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
+import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 
 export const RSCCPreset = StructureRepresentationPresetProvider({
     id: 'preset-structure-representation-rcsb-validation-report-rscc',
@@ -27,7 +27,7 @@ export const RSCCPreset = StructureRepresentationPresetProvider({
         description: 'Color structure based on real-space correlation coefficients. Data from wwPDB Validation Report, obtained via RCSB PDB.'
     },
     isApplicable(a) {
-        return a.data.models.length === 1 && ValidationReport.isApplicable(a.data.models[0]) && Model.isFromXray(a.data.models[0]) && Model.probablyHasDensityMap(a.data.models[0]);
+        return a.data.models.length === 1 && RSCC.isApplicableAndAvailable({ structure: a.data });
     },
     params: () => StructureRepresentationPresetProvider.CommonParams,
     async apply(ref, params, plugin) {
@@ -37,9 +37,9 @@ export const RSCCPreset = StructureRepresentationPresetProvider({
 
         const data = structure.models[0];
         await plugin.runTask(Task.create('Validation Report', async runtime => {
-            await ValidationReportProvider.attach({ runtime, assetManager: plugin.managers.asset }, data);
+            await RSCCProvider.attach({ runtime, assetManager: plugin.managers.asset }, data);
         }));
-        if (!ValidationReportProvider.get(data).value?.rscc || ValidationReportProvider.get(data).value?.rscc.size === 0) throw Error('No RSCC available');
+        if (RSCC.isUnavailable(data)) throw Error('No RSCC available');
 
         const colorTheme = RSCCColorThemeProvider.name as any;
         return PresetStructureRepresentations.auto.apply(ref, { ...params, theme: { globalName: colorTheme, focus: { name: colorTheme } } }, plugin);
@@ -76,9 +76,37 @@ export const RSCCScore = PluginBehavior.create<{ autoAttach: boolean, showToolti
             }
         };
 
+        // representations that already triggered a 'no RSCC values' notification
+        private notifiedRefs = new Set<string>();
+
+        private notifyIfUnavailable = ({ state, ref }: State.ObjectEvent) => {
+            const cell = state.cells.get(ref);
+            if (!cell || !PluginStateObject.Molecule.Structure.Representation3D.is(cell.obj)) return;
+            if (cell.transform.params?.colorTheme?.name !== RSCCColorThemeProvider.name) {
+                this.notifiedRefs.delete(ref);
+                return;
+            }
+
+            const { sourceData } = cell.obj.data;
+            if (this.notifiedRefs.has(ref) || sourceData.models.length === 0 || !RSCC.isUnavailable(sourceData.models[0])) return;
+
+            this.notifiedRefs.add(ref);
+            PluginCommands.Toast.Show(this.ctx, {
+                title: 'Experimental Support Confidence',
+                message: `No RSCC values available for ${sourceData.models[0].entryId}.`,
+                key: 'rscc-unavailable',
+                timeoutMs: 5000
+            });
+        };
+
         register(): void {
             this.ctx.customModelProperties.register(this.provider, this.params.autoAttach);
             this.ctx.managers.lociLabels.addProvider(this.labelProvider);
+
+            const { events } = this.ctx.state.data;
+            this.subscribeObservable(events.object.created, this.notifyIfUnavailable);
+            this.subscribeObservable(events.object.updated, this.notifyIfUnavailable);
+            this.subscribeObservable(events.object.removed, ({ ref }) => this.notifiedRefs.delete(ref));
 
             this.ctx.representation.structure.themes.colorThemeRegistry.add(RSCCColorThemeProvider);
             this.ctx.builders.structure.representation.registerPreset(RSCCPreset);
