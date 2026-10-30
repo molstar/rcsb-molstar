@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019-2024 mol* contributors, licensed under MIT, See LICENSE file for more info.
+ * Copyright (c) 2019-2026 mol* contributors, licensed under MIT, See LICENSE file for more info.
  *
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @author Joan Segura <joan.segura@rcsb.org>
@@ -68,6 +68,7 @@ import { GeometryExport } from 'molstar/lib/extensions/geo-export';
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { PartialCanvas3DProps } from 'molstar/lib/mol-canvas3d/canvas3d';
 import { RSCCScore } from './helpers/rscc/behavior';
+import { QScoreBehavior } from './helpers/qscore/behavior';
 import { createRoot } from 'react-dom/client';
 import { AssemblySymmetryData } from 'molstar/lib/extensions/assembly-symmetry/prop';
 import { wwPDBChemicalComponentDictionary } from 'molstar/lib/extensions/wwpdb/ccd/behavior';
@@ -95,6 +96,7 @@ const Extensions = {
     'assembly-symmetry': PluginSpec.Behavior(AssemblySymmetry),
     'rcsb-validation-report': PluginSpec.Behavior(RCSBValidationReport),
     'rscc': PluginSpec.Behavior(RSCCScore),
+    'qscore': PluginSpec.Behavior(QScoreBehavior),
     'anvil-membrane-orientation': PluginSpec.Behavior(ANVILMembraneOrientation),
     'ma-quality-assessment': PluginSpec.Behavior(MAQualityAssessment),
     'model-export': PluginSpec.Behavior(ModelExport),

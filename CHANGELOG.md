@@ -2,6 +2,12 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [2.15.0] - 2026-10-30
+### General
+- Q-score coloring for cryo-EM structures (Quality Assessment menu & color theme), data from RCSB Data API
+### API
+- New preset `kind: 'qscore'` to load structures with Q-score coloring
+
 ## [2.14.7] - 2026-09-22
 ### Bug fixes
 - Experimental Support Confidence (RSCC) coloring no longer removes the representation when no RSCC values are available (e.g., pdb_00001mbn)

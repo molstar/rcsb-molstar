@@ -26,6 +26,7 @@ import { FlexibleStructureFromModel } from './superpose/flexible-structure';
 import { PluginCommands } from 'molstar/lib/mol-plugin/commands';
 import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/interactivity';
 import { MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
+import { QScorePreset } from './qscore/behavior';
 import { setSubtreeVisibility } from 'molstar/lib/mol-plugin/behavior/static/state';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import {
@@ -68,6 +69,10 @@ export type AlignmentProps = {
         value: number,
         targets: Target[]
     }[]
+} & BaseProps
+
+type QScoreProps = {
+    kind: 'qscore'
 } & BaseProps
 
 export type EmptyProps = {
@@ -133,7 +138,7 @@ export type DefaultAssembly = {
 } & BaseProps;
 
 export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | AlignmentProps |
-MembraneProps | FeatureDensityProps | MotifProps | NakbProps | GlyGenProps | EmptyProps | DefaultAssembly;
+MembraneProps | FeatureDensityProps | MotifProps | NakbProps | GlyGenProps | EmptyProps | DefaultAssembly | QScoreProps;
 
 const RcsbParams = () => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -306,6 +311,18 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 plugin.log.error(msg);
                 console.error(msg);
                 console.error(error);
+
+                // fall back to default representation to show something
+                representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
+            }
+        } else if (p.kind === 'qscore') {
+            try {
+                representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, QScorePreset, presetParams);
+            } catch (error) {
+                // happens e.g. for pdb_00007a4m (no Q-scores available, they are only calculated for resolutions above 1.25 Å)
+                const msg = `No Q-scores available for ${model?.obj?.data.entryId}.`;
+                plugin.log.warn(msg);
+                await PluginCommands.Toast.Show(plugin, { title: 'Q-score', message: msg, key: 'qscore-unavailable', timeoutMs: 5000 });
 
                 // fall back to default representation to show something
                 representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
