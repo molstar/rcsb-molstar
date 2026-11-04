@@ -16,6 +16,8 @@ import { QualityAssessment } from 'molstar/lib/extensions/model-archive/quality-
 import { PLDDTConfidenceColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/plddt';
 import { QmeanScoreColorThemeProvider } from 'molstar/lib/extensions/model-archive/quality-assessment/color/qmean';
 import { RSCC } from '../helpers/rscc/prop';
+import { QScorePreset } from '../helpers/qscore/behavior';
+import { QScore } from '../helpers/qscore/prop';
 
 interface ValidationReportState extends CollapsableState {
     errorStates: Set<string>
@@ -23,6 +25,7 @@ interface ValidationReportState extends CollapsableState {
 
 const ValidationReportTag = 'validation-report';
 const RSCCReportTag = 'rscc';
+const QScoreTag = 'qscore';
 
 const _QualityIcon = <svg width='50px' height='50px' viewBox='0 0 38 47'>
     <g strokeWidth='4' fill='none'>
@@ -85,6 +88,11 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         return RSCC.isApplicable({ structure });
     }
 
+    get qscoreData() {
+        const structure = this.pivot.cell.obj?.data;
+        return QScore.isApplicable({ structure });
+    }
+
     get pLDDTData() {
         const structure = this.pivot.cell.obj?.data;
         if (!structure || structure.models.length !== 1) return false;
@@ -131,6 +139,19 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
         }
     };
 
+    requestQScorePreset = async () => {
+        try {
+            await QScorePreset.apply(this.pivot.cell, Object.create(null), this.plugin);
+        } catch (err) {
+            // happens e.g. for pdb_00007a4m (no Q-scores available)
+            this.setState(({ errorStates }) => {
+                const errors = new Set(errorStates);
+                errors.add(QScoreTag);
+                return { errorStates: errors };
+            });
+        }
+    };
+
     requestPLDDTConfidenceColoring = async () => {
         await this.plugin.managers.structure.component.updateRepresentationsTheme(this.pivot.components, { color: PLDDTConfidenceColorThemeProvider.name as any });
     };
@@ -159,6 +180,15 @@ export class ValidationReportControls extends CollapsableControls<{}, Validation
                 label: validationReportError ? 'Failed to Obtain RSCC Values' : (noRSCC ? 'No RSCC Values Available' : 'Experimental Support Confidence'),
                 value: this.requestRSCCPreset,
                 disabled: noRSCC || validationReportError
+            });
+        }
+        if (this.qscoreData) {
+            const noQScore = this.state.errorStates.has(QScoreTag) || QScore.isUnavailable(this.pivot.cell.obj!.data.models[0]);
+            out.push({
+                kind: 'item',
+                label: noQScore ? 'No Q-scores Available' : 'Q-score',
+                value: this.requestQScorePreset,
+                disabled: noQScore
             });
         }
         if (this.pLDDTData) {

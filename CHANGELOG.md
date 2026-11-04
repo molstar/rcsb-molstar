@@ -2,11 +2,21 @@
 
 [Semantic Versioning](https://semver.org/)
 
-## [Unreleased]
+## [2.15.2] - 2026-11-04
 ### Bug fixes
 - Focus representation: show metal coordination bonds in ball & stick (e.g., Fe-S bonds within SF4 clusters)
 ### API
 - `focusExcludeBondTypes` viewer prop and `Viewer.setFocusExcludeBondTypes()` to customize bond types hidden in focus target/surroundings
+
+## [2.15.1] - 2026-11-04
+### General
+- Q-score coloring: obtain data from wwPDB Validation Report (XML), adds Q-scores for oligosaccharides (e.g., 6VXX)
+
+## [2.15.0] - 2026-10-30
+### General
+- Q-score coloring for cryo-EM structures (Quality Assessment menu & color theme), data from RCSB Data API
+### API
+- New preset `kind: 'qscore'` to load structures with Q-score coloring
 
 ## [2.14.7] - 2026-09-22
 ### Bug fixes
