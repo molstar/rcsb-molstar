@@ -81,6 +81,8 @@ import { compile } from 'molstar/lib/mol-script/runtime/query/base';
 import { EntitySubtype } from 'molstar/lib/mol-model/structure/model/properties/common';
 import { MmcifFormat } from 'molstar/lib/mol-model-formats/structure/mmcif';
 import { StructureSelectionQueries as Q } from 'molstar/lib/mol-plugin-state/helpers/structure-selection-query';
+import { StructureFocusRepresentation } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-focus-representation';
+import { BondType } from 'molstar/lib/mol-model/structure/model/types';
 
 /** package version, filled in at bundle build time */
 declare const __RCSB_MOLSTAR_VERSION__: string;
@@ -161,6 +163,16 @@ const DefaultViewerProps = {
     manualReset: false, // switch to 'true' for 'motif' preset
     pickingAlphaThreshold: 0.5, // lower to 0.2 to accommodate 'motif' preset
     showWelcomeToast: true,
+
+    /**
+     * Bond types excluded from the ball & stick representations created when focusing a residue/ligand.
+     * Mol* excludes both 'hydrogen-bond' and 'metal-coordination' by default, which hides e.g. the
+     * Fe-S bonds within SF4 clusters. H-bonds are still shown by the non-covalent interactions component.
+     */
+    focusExcludeBondTypes: {
+        target: ['hydrogen-bond'] as BondType.Names[],
+        surroundings: ['hydrogen-bond'] as BondType.Names[],
+    },
 
     config: [] as [PluginConfigItem, any][],
 };
@@ -326,6 +338,8 @@ export class Viewer {
                 }
                 // normally, this would be part of CustomStructureControls -- we want to manage its collapsed state individually though
                 this._plugin.customStructureControls.delete(AssemblySymmetryData.Tag.Representation);
+
+                await this.setFocusExcludeBondTypes(o.focusExcludeBondTypes);
 
                 const root = createRoot(element);
                 root.render(React.createElement(Plugin, { plugin: this._plugin }));
@@ -844,6 +858,22 @@ export class Viewer {
 
     setFocus(target: SelectRange) {
         setFocusFromRange(this._plugin, target);
+    }
+
+    /**
+     * Customize which bond types are hidden in the ball & stick representations of the focus target and surroundings.
+     * Pass an empty array to show all bond types.
+     */
+    async setFocusExcludeBondTypes(excludeTypes: Partial<{ target: BondType.Names[], surroundings: BondType.Names[] }>) {
+        if (!this._plugin.state.hasBehavior(StructureFocusRepresentation)) return;
+        await this._plugin.state.updateBehavior(StructureFocusRepresentation, p => {
+            if (excludeTypes.target && p.targetParams.type.name === 'ball-and-stick') {
+                p.targetParams.type.params.excludeTypes = [...excludeTypes.target];
+            }
+            if (excludeTypes.surroundings && p.surroundingsParams.type.name === 'ball-and-stick') {
+                p.surroundingsParams.type.params.excludeTypes = [...excludeTypes.surroundings];
+            }
+        });
     }
 
     clearFocus(): void {
