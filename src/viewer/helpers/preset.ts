@@ -190,7 +190,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     params: { id: assemblyIds[0] }
                 } as RootStructureDefinition.Params);
             }
-        } else {
+        } else if (p.kind !== 'polyhedron') { // polyhedron always works on the model, so any requested chain is present
             if (p.assemblyId && p.assemblyId !== '' && p.assemblyId !== '0') {
                 Object.assign(structureParams, {
                     name: 'assembly',
