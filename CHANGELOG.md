@@ -6,7 +6,7 @@
 ### Bug fixes
 - Focus representation: show metal coordination bonds in ball & stick (e.g., Fe-S bonds within SF4 clusters)
 ### API
-- `polyhedron` preset kind (optional `target` to focus a ligand): shows Mol* coordination polyhedra around metal atoms of ligands and ions
+- `polyhedron` preset kind (optional `target`: polyhedra restricted to `target.labelAsymId`, target focused): shows Mol* coordination polyhedra around metal atoms of ligands and ions
 - 'Ligand Coordination Polyhedra' representation preset
 - `focusExcludeBondTypes` viewer prop and `Viewer.setFocusExcludeBondTypes()` to customize bond types hidden in focus target/surroundings
 

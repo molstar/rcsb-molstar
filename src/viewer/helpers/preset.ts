@@ -134,7 +134,10 @@ export type GlyGenProps = {
     glycosylation: Target[],
 } & BaseProps
 
-/** Coordination polyhedra around metal atoms of ligands and ions; optionally focus on a ligand. */
+/**
+ * Coordination polyhedra around metal atoms of ligands and ions.
+ * If `target.labelAsymId` is set, polyhedra are only created for metals with exactly that label_asym_id; the target is focused.
+ */
 export type PolyhedronProps = {
     kind: 'polyhedron',
     target?: Target
@@ -335,7 +338,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
             }
         } else if (p.kind === 'polyhedron') {
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, CoordinationPolyhedronPreset, presetParams);
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, CoordinationPolyhedronPreset, { ...presetParams, chain: p.target });
         } else if (p.kind === 'nakb') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, 'auto', { ...presetParams, theme: { globalName: 'nakb', focus: { name: 'nakb' } } });
         } else {
