@@ -28,6 +28,7 @@ import { InteractivityManager } from 'molstar/lib/mol-plugin-state/manager/inter
 import { MembraneOrientationPreset } from 'molstar/lib/extensions/anvil/behavior';
 import { QScorePreset } from './qscore/behavior';
 import { setSubtreeVisibility } from 'molstar/lib/mol-plugin/behavior/static/state';
+import { StructureFocusRepresentationTags } from 'molstar/lib/mol-plugin/behavior/dynamic/selection/structure-focus-representation';
 import { VolumeStreaming } from 'molstar/lib/mol-plugin/behavior/dynamic/volume-streaming/behavior';
 import {
     InitVolumeStreaming,
@@ -140,7 +141,9 @@ export type GlyGenProps = {
  */
 export type PolyhedronProps = {
     kind: 'polyhedron',
-    target?: Target
+    target?: Target,
+    /** label metal atoms and their coordinating atoms (default: true) */
+    showLabels?: boolean
 } & BaseProps
 
 export type DefaultAssembly = {
@@ -338,7 +341,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
             }
         } else if (p.kind === 'polyhedron') {
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, CoordinationPolyhedronPreset, { ...presetParams, chain: p.target });
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, CoordinationPolyhedronPreset, { ...presetParams, chain: p.target, showLabels: p.showLabels ?? true });
         } else if (p.kind === 'nakb') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, 'auto', { ...presetParams, theme: { globalName: 'nakb', focus: { name: 'nakb' } } });
         } else {
@@ -365,6 +368,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
             if (p.kind === 'feature-density') {
                 await initVolumeStreaming(plugin, structure, { overrideRadius: p.radius ?? 5, hiddenChannels: p.hiddenChannels ?? [], wireframe: p.wireframe ?? true });
             }
+
+            if (p.kind === 'polyhedron' && !StructureElement.Loci.isEmpty(target)) hideFocusSurroundings(plugin);
 
             plugin.managers.structure.focus.setFromLoci(target);
             plugin.managers.camera.focusLoci(target);
@@ -397,6 +402,24 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         };
     }
 });
+
+/**
+ * Hides the '[Focus] Surroundings' component (selection + its representations); it can still be shown from the UI.
+ * The component is created asynchronously by the StructureFocusRepresentation behavior once focus is set, so if
+ * it doesn't exist yet, it is hidden right after the state update that creates it has finished.
+ */
+function hideFocusSurroundings(plugin: PluginContext) {
+    const state = plugin.state.data;
+    const hide = () => {
+        const cells = state.select(StateSelection.Generators.root.subtree().withTag(StructureFocusRepresentationTags.SurrSel));
+        for (const cell of cells) setSubtreeVisibility(state, cell.transform.ref, true);
+        return cells.length > 0;
+    };
+    if (hide()) return;
+    const sub = state.events.changed.subscribe(() => {
+        if (hide()) sub.unsubscribe();
+    });
+}
 
 function checkPlddtColorTheme(structure: StructureObject | undefined, plddt: 'on' | 'single-chain' | 'off') {
     if (!structure?.data) return false;

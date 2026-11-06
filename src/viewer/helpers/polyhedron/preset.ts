@@ -8,7 +8,10 @@ import {
     PresetStructureRepresentations,
     StructureRepresentationPresetProvider
 } from 'molstar/lib/mol-plugin-state/builder/structure/representation-preset';
-import { StateObjectRef } from 'molstar/lib/mol-state';
+import { StateObjectCell, StateObjectRef } from 'molstar/lib/mol-state';
+import { PluginContext } from 'molstar/lib/mol-plugin/context';
+import { PluginStateObject } from 'molstar/lib/mol-plugin-state/objects';
+import { PolyhedronParams } from 'molstar/lib/mol-repr/structure/representation/polyhedron';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { ElementNames, isMetal } from 'molstar/lib/mol-model/structure/model/properties/atomic/types';
 import { ElementSymbol } from 'molstar/lib/mol-model/structure/model/types';
@@ -16,6 +19,10 @@ import { ObjectKeys } from 'molstar/lib/mol-util/type-helpers';
 import { ParamDefinition as PD } from 'molstar/lib/mol-util/param-definition';
 import { Expression } from 'molstar/lib/mol-script/language/expression';
 import { Target } from '../selection';
+import { Structure, StructureElement } from 'molstar/lib/mol-model/structure';
+import { OrderedSet, SortedArray } from 'molstar/lib/mol-data/int';
+import { ColorNames } from 'molstar/lib/mol-util/color/names';
+import { CoordinationIndex } from 'molstar/lib/mol-model/structure/structure/coordination/data';
 
 const MetalSymbols = ObjectKeys(ElementNames).filter(e => isMetal(e as ElementSymbol));
 
@@ -39,6 +46,43 @@ function ligandMetalsExpression(chain?: Target): Expression {
     });
 }
 
+type UnitIndexMap = Map<number, Set<StructureElement.UnitIndex>>
+
+function addToMap(map: UnitIndexMap, unitId: number, index: StructureElement.UnitIndex) {
+    if (!map.has(unitId)) map.set(unitId, new Set());
+    map.get(unitId)!.add(index);
+}
+
+function toLoci(structure: Structure, map: UnitIndexMap): StructureElement.Loci {
+    const elements: StructureElement.Loci['elements'][0][] = [];
+    map.forEach((indices, unitId) => {
+        elements.push({ unit: structure.unitMap.get(unitId), indices: OrderedSet.ofSortedArray(SortedArray.ofUnsortedArray(Array.from(indices))) });
+    });
+    return StructureElement.Loci(structure, elements);
+}
+
+/** Metal atoms in `metals` (a substructure of `structure`) and their coordinating atoms, i.e. the polyhedron vertices. */
+function getCoordinationLoci(structure: Structure, metals: Structure, minCoordination: number, maxCoordination: number) {
+    const atoms: UnitIndexMap = new Map();
+    const { sites, eachLigand } = structure.coordination;
+
+    for (let i = 0; i < sites.count; i++) {
+        if (sites.numbers[i] < minCoordination || sites.numbers[i] > maxCoordination) continue;
+        const unit = structure.unitMap.get(sites.unitIds[i]);
+        const element = unit.elements[sites.indices[i]];
+        const metalUnit = metals.unitMap.get(unit.id);
+        if (!metalUnit || !SortedArray.has(metalUnit.elements, element)) continue;
+
+        addToMap(atoms, unit.id, sites.indices[i]);
+        eachLigand(i as CoordinationIndex, l => {
+            addToMap(atoms, l.unit.id, SortedArray.indexOf(l.unit.elements, l.element) as StructureElement.UnitIndex);
+        });
+    }
+    return toLoci(structure, atoms);
+}
+
+const LabelTypeParams = { fontQuality: 4, borderWidth: 0.1, borderColor: ColorNames.lightgray, attachment: 'bottom-left' as const };
+
 /**
  * Same as 'Polymer & Ligand', plus Mol*'s 'polyhedron' representation for the coordination sites of
  * ligand/ion metal atoms. `includeParent` makes the coordination sites to be computed on the whole
@@ -54,6 +98,8 @@ export const CoordinationPolyhedronPreset = StructureRepresentationPresetProvide
         ...StructureRepresentationPresetProvider.CommonParams,
         /** Only create polyhedra for metal atoms in this chain; all ligand/ion metals if not set. */
         chain: PD.Value<Target | undefined>(undefined, { isHidden: true }),
+        /** Label metal atoms and their coordinating atoms. */
+        showLabels: PD.Boolean(true),
     }),
     async apply(ref, params, plugin) {
         const structureCell = StateObjectRef.resolveAndCheck(plugin.state.data, ref);
@@ -70,9 +116,35 @@ export const CoordinationPolyhedronPreset = StructureRepresentationPresetProvide
         }, { tag: 'ligand-metals-polyhedron' });
         await update.commit({ revertOnError: false });
 
+        const labels = params.showLabels && metals?.data
+            ? await addCoordinationLabels(plugin, structureCell, metals.data, params)
+            : { components: {}, representations: {} };
+
         return {
-            components: { ...base.components, metals },
-            representations: { ...base.representations, polyhedron }
+            components: { ...base.components, metals, ...labels.components },
+            representations: { ...base.representations, polyhedron, ...labels.representations }
         };
     }
 });
+
+async function addCoordinationLabels(plugin: PluginContext, structureCell: StateObjectCell<PluginStateObject.Molecule.Structure>, metals: Structure, params: StructureRepresentationPresetProvider.CommonParams) {
+    const structure = structureCell.obj!.data;
+    // keep in sync with the 'polyhedron' representation defaults, so that labels match the drawn polyhedra
+    const { minCoordination, maxCoordination } = PolyhedronParams;
+    const atoms = getCoordinationLoci(structure, metals, minCoordination.defaultValue, maxCoordination.defaultValue);
+
+    if (StructureElement.Loci.isEmpty(atoms)) return { components: {}, representations: {} };
+    const expression = StructureElement.Bundle.toExpression(StructureElement.Bundle.fromLoci(atoms));
+    const coordinationAtoms = await plugin.builders.structure.tryCreateComponentFromExpression(structureCell, expression, 'ligand-metals-coordination-atoms', { label: 'Coordination Atoms' });
+
+    const { update, builder } = StructureRepresentationPresetProvider.reprBuilder(plugin, params, structure);
+    const atomLabels = builder.buildRepresentation(update, coordinationAtoms, {
+        type: 'label', color: 'uniform', colorParams: { value: ColorNames.black }, typeParams: { ...LabelTypeParams, level: 'element' }
+    }, { tag: 'ligand-metals-atom-labels' });
+    await update.commit({ revertOnError: false });
+
+    return {
+        components: { coordinationAtoms },
+        representations: { atomLabels }
+    };
+}
