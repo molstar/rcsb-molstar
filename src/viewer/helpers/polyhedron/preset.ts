@@ -107,7 +107,7 @@ export const CoordinationPolyhedronPreset = StructureRepresentationPresetProvide
 
         const base = await PresetStructureRepresentations['polymer-and-ligand'].apply(ref, params, plugin);
 
-        const metals = await plugin.builders.structure.tryCreateComponentFromExpression(structureCell, ligandMetalsExpression(params.chain), 'ligand-metals', { label: 'Metal Coordination' });
+        const metals = await plugin.builders.structure.tryCreateComponentFromExpression(structureCell, ligandMetalsExpression(params.chain), 'ligand-metals', { label: 'Coordination Geometry' });
         const { update, builder, typeParams } = StructureRepresentationPresetProvider.reprBuilder(plugin, params, structureCell.obj.data);
         const polyhedron = builder.buildRepresentation(update, metals, {
             type: 'polyhedron',
