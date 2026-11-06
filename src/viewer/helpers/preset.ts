@@ -51,6 +51,7 @@ import { Task } from 'molstar/lib/mol-task';
 import { QualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
 import { firstMatchingAssemblyId } from './viewer';
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
+import { CoordinationPolyhedronPreset } from './polyhedron/preset';
 
 type BaseProps = {
     assemblyId?: string
@@ -133,12 +134,18 @@ export type GlyGenProps = {
     glycosylation: Target[],
 } & BaseProps
 
+/** Coordination polyhedra around metal atoms of ligands and ions; optionally focus on a ligand. */
+export type PolyhedronProps = {
+    kind: 'polyhedron',
+    target?: Target
+} & BaseProps
+
 export type DefaultAssembly = {
     kind: 'default-assembly'
 } & BaseProps;
 
 export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | AlignmentProps |
-MembraneProps | FeatureDensityProps | MotifProps | NakbProps | GlyGenProps | EmptyProps | DefaultAssembly | QScoreProps;
+MembraneProps | FeatureDensityProps | MotifProps | NakbProps | GlyGenProps | EmptyProps | DefaultAssembly | QScoreProps | PolyhedronProps;
 
 const RcsbParams = () => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -327,6 +334,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 // fall back to default representation to show something
                 representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
             }
+        } else if (p.kind === 'polyhedron') {
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, CoordinationPolyhedronPreset, presetParams);
         } else if (p.kind === 'nakb') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, 'auto', { ...presetParams, theme: { globalName: 'nakb', focus: { name: 'nakb' } } });
         } else {
@@ -334,10 +343,11 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         }
 
         // TODO align with 'motif'?
-        if ((p.kind === 'feature' || p.kind === 'feature-density') && structure?.obj) {
-            let loci = targetToLoci(p.target, structure!.obj.data);
+        const focusTarget = p.kind === 'feature' || p.kind === 'feature-density' || p.kind === 'polyhedron' ? p.target : undefined;
+        if (focusTarget && structure?.obj) {
+            let loci = targetToLoci(focusTarget, structure!.obj.data);
             // if requested: then don't force first residue
-            const chainMode = !!p.target.extendToChain;
+            const chainMode = !!focusTarget.extendToChain;
             // HELP-16678: check for rare case where ligand is not present in requested assembly
             if (loci.elements.length === 0 && !!p.assemblyId) {
                 // switch to Model (a.k.a. show coordinates independent of assembly)
@@ -345,7 +355,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 const s = selection.structures[0];
                 await plugin.managers.structure.hierarchy.updateStructure(s, { ...params, preset: { ...params.preset, assemblyId: void 0 } });
                 // update loci
-                loci = targetToLoci(p.target, structure!.obj.data);
+                loci = targetToLoci(focusTarget, structure!.obj.data);
             }
             const target = chainMode ? loci : StructureElement.Loci.firstResidue(loci);
 
