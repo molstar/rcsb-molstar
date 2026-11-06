@@ -173,6 +173,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         const modelParams = { modelIndex: p.modelIndex || 0 };
         // jump through some hoops to determine the unknown assemblyId of query selections
         if (p.kind === 'motif') determineAssemblyId(trajectory, p);
+        if (p.kind === 'polyhedron') determinePolyhedronAssemblyId(trajectory, p);
 
         const model = await builder.createModel(trajectory, modelParams);
         const modelProperties = await builder.insertModelProperties(model);
@@ -190,7 +191,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                     params: { id: assemblyIds[0] }
                 } as RootStructureDefinition.Params);
             }
-        } else if (p.kind !== 'polyhedron') { // polyhedron always works on the model, so any requested chain is present
+        } else {
             if (p.assemblyId && p.assemblyId !== '' && p.assemblyId !== '0') {
                 Object.assign(structureParams, {
                     name: 'assembly',
@@ -449,6 +450,19 @@ function determineAssemblyId(traj: any, p: MotifProps) {
     console.warn(`Could not auto-detect assembly-of-interest. Defaulting to model coordinates and dropping "structOperId" values`);
     Object.assign(p, { assemblyId: undefined });
     Object.assign(p, { targets: p.targets.map(({ structOperId, ...rest }) => rest) });
+}
+
+/** Load the first assembly that contains the target chain, or the model if there is none. */
+function determinePolyhedronAssemblyId(traj: any, p: PolyhedronProps) {
+    const labelAsymId = p.target?.labelAsymId;
+    if (!labelAsymId) return;
+    try {
+        const pdbx_struct_assembly_gen = traj.obj.data.representative.sourceData.data.frame.categories.pdbx_struct_assembly_gen;
+        p.assemblyId = firstMatchingAssemblyId(pdbx_struct_assembly_gen, [[p.target!.structOperId || '1', labelAsymId]]);
+    } catch (error) {
+        console.warn(error);
+        p.assemblyId = undefined;
+    }
 }
 
 async function initVolumeStreaming(plugin: PluginContext, structure: StructureObject, props?: { overrideRadius?: number, hiddenChannels: string[], wireframe?: boolean }) {
