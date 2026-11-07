@@ -52,7 +52,7 @@ import { Task } from 'molstar/lib/mol-task';
 import { QualityAssessment } from 'molstar/lib/extensions/model-archive/quality-assessment/prop';
 import { firstMatchingAssemblyId } from './viewer';
 import { ModelSymmetry } from 'molstar/lib/mol-model-formats/structure/property/symmetry';
-import { CoordinationPolyhedronPreset } from './polyhedron/preset';
+import { CoordinationGeometryPreset, CoordinationTarget } from './coordination/preset';
 
 type BaseProps = {
     assemblyId?: string
@@ -136,12 +136,14 @@ export type GlyGenProps = {
 } & BaseProps
 
 /**
- * Coordination polyhedra around metal atoms of ligands and ions.
- * If `target.labelAsymId` is set, polyhedra are only created for metals with exactly that label_asym_id; the target is focused.
+ * Coordination geometry (triangles, planar polygons, polyhedra) of metal atoms of ligands and ions.
+ * - `target.labelAsymId`: geometry for all metals with exactly that label_asym_id
+ * - `target.labelAsymId` + `target.labelAtomId`: geometry only for that metal atom
+ * The target residue is focused and the first assembly containing `target.labelAsymId` is loaded.
  */
-export type PolyhedronProps = {
-    kind: 'polyhedron',
-    target?: Target,
+export type CoordinationGeometryProps = {
+    kind: 'coordination-geometry',
+    target?: CoordinationTarget,
     /** label metal atoms and their coordinating atoms (default: true) */
     showLabels?: boolean
 } & BaseProps
@@ -151,7 +153,7 @@ export type DefaultAssembly = {
 } & BaseProps;
 
 export type PresetProps = ValidationProps | StandardProps | SymmetryProps | FeatureProps | DensityProps | AlignmentProps |
-MembraneProps | FeatureDensityProps | MotifProps | NakbProps | GlyGenProps | EmptyProps | DefaultAssembly | QScoreProps | PolyhedronProps;
+MembraneProps | FeatureDensityProps | MotifProps | NakbProps | GlyGenProps | EmptyProps | DefaultAssembly | QScoreProps | CoordinationGeometryProps;
 
 const RcsbParams = () => ({
     preset: PD.Value<PresetProps>({ kind: 'standard', assemblyId: '' }, { isHidden: true })
@@ -173,7 +175,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         const modelParams = { modelIndex: p.modelIndex || 0 };
         // jump through some hoops to determine the unknown assemblyId of query selections
         if (p.kind === 'motif') determineAssemblyId(trajectory, p);
-        if (p.kind === 'polyhedron') determinePolyhedronAssemblyId(trajectory, p);
+        if (p.kind === 'coordination-geometry') determineCoordinationAssemblyId(trajectory, p);
 
         const model = await builder.createModel(trajectory, modelParams);
         const modelProperties = await builder.insertModelProperties(model);
@@ -341,8 +343,8 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 // fall back to default representation to show something
                 representation = await plugin.builders.structure.representation.applyPreset(structureProperties!, 'auto', presetParams);
             }
-        } else if (p.kind === 'polyhedron') {
-            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, CoordinationPolyhedronPreset, { ...presetParams, chain: p.target, showLabels: p.showLabels ?? true });
+        } else if (p.kind === 'coordination-geometry') {
+            representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, CoordinationGeometryPreset, { ...presetParams, target: p.target, showLabels: p.showLabels ?? true });
         } else if (p.kind === 'nakb') {
             representation = await plugin.builders.structure.representation.applyPreset<any>(structureProperties!, 'auto', { ...presetParams, theme: { globalName: 'nakb', focus: { name: 'nakb' } } });
         } else {
@@ -350,7 +352,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
         }
 
         // TODO align with 'motif'?
-        const focusTarget = p.kind === 'feature' || p.kind === 'feature-density' || p.kind === 'polyhedron' ? p.target : undefined;
+        const focusTarget = p.kind === 'feature' || p.kind === 'feature-density' || p.kind === 'coordination-geometry' ? p.target : undefined;
         if (focusTarget && structure?.obj) {
             let loci = targetToLoci(focusTarget, structure!.obj.data);
             // if requested: then don't force first residue
@@ -370,7 +372,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 await initVolumeStreaming(plugin, structure, { overrideRadius: p.radius ?? 5, hiddenChannels: p.hiddenChannels ?? [], wireframe: p.wireframe ?? true });
             }
 
-            if (p.kind === 'polyhedron' && !StructureElement.Loci.isEmpty(target)) hideFocusSurroundings(plugin);
+            if (p.kind === 'coordination-geometry' && !StructureElement.Loci.isEmpty(target)) hideFocusSurroundings(plugin);
 
             plugin.managers.structure.focus.setFromLoci(target);
             plugin.managers.camera.focusLoci(target);
@@ -453,7 +455,7 @@ function determineAssemblyId(traj: any, p: MotifProps) {
 }
 
 /** Load the first assembly that contains the target chain, or the model if there is none. */
-function determinePolyhedronAssemblyId(traj: any, p: PolyhedronProps) {
+function determineCoordinationAssemblyId(traj: any, p: CoordinationGeometryProps) {
     const labelAsymId = p.target?.labelAsymId;
     if (!labelAsymId) return;
     try {

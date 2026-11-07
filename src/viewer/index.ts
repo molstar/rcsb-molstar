@@ -68,7 +68,8 @@ import { GeometryExport } from 'molstar/lib/extensions/geo-export';
 import { Mp4Export } from 'molstar/lib/extensions/mp4-export';
 import { PartialCanvas3DProps } from 'molstar/lib/mol-canvas3d/canvas3d';
 import { RSCCScore } from './helpers/rscc/behavior';
-import { CoordinationPolyhedronPreset } from './helpers/polyhedron/preset';
+import { CoordinationGeometryPreset } from './helpers/coordination/preset';
+import { CoordinationGeometryRepresentationProvider } from './helpers/coordination/representation';
 import { QScoreBehavior } from './helpers/qscore/behavior';
 import { createRoot } from 'react-dom/client';
 import { AssemblySymmetryData } from 'molstar/lib/extensions/assembly-symmetry/prop';
@@ -339,7 +340,8 @@ export class Viewer {
                     this._plugin.builders.structure.representation.unregisterPreset(MembraneOrientationPreset);
                     this._plugin.representation.structure.registry.remove(MembraneOrientationRepresentationProvider);
                 }
-                this._plugin.builders.structure.representation.registerPreset(CoordinationPolyhedronPreset);
+                this._plugin.representation.structure.registry.add(CoordinationGeometryRepresentationProvider);
+                this._plugin.builders.structure.representation.registerPreset(CoordinationGeometryPreset);
                 // normally, this would be part of CustomStructureControls -- we want to manage its collapsed state individually though
                 this._plugin.customStructureControls.delete(AssemblySymmetryData.Tag.Representation);
 

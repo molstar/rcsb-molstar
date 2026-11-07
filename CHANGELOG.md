@@ -2,6 +2,13 @@
 
 [Semantic Versioning](https://semver.org/)
 
+## [Unreleased]
+### Breaking changes
+- `polyhedron` preset kind replaced by `coordination-geometry`; 'Ligand Coordination Polyhedra' representation preset replaced by 'Coordination Geometry'
+### API
+- `coordination-geometry` preset kind: coordination geometry of metal atoms of ligands and ions, for `target.labelAsymId` (all metals of that chain) or `target.labelAsymId` + `target.labelAtomId` (a single metal atom); loads the first assembly containing the chain, focuses the target, shows coordinating residues (residues donating coordinating atoms) as Ball & Stick, labels metals and coordinating atoms (`showLabels`)
+- 'Coordination Geometry' representation: triangle for 2 ligands (metal + ligands), triangle for 3 ligands, polyhedron for 4+ ligands, planar polygon for coplanar ligands
+
 ## [2.15.2] - 2026-11-04
 ### Bug fixes
 - Focus representation: show metal coordination bonds in ball & stick (e.g., Fe-S bonds within SF4 clusters)
