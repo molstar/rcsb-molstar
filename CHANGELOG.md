@@ -4,7 +4,7 @@
 
 ## [Unreleased]
 ### API
-- `coordination-geometry` preset kind: coordination geometry of metal atoms of ligands and ions, for `target.labelAsymId` (all metals of that chain) or `target.labelAsymId` + `target.labelAtomId` (a single metal atom); loads the first assembly containing the chain, focuses the target, shows coordinating residues (residues donating coordinating atoms) as Ball & Stick, labels metals and coordinating atoms (`showLabels`)
+- `coordination-geometry` preset kind: coordination geometry of metal atoms of ligands and ions, for `target.labelAsymId` (all metals of that chain) or `target.labelAsymId` + `target.labelAtomId` (a single metal atom); loads the first assembly containing the chain, focuses the target, shows coordinating residues (residues donating coordinating atoms) as Ball & Stick, labels metals and coordinating atoms (`showLabels`); focus surroundings are hidden unless `showSurroundings` is true
 - 'Coordination Geometry' representation: triangle for 2 ligands (metal + ligands), triangle for 3 ligands, polyhedron for 4+ ligands, planar polygon for coplanar ligands
 
 ## [2.15.2] - 2026-11-04

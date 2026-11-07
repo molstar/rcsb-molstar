@@ -146,6 +146,8 @@ export type CoordinationGeometryProps = {
     target?: CoordinationTarget,
     /** label metal atoms and their coordinating atoms (default: true) */
     showLabels?: boolean
+    /** show the focus surroundings (default: false, i.e. '[Focus] Surroundings' is hidden) */
+    showSurroundings?: boolean
 } & BaseProps
 
 export type DefaultAssembly = {
@@ -372,7 +374,7 @@ export const RcsbPreset = TrajectoryHierarchyPresetProvider({
                 await initVolumeStreaming(plugin, structure, { overrideRadius: p.radius ?? 5, hiddenChannels: p.hiddenChannels ?? [], wireframe: p.wireframe ?? true });
             }
 
-            if (p.kind === 'coordination-geometry' && !StructureElement.Loci.isEmpty(target)) hideFocusSurroundings(plugin);
+            if (p.kind === 'coordination-geometry' && !p.showSurroundings && !StructureElement.Loci.isEmpty(target)) hideFocusSurroundings(plugin);
 
             plugin.managers.structure.focus.setFromLoci(target);
             plugin.managers.camera.focusLoci(target);
