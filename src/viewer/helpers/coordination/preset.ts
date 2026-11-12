@@ -131,7 +131,7 @@ export const CoordinationGeometryPreset = StructureRepresentationPresetProvider(
         const { update, builder, typeParams } = StructureRepresentationPresetProvider.reprBuilder(plugin, params, structureCell.obj.data);
         const geometry = builder.buildRepresentation(update, metals, {
             type: 'coordination-geometry' as any,
-            typeParams: { ...typeParams, includeParent: true },
+            typeParams: { ...typeParams, includeParent: true, alpha: 0.9 },
             color: 'element-symbol'
         }, { tag: 'coordination-geometry' });
         await update.commit({ revertOnError: false });
