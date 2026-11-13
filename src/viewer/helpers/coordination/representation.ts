@@ -94,6 +94,12 @@ function position(l: { unit: Unit, element: StructureElement.Location['element']
 
 const _centroid = Vec3(), _normal = Vec3(), _u = Vec3(), _v = Vec3(), _d = Vec3(), _a = Vec3(), _b = Vec3();
 
+/** Adds the triangle with both windings, so that a flat geometry is rendered from both sides. */
+function addTwoSidedTriangle(state: MeshBuilder.State, a: Vec3, b: Vec3, c: Vec3) {
+    MeshBuilder.addTriangle(state, a, b, c);
+    MeshBuilder.addTriangle(state, a, c, b);
+}
+
 /** Adds the convex polygon through (nearly) coplanar `positions` as a triangle fan around their centroid. */
 function addPolygon(state: MeshBuilder.State, positions: Vec3[]) {
     const n = positions.length;
@@ -114,7 +120,7 @@ function addPolygon(state: MeshBuilder.State, positions: Vec3[]) {
     Vec3.normalize(_normal, _normal);
 
     if (n === 3) {
-        MeshBuilder.addTriangle(state, positions[0], positions[1], positions[2]);
+        addTwoSidedTriangle(state, positions[0], positions[1], positions[2]);
         return;
     }
 
@@ -126,7 +132,7 @@ function addPolygon(state: MeshBuilder.State, positions: Vec3[]) {
         return { i, angle: Math.atan2(Vec3.dot(_d, _v), Vec3.dot(_d, _u)) };
     }).sort((x, y) => x.angle - y.angle).map(x => x.i);
     for (let k = 0; k < n; ++k) {
-        MeshBuilder.addTriangle(state, _centroid, positions[order[k]], positions[order[(k + 1) % n]]);
+        addTwoSidedTriangle(state, _centroid, positions[order[k]], positions[order[(k + 1) % n]]);
     }
 }
 

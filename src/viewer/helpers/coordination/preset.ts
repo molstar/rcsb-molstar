@@ -74,24 +74,29 @@ function toLoci(structure: Structure, map: UnitIndexMap): StructureElement.Loci 
 /**
  * For the metal atoms in `metals` (a substructure of `structure`), with the same params as the drawn geometry:
  * - `atoms`: metal atoms and their coordinating atoms
- * - `residues`: whole residues donating coordinating atoms, except the metal's own residue (e.g. Cys for SF4)
+ * - `residues`: whole residues donating coordinating atoms, except the metal's own residue (e.g. Cys for SF4),
+ *   plus the metal atoms they coordinate, so that Ball & Stick draws the metal-residue bonds
  */
 function getCoordinationLoci(structure: Structure, metals: Structure) {
     const { minCoordination, maxCoordination } = CoordinationGeometryParams;
     const atoms: UnitIndexMap = new Map();
     const donors: UnitIndexMap = new Map();
+    const bondedMetals: UnitIndexMap = new Map();
     for (const site of getMetalSites(structure, minCoordination.defaultValue, maxCoordination.defaultValue, metals)) {
         const metal = site.unit.elements[site.index];
         addToMap(atoms, site.unit, metal);
         for (const l of site.ligands) {
             addToMap(atoms, l.unit, l.element);
             const sameResidue = l.unit.id === site.unit.id && site.unit.residueIndex[l.element] === site.unit.residueIndex[metal];
-            if (!sameResidue) addToMap(donors, l.unit, l.element);
+            if (sameResidue) continue;
+            addToMap(donors, l.unit, l.element);
+            addToMap(bondedMetals, site.unit, metal);
         }
     }
+    const residues = StructureElement.Loci.extendToWholeResidues(toLoci(structure, donors)) as StructureElement.Loci;
     return {
         atoms: toLoci(structure, atoms),
-        residues: StructureElement.Loci.extendToWholeResidues(toLoci(structure, donors)) as StructureElement.Loci
+        residues: StructureElement.Loci.union(residues, toLoci(structure, bondedMetals))
     };
 }
 
